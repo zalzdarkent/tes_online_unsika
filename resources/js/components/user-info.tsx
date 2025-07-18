@@ -16,6 +16,9 @@ export function UserInfo({ user, showEmail = false }: { user: User; showEmail?: 
             <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.username}</span>
                 {showEmail && <span className="truncate text-xs text-muted-foreground">{user.email}</span>}
+                <span className="truncate text-xs text-blue-600 dark:text-blue-400 font-medium capitalize">
+                    {user.role}
+                </span>
             </div>
         </>
     );
