@@ -33,11 +33,13 @@ export interface SharedData {
 
 export interface User {
     id: number;
-    name: string;
-    email: string;
-    avatar?: string;
-    email_verified_at: string | null;
+    username: string;
+    password?: string; // Optional karena hidden di model
+    role: 'admin' | 'peserta';
+    nama: string | null;
+    email: string | null;
+    foto: string | null;
     created_at: string;
-    updated_at: string;
+    remember_token?: string; // Optional karena hidden di model
     [key: string]: unknown; // This allows for additional properties...
 }

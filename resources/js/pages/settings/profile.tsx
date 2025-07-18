@@ -20,7 +20,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 type ProfileForm = {
-    name: string;
+    nama: string;
     email: string;
 };
 
@@ -28,8 +28,8 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const { auth } = usePage<SharedData>().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
-        name: auth.user.name,
-        email: auth.user.email,
+        nama: auth.user.nama || '',
+        email: auth.user.email || '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -50,19 +50,19 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Name</Label>
+                            <Label htmlFor="nama">Nama</Label>
 
                             <Input
-                                id="name"
+                                id="nama"
                                 className="mt-1 block w-full"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
+                                value={data.nama}
+                                onChange={(e) => setData('nama', e.target.value)}
                                 required
                                 autoComplete="name"
-                                placeholder="Full name"
+                                placeholder="Nama lengkap"
                             />
 
-                            <InputError className="mt-2" message={errors.name} />
+                            <InputError className="mt-2" message={errors.nama} />
                         </div>
 
                         <div className="grid gap-2">
@@ -82,7 +82,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                             <InputError className="mt-2" message={errors.email} />
                         </div>
 
-                        {mustVerifyEmail && auth.user.email_verified_at === null && (
+                        {mustVerifyEmail && auth.user.email === null && (
                             <div>
                                 <p className="-mt-4 text-sm text-muted-foreground">
                                     Your email address is unverified.{' '}
