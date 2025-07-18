@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('username', 50)->unique();
             $table->string('password', 255);
-            $table->enum('role', ['admin', 'peserta']);
+            $table->enum('role', ['admin', 'teacher', 'peserta']);
             $table->string('nama', 100)->nullable();
             $table->string('email', 100)->nullable();
             $table->string('foto', 255)->nullable();

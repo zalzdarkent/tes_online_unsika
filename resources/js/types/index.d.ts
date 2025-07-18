@@ -20,6 +20,7 @@ export interface NavItem {
     href: string;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    roles?: string | string[]; // Role requirements untuk menu item
 }
 
 export interface SharedData {
@@ -35,7 +36,7 @@ export interface User {
     id: number;
     username: string;
     password?: string; // Optional karena hidden di model
-    role: 'admin' | 'peserta';
+    role: 'admin' | 'teacher' | 'peserta';
     nama: string | null;
     email: string | null;
     foto: string | null;

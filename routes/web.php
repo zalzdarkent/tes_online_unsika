@@ -11,6 +11,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+
+    // Routes yang hanya bisa diakses admin dan teacher
+    Route::middleware(['role:admin,teacher'])->group(function () {
+        Route::get('jadwal', function () {
+            return Inertia::render('jadwal/jadwal');
+        })->name('jadwal');
+
+        Route::get('koreksi', function () {
+            return Inertia::render('koreksi/koreksi');
+        })->name('koreksi');
+    });
+
+    // Routes yang hanya bisa diakses admin
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('admin', function () {
+            return Inertia::render('admin-panel');
+        })->name('admin');
+    });
 });
 
 require __DIR__.'/settings.php';

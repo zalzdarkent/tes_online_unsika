@@ -2,16 +2,42 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { filterMenuByRole } from '@/lib/auth-utils';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import { BookOpen, Calendar, ClipboardCheck, Folder, LayoutGrid, Settings } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
+const platformNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutGrid,
+        // Dashboard bisa diakses semua role
+    },
+];
+
+const mainNavItems: NavItem[] = [
+    {
+        title: 'Jadwal Tes',
+        href: '/jadwal',
+        icon: Calendar,
+        roles: ['admin', 'teacher'], // Hanya admin dan teacher yang bisa akses
+    },
+    {
+        title: 'Koreksi Peserta',
+        href: '/koreksi',
+        icon: ClipboardCheck,
+        roles: ['admin', 'teacher'], // Hanya admin dan teacher yang bisa akses
+    },
+];
+
+const adminNavItems: NavItem[] = [
+    {
+        title: 'Admin Panel',
+        href: '/admin',
+        icon: Settings,
+        roles: ['admin'], // Hanya admin yang bisa akses
     },
 ];
 
@@ -29,6 +55,14 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const page = usePage<SharedData>();
+    const user = page.props.auth.user;
+
+    // Filter menu berdasarkan role user
+    const filteredPlatformItems = filterMenuByRole(platformNavItems, user);
+    const filteredMainItems = filterMenuByRole(mainNavItems, user);
+    const filteredAdminItems = filterMenuByRole(adminNavItems, user);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -44,7 +78,15 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                {filteredPlatformItems.length > 0 && (
+                    <NavMain items={filteredPlatformItems} label="Platform" />
+                )}
+                {filteredMainItems.length > 0 && (
+                    <NavMain items={filteredMainItems} label="Main" />
+                )}
+                {filteredAdminItems.length > 0 && (
+                    <NavMain items={filteredAdminItems} label="Administration" />
+                )}
             </SidebarContent>
 
             <SidebarFooter>
