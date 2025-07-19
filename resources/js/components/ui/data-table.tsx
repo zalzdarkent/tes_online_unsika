@@ -50,6 +50,8 @@ interface DataTableProps<TData, TValue> {
   onAddNew?: () => void
   addButtonLabel?: string
   onBulkDelete?: (selectedRows: TData[]) => void
+  searchColumn?: string
+  searchPlaceholder?: string
 }
 
 export function DataTable<TData, TValue>({
@@ -58,6 +60,8 @@ export function DataTable<TData, TValue>({
   onAddNew,
   addButtonLabel = "Tambah Data",
   onBulkDelete,
+  searchColumn,
+  searchPlaceholder = "Cari data...",
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -152,14 +156,16 @@ export function DataTable<TData, TValue>({
       )}
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center space-x-2">
-          <Input
-            placeholder="Cari jadwal..."
-            value={(table.getColumn("namaJadwal")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("namaJadwal")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
+          {searchColumn && (
+            <Input
+              placeholder={searchPlaceholder}
+              value={(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""}
+              onChange={(event) =>
+                table.getColumn(searchColumn)?.setFilterValue(event.target.value)
+              }
+              className="max-w-sm"
+            />
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">
@@ -182,13 +188,7 @@ export function DataTable<TData, TValue>({
                         column.toggleVisibility(!!value)
                       }
                     >
-                      {column.id === "namaJadwal" ? "Nama Jadwal" :
-                       column.id === "tanggalMulai" ? "Tanggal Mulai" :
-                       column.id === "tanggalBerakhir" ? "Tanggal Berakhir" :
-                       column.id === "status" ? "Status" :
-                       column.id === "jadwalSebelumnya" ? "Jadwal Sebelumnya" :
-                       column.id === "actions" ? "Aksi" :
-                       column.id}
+                      {column.id}
                     </DropdownMenuCheckboxItem>
                   )
                 })}

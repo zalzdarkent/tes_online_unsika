@@ -259,6 +259,8 @@ export default function Jadwal({ jadwal }: JadwalProps) {
                     onAddNew={handleAddJadwal}
                     addButtonLabel="Tambah Jadwal"
                     onBulkDelete={handleBulkDelete}
+                    searchColumn="nama_jadwal"
+                    searchPlaceholder="Cari jadwal..."
                 />
             </div>
         </AppLayout>
