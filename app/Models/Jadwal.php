@@ -16,6 +16,12 @@ class Jadwal extends Model
         'auto_close',
         'id_jadwal_sebelumnya',
     ];
+
+    protected $casts = [
+        'auto_close' => 'boolean',
+        'tanggal_mulai' => 'datetime',
+        'tanggal_berakhir' => 'datetime',
+    ];
     public function jadwal()
     {
         return $this->hasMany(Jadwal::class);

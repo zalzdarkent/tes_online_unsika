@@ -22,7 +22,10 @@ class UsersSeeder extends Seeder
                 'nama' => 'Admin Utama',
                 'email' => 'admin@example.com',
                 'foto' => null,
-                'created_at' => '2025-02-16 17:38:01'
+                'remember_token' => null,
+                'email_verified_at' => null,
+                'created_at' => '2025-02-16 17:38:01',
+                'updated_at' => '2025-02-16 17:38:01'
             ],
             [
                 'username' => 'jajam',
@@ -31,7 +34,10 @@ class UsersSeeder extends Seeder
                 'nama' => 'jajam',
                 'email' => 'jajam@gmail.com',
                 'foto' => null,
-                'created_at' => '2025-02-16 17:46:06'
+                'remember_token' => null,
+                'email_verified_at' => null,
+                'created_at' => '2025-02-16 17:46:06',
+                'updated_at' => '2025-02-16 17:46:06'
             ],
             [
                 'username' => 'alif',
@@ -40,7 +46,10 @@ class UsersSeeder extends Seeder
                 'nama' => 'alif',
                 'email' => 'alif@gmail.com',
                 'foto' => null,
-                'created_at' => '2025-02-16 17:46:06'
+                'remember_token' => null,
+                'email_verified_at' => null,
+                'created_at' => '2025-02-16 17:46:06',
+                'updated_at' => '2025-02-16 17:46:06'
             ],
             [
                 'username' => 'peserta',
@@ -49,7 +58,10 @@ class UsersSeeder extends Seeder
                 'nama' => 'brian',
                 'email' => 'brian@gmail.com',
                 'foto' => null,
-                'created_at' => '2025-02-18 02:02:21'
+                'remember_token' => null,
+                'email_verified_at' => null,
+                'created_at' => '2025-02-18 02:02:21',
+                'updated_at' => '2025-02-18 02:02:21'
             ],
             [
                 'username' => 'jojo',
@@ -58,7 +70,10 @@ class UsersSeeder extends Seeder
                 'nama' => 'jojo sumarjo',
                 'email' => 'jojo.s@gmail.com',
                 'foto' => null,
-                'created_at' => '2025-02-23 04:30:48'
+                'remember_token' => null,
+                'email_verified_at' => null,
+                'created_at' => '2025-02-23 04:30:48',
+                'updated_at' => '2025-02-23 04:30:48'
             ]
         ]);
     }

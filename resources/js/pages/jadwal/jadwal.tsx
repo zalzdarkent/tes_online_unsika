@@ -27,11 +27,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Eye, Edit, Trash2, MoreHorizontal, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import InputError from '@/components/input-error';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -57,41 +58,50 @@ type JadwalProps = {
     jadwal: JadwalData[];
 };
 
-// Type untuk form data
-type JadwalFormData = {
-    nama_jadwal: string;
-    tanggal_mulai_date: string;
-    tanggal_mulai_time: string;
-    tanggal_berakhir_date: string;
-    tanggal_berakhir_time: string;
-    status: 'Buka' | 'Tutup';
-    auto_close: boolean;
-    id_jadwal_sebelumnya: number | null;
-};
-
 // Komponen untuk modal form tambah jadwal
 function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJadwal: () => void }) {
     const [isOpen, setIsOpen] = useState(false);
-    const [formData, setFormData] = useState<JadwalFormData>({
+    const { toast } = useToast();
+
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
         nama_jadwal: '',
+        tanggal_mulai: '',
+        tanggal_berakhir: '',
+        status: 'Buka' as 'Buka' | 'Tutup',
+        auto_close: true,
+        id_jadwal_sebelumnya: null as number | null,
+    });
+
+    // State terpisah untuk input date dan time
+    const [dateTimeInputs, setDateTimeInputs] = useState({
         tanggal_mulai_date: '',
         tanggal_mulai_time: '',
         tanggal_berakhir_date: '',
         tanggal_berakhir_time: '',
-        status: 'Buka',
-        auto_close: true,
-        id_jadwal_sebelumnya: null,
     });
-    const { toast } = useToast();
+
+    // Reset form saat modal dibuka
+    useEffect(() => {
+        if (isOpen) {
+            reset();
+            clearErrors();
+            setDateTimeInputs({
+                tanggal_mulai_date: '',
+                tanggal_mulai_time: '',
+                tanggal_berakhir_date: '',
+                tanggal_berakhir_time: '',
+            });
+        }
+    }, [isOpen, reset, clearErrors]);
 
     console.log("AddJadwalModal rendered with jadwal:", jadwal?.length || 0, "items");
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validasi sederhana
-        if (!formData.nama_jadwal || !formData.tanggal_mulai_date || !formData.tanggal_mulai_time ||
-            !formData.tanggal_berakhir_date || !formData.tanggal_berakhir_time) {
+        // Validasi frontend sederhana
+        if (!data.nama_jadwal || !dateTimeInputs.tanggal_mulai_date || !dateTimeInputs.tanggal_mulai_time ||
+            !dateTimeInputs.tanggal_berakhir_date || !dateTimeInputs.tanggal_berakhir_time) {
             toast({
                 variant: "destructive",
                 title: "Error!",
@@ -101,48 +111,86 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
         }
 
         // Gabungkan tanggal dan waktu
-        const tanggal_mulai = `${formData.tanggal_mulai_date}T${formData.tanggal_mulai_time}:00`;
-        const tanggal_berakhir = `${formData.tanggal_berakhir_date}T${formData.tanggal_berakhir_time}:00`;
+        const tanggal_mulai = `${dateTimeInputs.tanggal_mulai_date}T${dateTimeInputs.tanggal_mulai_time}:00`;
+        const tanggal_berakhir = `${dateTimeInputs.tanggal_berakhir_date}T${dateTimeInputs.tanggal_berakhir_time}:00`;
 
-        // Data untuk dikirim ke backend
-        const submitData = {
-            nama_jadwal: formData.nama_jadwal,
+        // Validasi tanggal
+        const startDate = new Date(tanggal_mulai);
+        const endDate = new Date(tanggal_berakhir);
+        const now = new Date();
+
+        if (startDate <= now) {
+            toast({
+                variant: "destructive",
+                title: "Error!",
+                description: "Tanggal mulai harus setelah waktu sekarang.",
+            });
+            return;
+        }
+
+        if (endDate <= startDate) {
+            toast({
+                variant: "destructive",
+                title: "Error!",
+                description: "Tanggal berakhir harus setelah tanggal mulai.",
+            });
+            return;
+        }
+
+        // Buat data payload langsung untuk dikirim
+        const formData = {
+            nama_jadwal: data.nama_jadwal,
             tanggal_mulai,
             tanggal_berakhir,
-            status: formData.status,
-            auto_close: formData.auto_close,
-            id_jadwal_sebelumnya: formData.id_jadwal_sebelumnya,
+            status: data.status,
+            auto_close: data.auto_close,
+            id_jadwal_sebelumnya: data.id_jadwal_sebelumnya,
         };
 
-        // TODO: Kirim data ke backend menggunakan Inertia
-        console.log("Form data:", submitData);
+        console.log("Sending form data:", formData);
 
-        // Simulasi sukses
-        toast({
-            variant: "success",
-            title: "Berhasil!",
-            description: "Jadwal berhasil ditambahkan.",
+        // Submit form langsung dengan data yang sudah disiapkan
+        post(route('jadwal.store'), {
+            data: formData,
+            onSuccess: () => {
+                toast({
+                    variant: "default",
+                    title: "Berhasil!",
+                    description: "Jadwal berhasil ditambahkan.",
+                });
+                setIsOpen(false);
+                onAddJadwal();
+            },
+            onError: (errors) => {
+                console.log("Validation errors:", errors);
+                // Handle validation errors
+                if (errors.conflict) {
+                    toast({
+                        variant: "destructive",
+                        title: "Konflik Jadwal!",
+                        description: errors.conflict,
+                    });
+                } else if (errors.error) {
+                    toast({
+                        variant: "destructive",
+                        title: "Error!",
+                        description: errors.error,
+                    });
+                } else {
+                    toast({
+                        variant: "destructive",
+                        title: "Error!",
+                        description: "Terjadi kesalahan saat menyimpan jadwal.",
+                    });
+                }
+            }
         });
-
-        // Reset form dan tutup modal
-        setFormData({
-            nama_jadwal: '',
-            tanggal_mulai_date: '',
-            tanggal_mulai_time: '',
-            tanggal_berakhir_date: '',
-            tanggal_berakhir_time: '',
-            status: 'Buka',
-            auto_close: true,
-            id_jadwal_sebelumnya: null,
-        });
-        setIsOpen(false);
-        onAddJadwal();
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button onClick={() => setIsOpen(true)}>
+                <Button onClick={() => setIsOpen(true)} className='cursor-pointer'>
                     <Plus className="mr-2 h-4 w-4" />
                     Tambah Jadwal
                 </Button>
@@ -162,10 +210,14 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
                                 id="nama_jadwal"
                                 type="text"
                                 placeholder="Masukkan nama jadwal"
-                                value={formData.nama_jadwal}
-                                onChange={(e) => setFormData({ ...formData, nama_jadwal: e.target.value })}
+                                value={data.nama_jadwal}
+                                onChange={(e) => setData('nama_jadwal', e.target.value)}
                                 required
+                                disabled={processing}
                             />
+                            {errors.nama_jadwal && (
+                                <InputError message={errors.nama_jadwal} />
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -176,9 +228,13 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
                                         <Input
                                             id="tanggal_mulai_date"
                                             type="date"
-                                            value={formData.tanggal_mulai_date}
-                                            onChange={(e) => setFormData({ ...formData, tanggal_mulai_date: e.target.value })}
+                                            value={dateTimeInputs.tanggal_mulai_date}
+                                            onChange={(e) => setDateTimeInputs(prev => ({
+                                                ...prev,
+                                                tanggal_mulai_date: e.target.value
+                                            }))}
                                             required
+                                            disabled={processing}
                                             className="w-full"
                                         />
                                     </div>
@@ -186,13 +242,20 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
                                         <Input
                                             id="tanggal_mulai_time"
                                             type="time"
-                                            value={formData.tanggal_mulai_time}
-                                            onChange={(e) => setFormData({ ...formData, tanggal_mulai_time: e.target.value })}
+                                            value={dateTimeInputs.tanggal_mulai_time}
+                                            onChange={(e) => setDateTimeInputs(prev => ({
+                                                ...prev,
+                                                tanggal_mulai_time: e.target.value
+                                            }))}
                                             required
+                                            disabled={processing}
                                             className="w-full"
                                         />
                                     </div>
                                 </div>
+                                {errors.tanggal_mulai && (
+                                    <InputError message={errors.tanggal_mulai} />
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="tanggal_berakhir">Tanggal & Waktu Berakhir</Label>
@@ -201,9 +264,13 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
                                         <Input
                                             id="tanggal_berakhir_date"
                                             type="date"
-                                            value={formData.tanggal_berakhir_date}
-                                            onChange={(e) => setFormData({ ...formData, tanggal_berakhir_date: e.target.value })}
+                                            value={dateTimeInputs.tanggal_berakhir_date}
+                                            onChange={(e) => setDateTimeInputs(prev => ({
+                                                ...prev,
+                                                tanggal_berakhir_date: e.target.value
+                                            }))}
                                             required
+                                            disabled={processing}
                                             className="w-full"
                                         />
                                     </div>
@@ -211,20 +278,31 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
                                         <Input
                                             id="tanggal_berakhir_time"
                                             type="time"
-                                            value={formData.tanggal_berakhir_time}
-                                            onChange={(e) => setFormData({ ...formData, tanggal_berakhir_time: e.target.value })}
+                                            value={dateTimeInputs.tanggal_berakhir_time}
+                                            onChange={(e) => setDateTimeInputs(prev => ({
+                                                ...prev,
+                                                tanggal_berakhir_time: e.target.value
+                                            }))}
                                             required
+                                            disabled={processing}
                                             className="w-full"
                                         />
                                     </div>
                                 </div>
+                                {errors.tanggal_berakhir && (
+                                    <InputError message={errors.tanggal_berakhir} />
+                                )}
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="status">Status</Label>
-                                <Select value={formData.status} onValueChange={(value: 'Buka' | 'Tutup') => setFormData({ ...formData, status: value })}>
+                                <Select
+                                    value={data.status}
+                                    onValueChange={(value: 'Buka' | 'Tutup') => setData('status', value)}
+                                    disabled={processing}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih status" />
                                     </SelectTrigger>
@@ -233,10 +311,17 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
                                         <SelectItem value="Tutup">Tutup</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                {errors.status && (
+                                    <InputError message={errors.status} />
+                                )}
                             </div>
                             <div>
                                 <Label htmlFor="id_jadwal_sebelumnya">Jadwal Sebelumnya</Label>
-                                <Select value={formData.id_jadwal_sebelumnya?.toString() || "0"} onValueChange={(value) => setFormData({ ...formData, id_jadwal_sebelumnya: value === "0" ? null : parseInt(value) })}>
+                                <Select
+                                    value={data.id_jadwal_sebelumnya?.toString() || "0"}
+                                    onValueChange={(value) => setData('id_jadwal_sebelumnya', value === "0" ? null : parseInt(value))}
+                                    disabled={processing}
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih jadwal sebelumnya" />
                                     </SelectTrigger>
@@ -249,16 +334,29 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
                                         )) : null}
                                     </SelectContent>
                                 </Select>
+                                {errors.id_jadwal_sebelumnya && (
+                                    <InputError message={errors.id_jadwal_sebelumnya} />
+                                )}
                             </div>
                         </div>
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                        <Button
+                            type="button"
+                            className='cursor-pointer'
+                            variant="outline"
+                            onClick={() => setIsOpen(false)}
+                            disabled={processing}
+                        >
                             Batal
                         </Button>
-                        <Button type="submit">
-                            Simpan Jadwal
+                        <Button
+                            type="submit"
+                            className='cursor-pointer'
+                            disabled={processing}
+                        >
+                            {processing ? 'Menyimpan...' : 'Simpan Jadwal'}
                         </Button>
                     </DialogFooter>
                 </form>

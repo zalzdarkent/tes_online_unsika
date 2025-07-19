@@ -4,6 +4,18 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
+import axios from 'axios';
+
+// Konfigurasi axios untuk CSRF token
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+// Set CSRF token untuk axios
+const token = document.head.querySelector('meta[name="csrf-token"]');
+if (token) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = token.getAttribute('content');
+} else {
+    console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
+}
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
