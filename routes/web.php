@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\JadwalController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -14,9 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Routes yang hanya bisa diakses admin dan teacher
     Route::middleware(['role:admin,teacher'])->group(function () {
-        Route::get('jadwal', function () {
-            return Inertia::render('jadwal/jadwal');
-        })->name('jadwal');
+        Route::resource('jadwal', JadwalController::class);
 
         Route::get('koreksi', function () {
             return Inertia::render('koreksi/koreksi');

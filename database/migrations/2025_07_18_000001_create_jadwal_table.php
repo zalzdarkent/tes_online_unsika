@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('id_jadwal_sebelumnya');
-            $table->foreign('id_jadwal_sebelumnya')->references('id')->on('jadwal');
+            $table->foreign('id_jadwal_sebelumnya')->references('id')->on('jadwal')->onDelete('cascade');;
         });
     }
 

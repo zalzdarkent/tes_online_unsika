@@ -28,99 +28,22 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Type untuk data jadwal
+// Type untuk data jadwal sesuai dengan database
 type JadwalData = {
     id: number;
-    namaJadwal: string;
-    tanggalMulai: string;
-    tanggalBerakhir: string;
+    nama_jadwal: string;
+    tanggal_mulai: string;
+    tanggal_berakhir: string;
     status: string;
-    jadwalSebelumnya: string;
+    id_jadwal_sebelumnya: number | null;
+    created_at: string;
+    updated_at: string;
 };
 
-// Data statis untuk tabel
-const jadwalData: JadwalData[] = [
-    {
-        id: 1,
-        namaJadwal: 'Ujian Matematika Semester 1',
-        tanggalMulai: '2025-01-15 09:00',
-        tanggalBerakhir: '2025-01-15 11:00',
-        status: 'Aktif',
-        jadwalSebelumnya: '-',
-    },
-    {
-        id: 2,
-        namaJadwal: 'Ujian Bahasa Indonesia',
-        tanggalMulai: '2025-01-20 13:00',
-        tanggalBerakhir: '2025-01-20 15:00',
-        status: 'Tutup',
-        jadwalSebelumnya: 'Ujian Matematika Semester 1',
-    },
-    {
-        id: 3,
-        namaJadwal: 'Ujian Bahasa Inggris',
-        tanggalMulai: '2025-01-22 08:00',
-        tanggalBerakhir: '2025-01-22 10:00',
-        status: 'Tutup',
-        jadwalSebelumnya: 'Ujian Bahasa Indonesia',
-    },
-    {
-        id: 4,
-        namaJadwal: 'Ujian Fisika',
-        tanggalMulai: '2025-01-23 10:00',
-        tanggalBerakhir: '2025-01-23 12:00',
-        status: 'Tutup',
-        jadwalSebelumnya: 'Ujian Bahasa Inggris',
-    },
-    {
-        id: 5,
-        namaJadwal: 'Ujian Kimia',
-        tanggalMulai: '2025-01-24 13:00',
-        tanggalBerakhir: '2025-01-24 15:00',
-        status: 'Aktif',
-        jadwalSebelumnya: 'Ujian Fisika',
-    },
-    {
-        id: 6,
-        namaJadwal: 'Ujian Biologi',
-        tanggalMulai: '2025-01-25 08:00',
-        tanggalBerakhir: '2025-01-25 10:00',
-        status: 'Tutup',
-        jadwalSebelumnya: 'Ujian Kimia',
-    },
-    {
-        id: 7,
-        namaJadwal: 'Ujian Sejarah',
-        tanggalMulai: '2025-01-26 13:00',
-        tanggalBerakhir: '2025-01-26 15:00',
-        status: 'Tutup',
-        jadwalSebelumnya: 'Ujian Biologi',
-    },
-    {
-        id: 8,
-        namaJadwal: 'Ujian Geografi',
-        tanggalMulai: '2025-01-27 09:00',
-        tanggalBerakhir: '2025-01-27 11:00',
-        status: 'Aktif',
-        jadwalSebelumnya: 'Ujian Sejarah',
-    },
-    {
-        id: 9,
-        namaJadwal: 'Ujian Ekonomi',
-        tanggalMulai: '2025-01-28 10:00',
-        tanggalBerakhir: '2025-01-28 12:00',
-        status: 'Tutup',
-        jadwalSebelumnya: 'Ujian Geografi',
-    },
-    {
-        id: 10,
-        namaJadwal: 'Ujian Sosiologi',
-        tanggalMulai: '2025-01-29 13:00',
-        tanggalBerakhir: '2025-01-29 15:00',
-        status: 'Tutup',
-        jadwalSebelumnya: 'Ujian Ekonomi',
-    },
-];
+// Type untuk props yang diterima dari controller
+type JadwalProps = {
+    jadwal: JadwalData[];
+};
 
 // Komponen untuk tombol hapus individual dengan dialog konfirmasi
 function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete: (jadwal: JadwalData) => void }) {
@@ -149,7 +72,7 @@ function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete
                 <AlertDialogHeader>
                     <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Apakah Anda yakin ingin menghapus jadwal "{jadwal.namaJadwal}"?
+                        Apakah Anda yakin ingin menghapus jadwal "{jadwal.nama_jadwal}"?
                         Tindakan ini tidak dapat dibatalkan.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -167,8 +90,15 @@ function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete
     );
 }
 
-export default function Jadwal() {
+export default function Jadwal({ jadwal }: JadwalProps) {
     const { toast } = useToast();
+
+    // Helper function untuk mencari nama jadwal berdasarkan ID
+    const findJadwalNameById = (id: number | null): string => {
+        if (!id) return '-';
+        const found = jadwal.find(j => j.id === id);
+        return found ? found.nama_jadwal : '-';
+    };
 
     const handleAddJadwal = () => {
         console.log("Tambah jadwal clicked");
@@ -194,7 +124,7 @@ export default function Jadwal() {
             toast({
                 variant: "success",
                 title: "Berhasil!",
-                description: `Jadwal "${jadwal.namaJadwal}" berhasil dihapus.`,
+                description: `Jadwal "${jadwal.nama_jadwal}" berhasil dihapus.`,
             });
         }, 500);
     };
@@ -231,22 +161,30 @@ export default function Jadwal() {
             },
         },
         {
-            accessorKey: "namaJadwal",
+            accessorKey: "nama_jadwal",
             header: "Nama Jadwal",
             enableSorting: true,
             enableHiding: true,
         },
         {
-            accessorKey: "tanggalMulai",
+            accessorKey: "tanggal_mulai",
             header: "Tanggal Mulai",
             enableSorting: true,
             enableHiding: true,
+            cell: ({ row }) => {
+                const tanggal = row.getValue("tanggal_mulai") as string;
+                return new Date(tanggal).toLocaleString('id-ID');
+            },
         },
         {
-            accessorKey: "tanggalBerakhir",
+            accessorKey: "tanggal_berakhir",
             header: "Tanggal Berakhir",
             enableSorting: true,
             enableHiding: true,
+            cell: ({ row }) => {
+                const tanggal = row.getValue("tanggal_berakhir") as string;
+                return new Date(tanggal).toLocaleString('id-ID');
+            },
         },
         {
             accessorKey: "status",
@@ -257,7 +195,7 @@ export default function Jadwal() {
                 const status = row.getValue("status") as string;
                 return (
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        status === 'Aktif'
+                        status === 'Buka'
                             ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                             : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                     }`}>
@@ -267,13 +205,14 @@ export default function Jadwal() {
             },
         },
         {
-            accessorKey: "jadwalSebelumnya",
+            accessorKey: "id_jadwal_sebelumnya",
             header: "Jadwal Sebelumnya",
             enableSorting: true,
             enableHiding: true,
             cell: ({ row }) => {
-                const jadwalSebelumnya = row.getValue("jadwalSebelumnya") as string;
-                return <div className="text-muted-foreground">{jadwalSebelumnya}</div>;
+                const idJadwalSebelumnya = row.getValue("id_jadwal_sebelumnya") as number | null;
+                const namaJadwal = findJadwalNameById(idJadwalSebelumnya);
+                return <div className="text-muted-foreground">{namaJadwal}</div>;
             },
         },
         {
@@ -281,7 +220,7 @@ export default function Jadwal() {
             header: "Aksi",
             enableHiding: true,
             cell: ({ row }) => {
-                const jadwal = row.original;
+                const jadwalItem = row.original;
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -299,7 +238,7 @@ export default function Jadwal() {
                                 Edit
                             </DropdownMenuItem>
                             <DeleteJadwalButton
-                                jadwal={jadwal}
+                                jadwal={jadwalItem}
                                 onDelete={handleDeleteSingle}
                             />
                         </DropdownMenuContent>
@@ -316,7 +255,7 @@ export default function Jadwal() {
                 <h2 className="text-2xl font-bold">Jadwal Tes</h2>
                 <DataTable
                     columns={columns}
-                    data={jadwalData}
+                    data={jadwal}
                     onAddNew={handleAddJadwal}
                     addButtonLabel="Tambah Jadwal"
                     onBulkDelete={handleBulkDelete}

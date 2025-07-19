@@ -25,7 +25,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('id_jadwal');
-            $table->foreign('id_jadwal')->references('id')->on('jadwal');
+            $table->foreign('id_jadwal')->references('id')->on('jadwal')->onDelete('cascade');;
         });
     }
 
