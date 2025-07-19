@@ -15,34 +15,30 @@ class JawabanSeeder extends Seeder
     {
         DB::table('jawaban')->insert([
             [
-                'id_jawaban' => 1,
                 'id_user' => 5,
-                'id_jadwal' => 13,
-                'id_soal' => 10,
+                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
+                'id_soal' => 6,    // Soal ke-6 (yang pertanyaannya "1" untuk jadwal 2)
                 'jawaban' => 'A',
                 'created_at' => '2025-02-22 19:40:00'
             ],
             [
-                'id_jawaban' => 2,
                 'id_user' => 5,
-                'id_jadwal' => 13,
-                'id_soal' => 11,
+                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
+                'id_soal' => 7,    // Soal ke-7 (yang pertanyaannya "akibat dari apakah pusing itu")
                 'jawaban' => 'tidak punya duit',
                 'created_at' => '2025-02-22 19:40:00'
             ],
             [
-                'id_jawaban' => 3,
                 'id_user' => 5,
-                'id_jadwal' => 13,
-                'id_soal' => 10,
+                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
+                'id_soal' => 6,    // Soal ke-6 (yang pertanyaannya "1" untuk jadwal 2)
                 'jawaban' => 'C',
                 'created_at' => '2025-02-22 19:41:18'
             ],
             [
-                'id_jawaban' => 4,
                 'id_user' => 5,
-                'id_jadwal' => 13,
-                'id_soal' => 11,
+                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
+                'id_soal' => 7,    // Soal ke-7 (yang pertanyaannya "akibat dari apakah pusing itu")
                 'jawaban' => 'gak punya duit',
                 'created_at' => '2025-02-22 19:41:18'
             ]

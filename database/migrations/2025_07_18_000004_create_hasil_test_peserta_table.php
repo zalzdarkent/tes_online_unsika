@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('hasil_test_peserta', function (Blueprint $table) {
-            $table->id('id_hasil');
+            $table->id();
             $table->unsignedBigInteger('id_jadwal');
-            $table->unsignedBigInteger('id');
+            $table->unsignedBigInteger('id_user');
             $table->unsignedBigInteger('id_soal');
             $table->string('jawaban', 255);
             $table->string('jawaban_benar', 255);
@@ -22,11 +22,11 @@ return new class extends Migration
             $table->timestamp('waktu_ujian')->useCurrent();
 
             $table->index('id_jadwal');
-            $table->index('id');
+            $table->index('id_user');
             $table->index('id_soal');
-            $table->foreign('id_jadwal')->references('id_jadwal')->on('jadwal')->onDelete('cascade');
-            $table->foreign('id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('id_soal')->references('id_soal')->on('soal')->onDelete('cascade');
+            $table->foreign('id_jadwal')->references('id')->on('jadwal')->onDelete('cascade');
+            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('id_soal')->references('id')->on('soal')->onDelete('cascade');
         });
     }
 

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('jawaban', function (Blueprint $table) {
-            $table->id('id_jawaban');
+            $table->id();
             $table->unsignedBigInteger('id_user');
             $table->unsignedBigInteger('id_jadwal');
             $table->unsignedBigInteger('id_soal');
@@ -21,8 +21,8 @@ return new class extends Migration
 
             // Foreign key constraints
             $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('id_jadwal')->references('id_jadwal')->on('jadwal')->onDelete('cascade');
-            $table->foreign('id_soal')->references('id_soal')->on('soal')->onDelete('cascade');
+            $table->foreign('id_jadwal')->references('id')->on('jadwal')->onDelete('cascade');
+            $table->foreign('id_soal')->references('id')->on('soal')->onDelete('cascade');
         });
     }
 

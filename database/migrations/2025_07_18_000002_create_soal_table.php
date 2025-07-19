@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('soal', function (Blueprint $table) {
-            $table->id('id_soal');
+            $table->id();
             $table->unsignedBigInteger('id_jadwal');
             $table->enum('jenis_soal', ['pilihan_ganda', 'esai']);
             $table->text('pertanyaan');
@@ -22,9 +22,10 @@ return new class extends Migration
             $table->string('opsi_d', 255)->nullable();
             $table->string('jawaban_benar', 255);
             $table->integer('skor')->default(0);
+            $table->timestamps();
 
             $table->index('id_jadwal');
-            $table->foreign('id_jadwal')->references('id_jadwal')->on('jadwal');
+            $table->foreign('id_jadwal')->references('id')->on('jadwal');
         });
     }
 

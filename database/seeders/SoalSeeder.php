@@ -15,8 +15,7 @@ class SoalSeeder extends Seeder
     {
     DB::table('soal')->insert([
             [
-                'id_soal' => 5,
-                'id_jadwal' => 10,
+                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'pilihan_ganda',
                 'pertanyaan' => '123',
                 'opsi_a' => '1',
@@ -27,8 +26,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_soal' => 6,
-                'id_jadwal' => 13,
+                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => 'asfdasf',
                 'opsi_a' => null,
@@ -39,8 +37,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_soal' => 7,
-                'id_jadwal' => 13,
+                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
                 'jenis_soal' => 'pilihan_ganda',
                 'pertanyaan' => 'sdfadfsdf',
                 'opsi_a' => '2',
@@ -51,8 +48,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_soal' => 8,
-                'id_jadwal' => 10,
+                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'pilihan_ganda',
                 'pertanyaan' => '1',
                 'opsi_a' => '1',
@@ -63,8 +59,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_soal' => 9,
-                'id_jadwal' => 10,
+                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => 'a',
                 'opsi_a' => null,
@@ -75,8 +70,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_soal' => 10,
-                'id_jadwal' => 13,
+                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
                 'jenis_soal' => 'pilihan_ganda',
                 'pertanyaan' => '1',
                 'opsi_a' => '1',
@@ -87,8 +81,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_soal' => 11,
-                'id_jadwal' => 13,
+                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => 'akibat dari apakah pusing itu',
                 'opsi_a' => null,
@@ -99,8 +92,7 @@ class SoalSeeder extends Seeder
                 'skor' => 10
             ],
             [
-                'id_soal' => 12,
-                'id_jadwal' => 10,
+                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => 'Uang rupiah berasal dari negara?',
                 'opsi_a' => null,
@@ -111,8 +103,7 @@ class SoalSeeder extends Seeder
                 'skor' => 10
             ],
             [
-                'id_soal' => 13,
-                'id_jadwal' => 10,
+                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => 'Dji SAm Soe adalah rokok jenia?',
                 'opsi_a' => null,
@@ -123,8 +114,7 @@ class SoalSeeder extends Seeder
                 'skor' => 10
             ],
             [
-                'id_soal' => 14,
-                'id_jadwal' => 10,
+                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => '1',
                 'opsi_a' => null,

@@ -13,7 +13,6 @@ const platformNavItems: NavItem[] = [
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutGrid,
-        // Dashboard bisa diakses semua role
     },
 ];
 
@@ -22,13 +21,13 @@ const mainNavItems: NavItem[] = [
         title: 'Jadwal Tes',
         href: '/jadwal',
         icon: Calendar,
-        roles: ['admin', 'teacher'], // Hanya admin dan teacher yang bisa akses
+        roles: ['admin', 'teacher'],
     },
     {
         title: 'Koreksi Peserta',
         href: '/koreksi',
         icon: ClipboardCheck,
-        roles: ['admin', 'teacher'], // Hanya admin dan teacher yang bisa akses
+        roles: ['admin', 'teacher'],
     },
 ];
 
@@ -37,7 +36,7 @@ const adminNavItems: NavItem[] = [
         title: 'Admin Panel',
         href: '/admin',
         icon: Settings,
-        roles: ['admin'], // Hanya admin yang bisa akses
+        roles: ['admin'],
     },
 ];
 
@@ -58,7 +57,6 @@ export function AppSidebar() {
     const page = usePage<SharedData>();
     const user = page.props.auth.user;
 
-    // Filter menu berdasarkan role user
     const filteredPlatformItems = filterMenuByRole(platformNavItems, user);
     const filteredMainItems = filterMenuByRole(mainNavItems, user);
     const filteredAdminItems = filterMenuByRole(adminNavItems, user);
