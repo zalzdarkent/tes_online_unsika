@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Head, useForm, router } from "@inertiajs/react";
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -27,12 +28,68 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/react';
+
 import { ColumnDef } from '@tanstack/react-table';
 import { Eye, Edit, Trash2, MoreHorizontal, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import InputError from '@/components/input-error';
+
+// Helper function untuk format tanggal tanpa timezone conversion
+const formatDateTime = (dateTimeString: string): string => {
+    if (!dateTimeString) return '';
+
+    console.log("Original dateTimeString:", dateTimeString);
+
+    // Handle format dari database: "2025-09-07T15:00:00.000000Z"
+    let dateStr = dateTimeString;
+
+    // Remove timezone 'Z' dan microseconds
+    if (dateStr.includes('Z')) {
+        dateStr = dateStr.replace('Z', '');
+    }
+
+    // Remove microseconds (.000000)
+    if (dateStr.includes('.')) {
+        dateStr = dateStr.split('.')[0];
+    }
+
+    // Replace 'T' dengan spasi
+    if (dateStr.includes('T')) {
+        dateStr = dateStr.replace('T', ' ');
+    }
+
+    // Ambil bagian tanggal dan waktu
+    const parts = dateStr.split(' ');
+    if (parts.length < 2) {
+        console.log("Invalid date format:", dateTimeString);
+        return dateTimeString;
+    }
+
+    const datePart = parts[0]; // 2025-09-07
+    const timePart = parts[1]; // 15:00:00
+
+    console.log("Date part:", datePart, "Time part:", timePart);
+
+    const [year, month, day] = datePart.split('-');
+    const [hour, minute] = timePart.split(':');
+
+    console.log("Parsed:", { year, month, day, hour, minute });
+
+    if (!year || !month || !day || !hour || !minute) {
+        console.log("Missing date/time components");
+        return dateTimeString;
+    }
+
+    // Format manual tanpa Date object untuk menghindari timezone issues
+    const formattedDate = `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+    const formattedTime = `${hour.padStart(2, '0')}.${minute.padStart(2, '0')}`;
+
+    const result = `${formattedDate}, ${formattedTime}`;
+    console.log("Formatted result:", result);
+
+    return result;
+};
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -63,7 +120,7 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
     const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
 
-    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({
+    const { data, setData, processing, errors, reset, clearErrors } = useForm({
         nama_jadwal: '',
         tanggal_mulai: '',
         tanggal_berakhir: '',
@@ -137,8 +194,8 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
             return;
         }
 
-        // Buat data payload langsung untuk dikirim
-        const formData = {
+        // Buat payload data yang akan dikirim langsung
+        const submitData = {
             nama_jadwal: data.nama_jadwal,
             tanggal_mulai,
             tanggal_berakhir,
@@ -147,11 +204,10 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
             id_jadwal_sebelumnya: data.id_jadwal_sebelumnya,
         };
 
-        console.log("Sending form data:", formData);
+        console.log("Sending data:", submitData);
 
-        // Submit form langsung dengan data yang sudah disiapkan
-        post(route('jadwal.store'), {
-            data: formData,
+        // Gunakan router.post langsung dengan data yang benar
+        router.post(route('jadwal.store'), submitData, {
             onSuccess: () => {
                 toast({
                     variant: "default",
@@ -161,7 +217,7 @@ function AddJadwalModal({ jadwal, onAddJadwal }: { jadwal: JadwalData[]; onAddJa
                 setIsOpen(false);
                 onAddJadwal();
             },
-            onError: (errors) => {
+            onError: (errors: Record<string, string>) => {
                 console.log("Validation errors:", errors);
                 // Handle validation errors
                 if (errors.conflict) {
@@ -510,7 +566,7 @@ export default function Jadwal({ jadwal }: JadwalProps) {
             enableHiding: true,
             cell: ({ row }) => {
                 const tanggal = row.getValue("tanggal_mulai") as string;
-                return new Date(tanggal).toLocaleString('id-ID');
+                return formatDateTime(tanggal);
             },
         },
         {
@@ -520,7 +576,7 @@ export default function Jadwal({ jadwal }: JadwalProps) {
             enableHiding: true,
             cell: ({ row }) => {
                 const tanggal = row.getValue("tanggal_berakhir") as string;
-                return new Date(tanggal).toLocaleString('id-ID');
+                return formatDateTime(tanggal);
             },
         },
         {
