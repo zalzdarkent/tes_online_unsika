@@ -210,6 +210,66 @@ class JadwalController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $jadwal = Jadwal::findOrFail($id);
+
+            // Check if there are any related jadwal that reference this one
+            $relatedJadwal = Jadwal::where('id_jadwal_sebelumnya', $id)->first();
+
+            if ($relatedJadwal) {
+                return back()->withErrors([
+                    'error' => "Tidak dapat menghapus jadwal '{$jadwal->nama_jadwal}' karena masih direferensikan oleh jadwal '{$relatedJadwal->nama_jadwal}'."
+                ]);
+            }
+
+            $namaJadwal = $jadwal->nama_jadwal;
+            $jadwal->delete();
+
+            return redirect()->route('jadwal.index')->with('success', "Jadwal '{$namaJadwal}' berhasil dihapus!");
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'error' => 'Terjadi kesalahan saat menghapus jadwal. Silakan coba lagi.'
+            ]);
+        }
+    }
+
+    /**
+     * Remove multiple resources from storage (bulk delete).
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:jadwal,id',
+        ], [
+            'ids.required' => 'Pilih minimal satu jadwal untuk dihapus.',
+            'ids.array' => 'Format data tidak valid.',
+            'ids.min' => 'Pilih minimal satu jadwal untuk dihapus.',
+            'ids.*.exists' => 'Salah satu jadwal tidak valid.',
+        ]);
+
+        try {
+            $ids = $validated['ids'];
+
+            // Check for any related jadwal that reference the ones to be deleted
+            $relatedJadwal = Jadwal::whereIn('id_jadwal_sebelumnya', $ids)
+                ->whereNotIn('id', $ids) // Exclude the ones being deleted
+                ->first();
+
+            if ($relatedJadwal) {
+                $referencedJadwal = Jadwal::find($relatedJadwal->id_jadwal_sebelumnya);
+                return back()->withErrors([
+                    'error' => "Tidak dapat menghapus jadwal '{$referencedJadwal->nama_jadwal}' karena masih direferensikan oleh jadwal '{$relatedJadwal->nama_jadwal}'."
+                ]);
+            }
+
+            $deletedCount = Jadwal::whereIn('id', $ids)->delete();
+
+            return redirect()->route('jadwal.index')->with('success', "{$deletedCount} jadwal berhasil dihapus!");
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'error' => 'Terjadi kesalahan saat menghapus jadwal. Silakan coba lagi.'
+            ]);
+        }
     }
 }

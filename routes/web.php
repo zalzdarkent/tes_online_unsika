@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Routes yang hanya bisa diakses admin dan teacher
     Route::middleware(['role:admin,teacher'])->group(function () {
         Route::resource('jadwal', JadwalController::class);
+        Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])->name('jadwal.bulk-destroy');
 
         Route::get('koreksi', function () {
             return Inertia::render('koreksi/koreksi');

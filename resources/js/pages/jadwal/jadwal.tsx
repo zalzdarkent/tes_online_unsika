@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Head } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -109,10 +109,16 @@ type JadwalProps = {
 // Komponen untuk tombol hapus individual dengan dialog konfirmasi
 function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete: (jadwal: JadwalData) => void }) {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = () => {
+        setIsDeleting(true);
         onDelete(jadwal);
-        setIsDeleteDialogOpen(false);
+        // Don't close dialog immediately, let the parent handle success/error
+        setTimeout(() => {
+            setIsDeleting(false);
+            setIsDeleteDialogOpen(false);
+        }, 1000);
     };
 
     return (
@@ -138,12 +144,15 @@ function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel>Batal</AlertDialogCancel>
+                    <AlertDialogCancel disabled={isDeleting}>
+                        Batal
+                    </AlertDialogCancel>
                     <AlertDialogAction
                         onClick={handleDelete}
+                        disabled={isDeleting}
                         className="bg-destructive text-white hover:bg-destructive/90"
                     >
-                        Ya, Hapus
+                        {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -192,25 +201,66 @@ export default function Jadwal({ jadwal }: JadwalProps) {
         const selectedIds = selectedData.map(item => item.id);
         console.log("Bulk delete for IDs:", selectedIds);
 
-        setTimeout(() => {
-            toast({
-                variant: "success",
-                title: "Berhasil!",
-                description: `${selectedData.length} jadwal berhasil dihapus.`,
-            });
-        }, 500);
+        // Gunakan router.post untuk mengirim request bulk delete
+        router.post(route('jadwal.bulk-destroy'),
+            { ids: selectedIds },
+            {
+                onSuccess: () => {
+                    toast({
+                        variant: "success",
+                        title: "Berhasil!",
+                        description: `${selectedData.length} jadwal berhasil dihapus.`,
+                    });
+                },
+                onError: (errors: Record<string, string>) => {
+                    console.log("Delete errors:", errors);
+                    if (errors.error) {
+                        toast({
+                            variant: "destructive",
+                            title: "Error!",
+                            description: errors.error,
+                        });
+                    } else {
+                        toast({
+                            variant: "destructive",
+                            title: "Error!",
+                            description: "Terjadi kesalahan saat menghapus jadwal.",
+                        });
+                    }
+                }
+            }
+        );
     };
 
     const handleDeleteSingle = (jadwal: JadwalData) => {
         console.log("Delete single jadwal:", jadwal.id);
 
-        setTimeout(() => {
-            toast({
-                variant: "success",
-                title: "Berhasil!",
-                description: `Jadwal "${jadwal.nama_jadwal}" berhasil dihapus.`,
-            });
-        }, 500);
+        // Gunakan router untuk mengirim request delete
+        router.delete(route('jadwal.destroy', jadwal.id), {
+            onSuccess: () => {
+                toast({
+                    variant: "success",
+                    title: "Berhasil!",
+                    description: `Jadwal "${jadwal.nama_jadwal}" berhasil dihapus.`,
+                });
+            },
+            onError: (errors: Record<string, string>) => {
+                console.log("Delete errors:", errors);
+                if (errors.error) {
+                    toast({
+                        variant: "destructive",
+                        title: "Error!",
+                        description: errors.error,
+                    });
+                } else {
+                    toast({
+                        variant: "destructive",
+                        title: "Error!",
+                        description: "Terjadi kesalahan saat menghapus jadwal.",
+                    });
+                }
+            }
+        });
     };
 
     const columns: ColumnDef<JadwalData>[] = [
