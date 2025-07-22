@@ -19,8 +19,6 @@ class Jadwal extends Model
 
     protected $casts = [
         'auto_close' => 'boolean',
-        'tanggal_mulai' => 'datetime',
-        'tanggal_berakhir' => 'datetime',
     ];
     public function jadwal()
     {
