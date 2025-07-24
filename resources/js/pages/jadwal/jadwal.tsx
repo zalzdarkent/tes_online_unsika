@@ -328,11 +328,10 @@ export default function Jadwal({ jadwal }: JadwalProps) {
             cell: ({ row }) => {
                 const status = row.getValue("status") as string;
                 return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        status === 'Buka'
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${status === 'Buka'
                             ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                             : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                    }`}>
+                        }`}>
                         {status}
                     </span>
                 );
@@ -363,7 +362,12 @@ export default function Jadwal({ jadwal }: JadwalProps) {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="cursor-pointer">
+                            <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => {
+                                    router.visit(`/jadwal/${jadwalItem.id}/soal`);
+                                }}
+                            >
                                 <Eye className="mr-2 h-4 w-4" />
                                 Lihat Soal
                             </DropdownMenuItem>

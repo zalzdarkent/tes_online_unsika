@@ -45,4 +45,9 @@ class Jadwal extends Model
     {
         return $this->hasMany(Jadwal::class, 'id_jadwal_sebelumnya');
     }
+
+    public function soal()
+    {
+        return $this->hasMany(\App\Models\Soal::class, 'id_jadwal');
+    }
 }

@@ -37,7 +37,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
+                'id_jadwal' => 5,  // Jadwal kedua (auto-generated ID = 2)
                 'jenis_soal' => 'pilihan_ganda',
                 'pertanyaan' => 'sdfadfsdf',
                 'opsi_a' => '2',
@@ -48,7 +48,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 6,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'pilihan_ganda',
                 'pertanyaan' => '1',
                 'opsi_a' => '1',
@@ -59,7 +59,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 5,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => 'a',
                 'opsi_a' => null,
@@ -70,7 +70,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
+                'id_jadwal' => 6,  // Jadwal kedua (auto-generated ID = 2)
                 'jenis_soal' => 'pilihan_ganda',
                 'pertanyaan' => '1',
                 'opsi_a' => '1',
@@ -81,7 +81,7 @@ class SoalSeeder extends Seeder
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
+                'id_jadwal' => 5,  // Jadwal kedua (auto-generated ID = 2)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => 'akibat dari apakah pusing itu',
                 'opsi_a' => null,
@@ -92,7 +92,7 @@ class SoalSeeder extends Seeder
                 'skor' => 10
             ],
             [
-                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 6,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => 'Uang rupiah berasal dari negara?',
                 'opsi_a' => null,
@@ -103,7 +103,7 @@ class SoalSeeder extends Seeder
                 'skor' => 10
             ],
             [
-                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 5,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => 'Dji SAm Soe adalah rokok jenia?',
                 'opsi_a' => null,
@@ -114,7 +114,7 @@ class SoalSeeder extends Seeder
                 'skor' => 10
             ],
             [
-                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 5,  // Jadwal pertama (auto-generated ID = 1)
                 'jenis_soal' => 'esai',
                 'pertanyaan' => '1',
                 'opsi_a' => null,

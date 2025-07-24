@@ -12,6 +12,21 @@ class JadwalController extends Controller
     /**
      * Display a listing of the resource.
      */
+    public function soal($jadwalId)
+    {
+        $userId = Auth::id();
+        $jadwal = Jadwal::where('id', $jadwalId)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $soal = $jadwal->soal()->orderBy('created_at', 'asc')->get();
+
+        return inertia('jadwal/soal', [
+            'jadwal' => $jadwal,
+            'soal' => $soal,
+        ]);
+    }
+
     public function index()
     {
         // Hanya tampilkan jadwal milik user yang sedang login
@@ -104,11 +119,11 @@ class JadwalController extends Controller
         $conflictingSchedule = Jadwal::where('user_id', $userId)
             ->where(function ($query) use ($validated) {
                 $query->whereBetween('tanggal_mulai', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
-                      ->orWhereBetween('tanggal_berakhir', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
-                      ->orWhere(function ($q) use ($validated) {
-                          $q->where('tanggal_mulai', '<=', $validated['tanggal_mulai'])
+                    ->orWhereBetween('tanggal_berakhir', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
+                    ->orWhere(function ($q) use ($validated) {
+                        $q->where('tanggal_mulai', '<=', $validated['tanggal_mulai'])
                             ->where('tanggal_berakhir', '>=', $validated['tanggal_berakhir']);
-                      });
+                    });
             })->first();
 
         if ($conflictingSchedule) {
@@ -238,11 +253,11 @@ class JadwalController extends Controller
             ->where('id', '!=', $jadwal->getAttribute('id'))
             ->where(function ($query) use ($validated) {
                 $query->whereBetween('tanggal_mulai', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
-                      ->orWhereBetween('tanggal_berakhir', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
-                      ->orWhere(function ($q) use ($validated) {
-                          $q->where('tanggal_mulai', '<=', $validated['tanggal_mulai'])
+                    ->orWhereBetween('tanggal_berakhir', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
+                    ->orWhere(function ($q) use ($validated) {
+                        $q->where('tanggal_mulai', '<=', $validated['tanggal_mulai'])
                             ->where('tanggal_berakhir', '>=', $validated['tanggal_berakhir']);
-                      });
+                    });
             })->first();
 
         if ($conflictingSchedule) {

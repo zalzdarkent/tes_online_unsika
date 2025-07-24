@@ -80,6 +80,36 @@ class JadwalSeeder extends Seeder
             ]);
         }
 
+        // Jika ada user ketiga, tambahkan data untuk user ketiga
+        if ($users->count() > 2) {
+            $thirdUserId = $users->skip(2)->first()->id;
+
+            DB::table('jadwal')->insert([
+                [
+                    'nama_jadwal' => 'Tryout Nasional',
+                    'tanggal_mulai' => '2025-04-01 08:00:00',
+                    'tanggal_berakhir' => '2025-04-01 10:00:00',
+                    'status' => 'Buka',
+                    'auto_close' => true,
+                    'user_id' => $thirdUserId,
+                    'id_jadwal_sebelumnya' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'nama_jadwal' => 'Simulasi Ujian',
+                    'tanggal_mulai' => '2025-04-10 09:00:00',
+                    'tanggal_berakhir' => '2025-04-10 11:00:00',
+                    'status' => 'Tutup',
+                    'auto_close' => true,
+                    'user_id' => $thirdUserId,
+                    'id_jadwal_sebelumnya' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ]);
+        }
+
         $this->command->info('Jadwal seeder completed with user-specific data.');
     }
 }
