@@ -13,115 +13,175 @@ class SoalSeeder extends Seeder
      */
     public function run(): void
     {
-    DB::table('soal')->insert([
+        DB::table('soal')->insert([
             [
-                'id_jadwal' => 1,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 1,
                 'jenis_soal' => 'pilihan_ganda',
+                'tipe_jawaban' => 'single_choice',
                 'pertanyaan' => '123',
                 'opsi_a' => '1',
                 'opsi_b' => '2',
                 'opsi_c' => '3',
                 'opsi_d' => '4',
-                'jawaban_benar' => '',
+                'opsi_jawaban' => json_encode(['1','2','3','4']),
+                'jawaban_benar' => 'A',
+                'jawaban_benar_multi' => null,
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 2,  // Jadwal kedua (auto-generated ID = 2)
+                'id_jadwal' => 2,
                 'jenis_soal' => 'esai',
+                'tipe_jawaban' => 'essay',
                 'pertanyaan' => 'asfdasf',
                 'opsi_a' => null,
                 'opsi_b' => null,
                 'opsi_c' => null,
                 'opsi_d' => null,
+                'opsi_jawaban' => null,
                 'jawaban_benar' => '',
+                'jawaban_benar_multi' => null,
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 5,  // Jadwal kedua (auto-generated ID = 2)
+                'id_jadwal' => 5,
                 'jenis_soal' => 'pilihan_ganda',
+                'tipe_jawaban' => 'multi_choice',
                 'pertanyaan' => 'sdfadfsdf',
                 'opsi_a' => '2',
                 'opsi_b' => '3',
                 'opsi_c' => '4',
                 'opsi_d' => '5',
+                'opsi_jawaban' => json_encode(['2','3','4','5']),
                 'jawaban_benar' => '',
+                'jawaban_benar_multi' => json_encode(['A','C']),
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 6,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 6,
                 'jenis_soal' => 'pilihan_ganda',
+                'tipe_jawaban' => 'single_choice',
                 'pertanyaan' => '1',
                 'opsi_a' => '1',
                 'opsi_b' => '2',
                 'opsi_c' => '3',
                 'opsi_d' => '4',
+                'opsi_jawaban' => json_encode(['1','2','3','4']),
                 'jawaban_benar' => 'A',
+                'jawaban_benar_multi' => null,
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 5,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 5,
                 'jenis_soal' => 'esai',
+                'tipe_jawaban' => 'essay',
                 'pertanyaan' => 'a',
                 'opsi_a' => null,
                 'opsi_b' => null,
                 'opsi_c' => null,
                 'opsi_d' => null,
+                'opsi_jawaban' => null,
                 'jawaban_benar' => 'a',
+                'jawaban_benar_multi' => null,
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 6,  // Jadwal kedua (auto-generated ID = 2)
+                'id_jadwal' => 6,
                 'jenis_soal' => 'pilihan_ganda',
+                'tipe_jawaban' => 'multi_choice',
                 'pertanyaan' => '1',
                 'opsi_a' => '1',
                 'opsi_b' => '2',
                 'opsi_c' => '3',
                 'opsi_d' => '4',
-                'jawaban_benar' => 'A',
+                'opsi_jawaban' => json_encode(['1','2','3','4']),
+                'jawaban_benar' => '',
+                'jawaban_benar_multi' => json_encode(['A','B']),
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 1
             ],
             [
-                'id_jadwal' => 5,  // Jadwal kedua (auto-generated ID = 2)
+                'id_jadwal' => 5,
                 'jenis_soal' => 'esai',
+                'tipe_jawaban' => 'essay',
                 'pertanyaan' => 'akibat dari apakah pusing itu',
                 'opsi_a' => null,
                 'opsi_b' => null,
                 'opsi_c' => null,
                 'opsi_d' => null,
+                'opsi_jawaban' => null,
                 'jawaban_benar' => 'gak punya duit',
+                'jawaban_benar_multi' => null,
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 10
             ],
             [
-                'id_jadwal' => 6,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 6,
                 'jenis_soal' => 'esai',
+                'tipe_jawaban' => 'essay',
                 'pertanyaan' => 'Uang rupiah berasal dari negara?',
                 'opsi_a' => null,
                 'opsi_b' => null,
                 'opsi_c' => null,
                 'opsi_d' => null,
+                'opsi_jawaban' => null,
                 'jawaban_benar' => 'Indonesia',
+                'jawaban_benar_multi' => null,
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 10
             ],
             [
-                'id_jadwal' => 5,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 5,
                 'jenis_soal' => 'esai',
+                'tipe_jawaban' => 'essay',
                 'pertanyaan' => 'Dji SAm Soe adalah rokok jenia?',
                 'opsi_a' => null,
                 'opsi_b' => null,
                 'opsi_c' => null,
                 'opsi_d' => null,
+                'opsi_jawaban' => null,
                 'jawaban_benar' => 'Kretek',
+                'jawaban_benar_multi' => null,
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 10
             ],
             [
-                'id_jadwal' => 5,  // Jadwal pertama (auto-generated ID = 1)
+                'id_jadwal' => 5,
                 'jenis_soal' => 'esai',
+                'tipe_jawaban' => 'essay',
                 'pertanyaan' => '1',
                 'opsi_a' => null,
                 'opsi_b' => null,
                 'opsi_c' => null,
                 'opsi_d' => null,
+                'opsi_jawaban' => null,
                 'jawaban_benar' => '1',
+                'jawaban_benar_multi' => null,
+                'media' => null,
+                'tipe_skala' => null,
+                'equation' => null,
                 'skor' => 1
             ]
         ]);

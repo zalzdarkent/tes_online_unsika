@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit, Trash2, Plus } from 'lucide-react';
+import SoalFormModal from '@/components/SoalFormModal';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -96,10 +97,18 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
               Tanggal: {jadwal.tanggal_mulai} s/d {jadwal.tanggal_berakhir}
             </div>
           </div>
-          <Button className="cursor-pointer">
-            <Plus className="mr-2 h-4 w-4" />
-            Tambah Soal
-          </Button>
+          <SoalFormModal
+            trigger={
+              <Button className="cursor-pointer">
+                <Plus className="mr-2 h-4 w-4" />
+                Tambah Soal
+              </Button>
+            }
+            idJadwal={jadwal.id}
+            onSuccess={() => {
+              // TODO: reload data jika perlu
+            }}
+          />
         </div>
         <DataTable
           columns={columns}
