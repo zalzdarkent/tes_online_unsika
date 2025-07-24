@@ -10,7 +10,6 @@ class Soal extends Model
 
     protected $fillable = [
         'id_jadwal',
-        'user_id',
         'jenis_soal',
         'pertanyaan',
         'opsi_a',

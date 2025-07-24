@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
   const [media, setMedia] = useState<File | null>(null);
   const [tipeSkala, setTipeSkala] = useState('');
   const [equation, setEquation] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Reset form saat modal ditutup
   const resetForm = () => {
@@ -49,15 +51,69 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
   };
 
   // Handler submit
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!pertanyaan.trim()) newErrors.pertanyaan = 'Pertanyaan wajib diisi.';
+    if (!skor || skor < 1) newErrors.skor = 'Skor minimal 1.';
+    if (tipeJawaban === 'single_choice') {
+      opsi.forEach((o, i) => {
+        if (!o.trim()) newErrors[`opsi_${i}`] = `Opsi ${String.fromCharCode(65 + i)} wajib diisi.`;
+      });
+      if (!jawabanBenar) newErrors.jawabanBenar = 'Jawaban benar wajib dipilih.';
+    }
+    if (tipeJawaban === 'multi_choice') {
+      opsi.forEach((o, i) => {
+        if (!o.trim()) newErrors[`opsi_${i}`] = `Opsi ${String.fromCharCode(65 + i)} wajib diisi.`;
+      });
+      if (jawabanBenarMulti.length === 0) newErrors.jawabanBenarMulti = 'Pilih minimal satu jawaban benar.';
+    }
+    return newErrors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    const newErrors = validate();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
     setLoading(true);
-    // TODO: Kirim data ke backend pakai Inertia/axios/fetch
-    // ...
-    setLoading(false);
-    setOpen(false);
-    resetForm();
-    if (onSuccess) onSuccess();
+    // Kirim data ke backend
+    const payload: any = {
+      id_jadwal: idJadwal,
+      jenis_soal: tipeJawaban === 'single_choice' ? 'pilihan_ganda' : tipeJawaban === 'essay' ? 'esai' : tipeJawaban,
+      pertanyaan,
+      skor,
+    };
+    if (tipeJawaban === 'single_choice') {
+      payload.opsi_a = opsi[0];
+      payload.opsi_b = opsi[1];
+      payload.opsi_c = opsi[2];
+      payload.opsi_d = opsi[3];
+      payload.jawaban_benar = jawabanBenar;
+    }
+    if (tipeJawaban === 'multi_choice') {
+      payload.opsi_a = opsi[0];
+      payload.opsi_b = opsi[1];
+      payload.opsi_c = opsi[2];
+      payload.opsi_d = opsi[3];
+      payload.jawaban_benar = jawabanBenarMulti.join(',');
+    }
+    // Tambahkan field lain sesuai kebutuhan
+    router.post(`/jadwal/soal`, payload, {
+      onSuccess: () => {
+        setLoading(false);
+        setOpen(false);
+        resetForm();
+        if (onSuccess) onSuccess();
+      },
+      onError: (err) => {
+        setLoading(false);
+        if (err) setErrors(err);
+      },
+      preserveScroll: true,
+    });
   };
 
   // Render opsi input sesuai tipe soal
@@ -78,6 +134,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
                   setOpsi(newOpsi);
                 }}
               />
+              {errors[`opsi_${idx}`] && <span className="text-red-500 text-xs ml-2">{errors[`opsi_${idx}`]}</span>}
               {tipeJawaban === 'multi_choice' ? (
                 <label className="flex items-center gap-1">
                   <input
@@ -105,6 +162,8 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
               )}
             </div>
           ))}
+          {tipeJawaban === 'single_choice' && errors.jawabanBenar && <span className="text-red-500 text-xs">{errors.jawabanBenar}</span>}
+          {tipeJawaban === 'multi_choice' && errors.jawabanBenarMulti && <span className="text-red-500 text-xs">{errors.jawabanBenarMulti}</span>}
         </div>
       );
     }
@@ -174,6 +233,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
           <div>
             <label className="block font-medium mb-1">Pertanyaan</label>
             <Textarea placeholder="Pertanyaan" value={pertanyaan} onChange={e => setPertanyaan(e.target.value)} required />
+            {errors.pertanyaan && <span className="text-red-500 text-xs">{errors.pertanyaan}</span>}
           </div>
           {renderOpsiInput()}
           {renderMediaInput()}
@@ -182,6 +242,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
           <div>
             <label className="block font-medium mb-1">Skor</label>
             <Input type="number" min={1} value={skor} onChange={e => setSkor(Number(e.target.value))} placeholder="Skor" required />
+            {errors.skor && <span className="text-red-500 text-xs">{errors.skor}</span>}
           </div>
           <DialogFooter>
             <Button type="submit" disabled={loading}>{loading ? 'Menyimpan...' : 'Simpan'}</Button>

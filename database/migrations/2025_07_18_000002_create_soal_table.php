@@ -14,7 +14,15 @@ return new class extends Migration
         Schema::create('soal', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('id_jadwal');
-            $table->enum('jenis_soal', ['pilihan_ganda', 'esai']);
+            $table->enum('jenis_soal', [
+                'pilihan_ganda',
+                'multi_choice',
+                'esai',
+                'essay_gambar',
+                'essay_audio',
+                'skala',
+                'equation'
+            ]);
             $table->text('pertanyaan');
             $table->string('opsi_a', 255)->nullable();
             $table->string('opsi_b', 255)->nullable();
@@ -25,7 +33,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('id_jadwal');
-            $table->foreign('id_jadwal')->references('id')->on('jadwal')->onDelete('cascade');;
+            $table->foreign('id_jadwal')->references('id')->on('jadwal')->onDelete('cascade');
         });
     }
 
