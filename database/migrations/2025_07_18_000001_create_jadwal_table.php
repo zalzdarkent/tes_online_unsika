@@ -18,11 +18,14 @@ return new class extends Migration
             $table->dateTime('tanggal_berakhir');
             $table->enum('status', ['Buka', 'Tutup']);
             $table->boolean('auto_close')->default(true);
+            $table->unsignedBigInteger('user_id'); // User yang membuat jadwal
             $table->unsignedBigInteger('id_jadwal_sebelumnya')->nullable();
             $table->timestamps();
 
+            $table->index('user_id');
             $table->index('id_jadwal_sebelumnya');
-            $table->foreign('id_jadwal_sebelumnya')->references('id')->on('jadwal')->onDelete('cascade');;
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('id_jadwal_sebelumnya')->references('id')->on('jadwal')->onDelete('cascade');
         });
     }
 

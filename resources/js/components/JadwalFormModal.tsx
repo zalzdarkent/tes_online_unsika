@@ -22,7 +22,7 @@ type JadwalData = {
     nama_jadwal: string;
     tanggal_mulai: string;
     tanggal_berakhir: string;
-    status: string;
+    // status: string; // status tidak perlu diinput manual
     auto_close?: boolean;
     id_jadwal_sebelumnya: number | null;
     created_at: string;
@@ -65,11 +65,10 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
 
     console.log("JadwalFormModal rendered:", { mode, jadwal, isOpen });
 
-    const { data, setData, processing, errors, reset, clearErrors } = useForm({
+    const { data, setData, post, put, processing, errors, reset, clearErrors } = useForm({
         nama_jadwal: '',
         tanggal_mulai: '',
         tanggal_berakhir: '',
-        status: 'Buka' as 'Buka' | 'Tutup',
         auto_close: true as boolean,
         id_jadwal_sebelumnya: null as number | null,
     });
@@ -84,6 +83,29 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
         tanggal_berakhir_time: '',
     });
 
+    // Helper untuk update data.tanggal_mulai dan data.tanggal_berakhir setiap kali input berubah
+    const updateTanggalMulai = (date: string, time: string) => {
+        setDateTimeInputs(prev => {
+            const next = { ...prev, tanggal_mulai_date: date ?? prev.tanggal_mulai_date, tanggal_mulai_time: time ?? prev.tanggal_mulai_time };
+            if (next.tanggal_mulai_date && next.tanggal_mulai_time) {
+                setData('tanggal_mulai', `${next.tanggal_mulai_date}T${next.tanggal_mulai_time}:00`);
+            } else {
+                setData('tanggal_mulai', '');
+            }
+            return next;
+        });
+    };
+    const updateTanggalBerakhir = (date: string, time: string) => {
+        setDateTimeInputs(prev => {
+            const next = { ...prev, tanggal_berakhir_date: date ?? prev.tanggal_berakhir_date, tanggal_berakhir_time: time ?? prev.tanggal_berakhir_time };
+            if (next.tanggal_berakhir_date && next.tanggal_berakhir_time) {
+                setData('tanggal_berakhir', `${next.tanggal_berakhir_date}T${next.tanggal_berakhir_time}:00`);
+            } else {
+                setData('tanggal_berakhir', '');
+            }
+            return next;
+        });
+    };
     // Function untuk load data edit
     const loadEditData = () => {
         if (mode === 'edit' && jadwal) {
@@ -99,7 +121,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
             setData('nama_jadwal', jadwal.nama_jadwal || '');
             setData('tanggal_mulai', jadwal.tanggal_mulai || '');
             setData('tanggal_berakhir', jadwal.tanggal_berakhir || '');
-            setData('status', (jadwal.status as 'Buka' | 'Tutup') || 'Buka');
+            // status tidak perlu di-set manual
             setData('auto_close', jadwal.auto_close ?? true);
             setData('id_jadwal_sebelumnya', jadwal.id_jadwal_sebelumnya || null);
 
@@ -216,62 +238,74 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
             nama_jadwal: data.nama_jadwal,
             tanggal_mulai,
             tanggal_berakhir,
-            status: data.status,
             auto_close: data.auto_close,
             id_jadwal_sebelumnya: data.id_jadwal_sebelumnya,
         };
 
-        // Tambahkan method spoofing untuk edit
-        if (mode === 'edit') {
-            submitData._method = 'PUT';
-        }
-
         console.log(`${mode === 'create' ? 'Creating' : 'Updating'} jadwal with data:`, submitData);
 
-        // Pilih route berdasarkan mode
-        const routeName = mode === 'create' ? 'jadwal.store' : 'jadwal.update';
-        const routeParams = mode === 'edit' && jadwal ? jadwal.id : undefined;
+        // Pilih route dan method berdasarkan mode
+        if (mode === 'create') {
+            post(route('jadwal.store'), {
+                onSuccess: () => {
+                    toast({
+                        variant: "success",
+                        title: "Berhasil!",
+                        description: "Jadwal berhasil ditambahkan.",
+                    });
+                    setIsOpen(false);
+                    onSuccess();
+                },
+                onError: handleFormErrors,
+            });
+        } else if (mode === 'edit' && jadwal) {
+            put(route('jadwal.update', jadwal.id), {
+                onSuccess: () => {
+                    toast({
+                        variant: "success",
+                        title: "Berhasil!",
+                        description: "Jadwal berhasil diupdate.",
+                    });
+                    setIsOpen(false);
+                    onSuccess();
+                    // Force reload data supaya UI tidak freeze
+                    if (typeof router !== 'undefined' && router.reload) {
+                        setTimeout(() => router.reload({ only: ['jadwal'] }), 100);
+                    }
+                },
+                onError: handleFormErrors,
+            });
+        }
+    };
 
-        router.post(route(routeName, routeParams), submitData, {
-            onSuccess: () => {
-                toast({
-                    variant: "success",
-                    title: "Berhasil!",
-                    description: `Jadwal berhasil ${mode === 'create' ? 'ditambahkan' : 'diupdate'}.`,
-                });
-                setIsOpen(false);
-                onSuccess();
-            },
-            onError: (errors: Record<string, string>) => {
-                console.log("Validation errors:", errors);
-                // Handle validation errors
-                if (errors.conflict) {
-                    toast({
-                        variant: "destructive",
-                        title: "Konflik Jadwal!",
-                        description: errors.conflict,
-                    });
-                } else if (errors.error) {
-                    toast({
-                        variant: "destructive",
-                        title: "Error!",
-                        description: errors.error,
-                    });
-                } else if (errors.tanggal_mulai) {
-                    toast({
-                        variant: "destructive",
-                        title: "Error!",
-                        description: errors.tanggal_mulai,
-                    });
-                } else {
-                    toast({
-                        variant: "destructive",
-                        title: "Error!",
-                        description: `Terjadi kesalahan saat ${mode === 'create' ? 'menyimpan' : 'mengupdate'} jadwal.`,
-                    });
-                }
-            }
-        });
+    const handleFormErrors = (errors: Record<string, string>) => {
+        console.log("Validation errors:", errors);
+        // Handle validation errors
+        if (errors.conflict) {
+            toast({
+                variant: "destructive",
+                title: "Konflik Jadwal!",
+                description: errors.conflict,
+            });
+        } else if (errors.error) {
+            toast({
+                variant: "destructive",
+                title: "Error!",
+                description: errors.error,
+            });
+        } else if (errors.tanggal_mulai) {
+            toast({
+                variant: "destructive",
+                title: "Error!",
+                description: errors.tanggal_mulai,
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Error!",
+                description: `Terjadi kesalahan saat ${mode === 'create' ? 'menyimpan' : 'mengupdate'} jadwal.`,
+            });
+        }
     };
 
     const title = mode === 'create' ? 'Tambah Jadwal Baru' : 'Edit Jadwal';
@@ -318,10 +352,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
                                             id={`${mode}_tanggal_mulai_date`}
                                             type="date"
                                             value={dateTimeInputs.tanggal_mulai_date}
-                                            onChange={(e) => setDateTimeInputs(prev => ({
-                                                ...prev,
-                                                tanggal_mulai_date: e.target.value
-                                            }))}
+                                            onChange={(e) => updateTanggalMulai(e.target.value, dateTimeInputs.tanggal_mulai_time)}
                                             required
                                             disabled={processing}
                                             readOnly={false}
@@ -333,10 +364,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
                                             id={`${mode}_tanggal_mulai_time`}
                                             type="time"
                                             value={dateTimeInputs.tanggal_mulai_time}
-                                            onChange={(e) => setDateTimeInputs(prev => ({
-                                                ...prev,
-                                                tanggal_mulai_time: e.target.value
-                                            }))}
+                                            onChange={(e) => updateTanggalMulai(dateTimeInputs.tanggal_mulai_date, e.target.value)}
                                             required
                                             disabled={processing}
                                             readOnly={false}
@@ -356,10 +384,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
                                             id={`${mode}_tanggal_berakhir_date`}
                                             type="date"
                                             value={dateTimeInputs.tanggal_berakhir_date}
-                                            onChange={(e) => setDateTimeInputs(prev => ({
-                                                ...prev,
-                                                tanggal_berakhir_date: e.target.value
-                                            }))}
+                                            onChange={(e) => updateTanggalBerakhir(e.target.value, dateTimeInputs.tanggal_berakhir_time)}
                                             required
                                             disabled={processing}
                                             readOnly={false}
@@ -371,10 +396,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
                                             id={`${mode}_tanggal_berakhir_time`}
                                             type="time"
                                             value={dateTimeInputs.tanggal_berakhir_time}
-                                            onChange={(e) => setDateTimeInputs(prev => ({
-                                                ...prev,
-                                                tanggal_berakhir_time: e.target.value
-                                            }))}
+                                            onChange={(e) => updateTanggalBerakhir(dateTimeInputs.tanggal_berakhir_date, e.target.value)}
                                             required
                                             disabled={processing}
                                             readOnly={false}
@@ -389,26 +411,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor={`${mode}_status`}>Status</Label>
-                                <Select
-                                    value={data.status}
-                                    onValueChange={(value: 'Buka' | 'Tutup') => setData('status', value)}
-                                    disabled={processing}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="Buka">Buka</SelectItem>
-                                        <SelectItem value="Tutup">Tutup</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {errors.status && (
-                                    <InputError message={errors.status} />
-                                )}
-                            </div>
-                            <div>
+                            <div className="col-span-2">
                                 <Label htmlFor={`${mode}_id_jadwal_sebelumnya`}>Jadwal Sebelumnya</Label>
                                 <Select
                                     value={data.id_jadwal_sebelumnya?.toString() || "0"}

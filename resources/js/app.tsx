@@ -12,7 +12,9 @@ axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 // Set CSRF token untuk axios
 const token = document.head.querySelector('meta[name="csrf-token"]');
 if (token) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = token.getAttribute('content');
+    const tokenValue = token.getAttribute('content');
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = tokenValue;
+    console.log('CSRF token set:', tokenValue);
 } else {
     console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
 }

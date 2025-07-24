@@ -411,22 +411,16 @@ export default function Jadwal({ jadwal }: JadwalProps) {
                         onSuccess={handleAddJadwal}
                     />
                 </div>
-                {jadwal && jadwal.length > 0 ? (
-                    <DataTable
-                        columns={columns}
-                        data={jadwal}
-                        searchColumn="nama_jadwal"
-                        searchPlaceholder="Cari jadwal..."
-                        onBulkDelete={handleBulkDelete}
-                    />
-                ) : (
-                    <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-lg">
-                        <div className="text-center">
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">Belum Ada Jadwal</h3>
-                            <p className="text-gray-500 mb-4">Tidak ada jadwal tes yang tersedia saat ini.</p>
-                        </div>
-                    </div>
-                )}
+                <DataTable
+                    columns={columns}
+                    data={jadwal}
+                    searchColumn="nama_jadwal"
+                    searchPlaceholder="Cari jadwal..."
+                    onBulkDelete={handleBulkDelete}
+                    emptyMessage={
+                        <div className="text-center w-full py-8 text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>
+                    }
+                />
             </div>
         </AppLayout>
     );

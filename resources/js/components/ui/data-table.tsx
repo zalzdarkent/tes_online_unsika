@@ -52,6 +52,7 @@ interface DataTableProps<TData, TValue> {
   onBulkDelete?: (selectedRows: TData[]) => void
   searchColumn?: string
   searchPlaceholder?: string
+  emptyMessage?: React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
@@ -62,6 +63,7 @@ export function DataTable<TData, TValue>({
   onBulkDelete,
   searchColumn,
   searchPlaceholder = "Cari data...",
+  emptyMessage,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -254,7 +256,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Belum ada data.
+                  {emptyMessage || "Belum ada data."}
                 </TableCell>
               </TableRow>
             )}

@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
 
 type LoginForm = {
     email: string;
@@ -35,6 +34,9 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('login'), {
+            onSuccess: () => {
+                window.location.href = route('dashboard');
+            },
             onFinish: () => reset('password'),
         });
     };
@@ -59,6 +61,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 </CardHeader>
                 <CardContent>
                     <form className="flex flex-col gap-6" onSubmit={submit}>
+                        {/* csrf token here */}
                         <div className="grid gap-6">
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email address</Label>

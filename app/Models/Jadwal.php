@@ -14,14 +14,35 @@ class Jadwal extends Model
         'tanggal_berakhir',
         'status',
         'auto_close',
+        'user_id',
         'id_jadwal_sebelumnya',
     ];
 
     protected $casts = [
         'auto_close' => 'boolean',
     ];
-    public function jadwal()
+
+    /**
+     * Relasi ke User (pemilik jadwal)
+     */
+    public function user()
     {
-        return $this->hasMany(Jadwal::class);
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relasi ke jadwal sebelumnya
+     */
+    public function jadwalSebelumnya()
+    {
+        return $this->belongsTo(Jadwal::class, 'id_jadwal_sebelumnya');
+    }
+
+    /**
+     * Relasi ke jadwal yang mereferensikan jadwal ini sebagai jadwal sebelumnya
+     */
+    public function jadwalBerikutnya()
+    {
+        return $this->hasMany(Jadwal::class, 'id_jadwal_sebelumnya');
     }
 }
