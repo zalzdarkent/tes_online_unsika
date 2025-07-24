@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit, Trash2, Plus } from 'lucide-react';
-import SoalFormModal from '@/components/SoalFormModal';
+import SoalFormModal from '@/components/modal/SoalFormModal';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -49,7 +49,27 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
     {
       accessorKey: 'jenis_soal',
       header: 'Jenis',
-      cell: ({ row }: any) => row.getValue('jenis_soal') === 'pilihan_ganda' ? 'Pilihan Ganda' : 'Esai',
+      cell: ({ row }: any) => {
+        const jenis = row.getValue('jenis_soal');
+        switch (jenis) {
+          case 'pilihan_ganda':
+            return 'Pilihan Ganda';
+          case 'multi_choice':
+            return 'Pilihan Ganda (Multi Jawaban)';
+          case 'esai':
+            return 'Esai';
+          case 'essay_gambar':
+            return 'Esai + Gambar';
+          case 'essay_audio':
+            return 'Esai + Audio';
+          case 'skala':
+            return 'Skala';
+          case 'equation':
+            return 'Equation';
+          default:
+            return jenis;
+        }
+      },
     },
     {
       accessorKey: 'pertanyaan',

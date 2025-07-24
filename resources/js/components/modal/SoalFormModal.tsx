@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus } from 'lucide-react';
 import { DialogTrigger } from '@radix-ui/react-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 // Tipe soal yang didukung
 const SOAL_TYPES = [
@@ -24,6 +25,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
   onSuccess?: () => void;
   idJadwal: number;
 }) {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [tipeJawaban, setTipeJawaban] = useState('single_choice');
@@ -67,6 +69,14 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
       });
       if (jawabanBenarMulti.length === 0) newErrors.jawabanBenarMulti = 'Pilih minimal satu jawaban benar.';
     }
+    // Validasi wajib untuk essay
+    if (
+      tipeJawaban === 'essay' ||
+      tipeJawaban === 'essay_gambar' ||
+      tipeJawaban === 'essay_audio'
+    ) {
+      if (!jawabanBenar.trim()) newErrors.jawabanBenar = 'Jawaban benar wajib diisi.';
+    }
     return newErrors;
   };
 
@@ -76,44 +86,124 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      // Tampilkan toast error validasi frontend
+      toast({
+        title: 'Gagal menyimpan soal',
+        description: Object.values(newErrors).join(' '),
+        status: 'error',
+      });
       return;
     }
     setLoading(true);
     // Kirim data ke backend
-    const payload: any = {
-      id_jadwal: idJadwal,
-      jenis_soal: tipeJawaban === 'single_choice' ? 'pilihan_ganda' : tipeJawaban === 'essay' ? 'esai' : tipeJawaban,
-      pertanyaan,
-      skor,
-    };
-    if (tipeJawaban === 'single_choice') {
-      payload.opsi_a = opsi[0];
-      payload.opsi_b = opsi[1];
-      payload.opsi_c = opsi[2];
-      payload.opsi_d = opsi[3];
-      payload.jawaban_benar = jawabanBenar;
+    let formData: FormData | null = null;
+    if (media) {
+      formData = new FormData();
+      formData.append('id_jadwal', String(idJadwal));
+      formData.append('jenis_soal', tipeJawaban === 'single_choice' ? 'pilihan_ganda' : tipeJawaban === 'essay' ? 'esai' : tipeJawaban);
+      formData.append('pertanyaan', pertanyaan);
+      formData.append('skor', String(skor));
+      if (tipeJawaban === 'single_choice') {
+        formData.append('opsi_a', opsi[0]);
+        formData.append('opsi_b', opsi[1]);
+        formData.append('opsi_c', opsi[2]);
+        formData.append('opsi_d', opsi[3]);
+        formData.append('jawaban_benar', jawabanBenar);
+      }
+      if (tipeJawaban === 'multi_choice') {
+        formData.append('opsi_a', opsi[0]);
+        formData.append('opsi_b', opsi[1]);
+        formData.append('opsi_c', opsi[2]);
+        formData.append('opsi_d', opsi[3]);
+        formData.append('jawaban_benar', jawabanBenarMulti.join(','));
+      }
+      if (
+        tipeJawaban === 'essay' ||
+        tipeJawaban === 'essay_gambar' ||
+        tipeJawaban === 'essay_audio'
+      ) {
+        formData.append('jawaban_benar', jawabanBenar);
+      }
+      formData.append('media', media);
+      // Tambahkan field lain sesuai kebutuhan
+      router.post(`/jadwal/soal`, formData, {
+        onSuccess: () => {
+          setLoading(false);
+          setOpen(false);
+          resetForm();
+          toast({
+            title: 'Berhasil',
+            description: 'Soal berhasil ditambahkan!',
+            status: 'success',
+          });
+          if (onSuccess) onSuccess();
+        },
+        onError: (err) => {
+          setLoading(false);
+          // Tampilkan toast error dari backend
+          toast({
+            title: 'Gagal menyimpan soal',
+            description: err && typeof err === 'object' ? Object.values(err).join(' ') : String(err),
+            status: 'error',
+          });
+          if (err) setErrors(err);
+        },
+        preserveScroll: true,
+        forceFormData: true,
+      });
+    } else {
+      const payload: any = {
+        id_jadwal: idJadwal,
+        jenis_soal: tipeJawaban === 'single_choice' ? 'pilihan_ganda' : tipeJawaban === 'essay' ? 'esai' : tipeJawaban,
+        pertanyaan,
+        skor,
+      };
+      if (tipeJawaban === 'single_choice') {
+        payload.opsi_a = opsi[0];
+        payload.opsi_b = opsi[1];
+        payload.opsi_c = opsi[2];
+        payload.opsi_d = opsi[3];
+        payload.jawaban_benar = jawabanBenar;
+      }
+      if (tipeJawaban === 'multi_choice') {
+        payload.opsi_a = opsi[0];
+        payload.opsi_b = opsi[1];
+        payload.opsi_c = opsi[2];
+        payload.opsi_d = opsi[3];
+        payload.jawaban_benar = jawabanBenarMulti.join(',');
+      }
+      if (
+        tipeJawaban === 'essay' ||
+        tipeJawaban === 'essay_gambar' ||
+        tipeJawaban === 'essay_audio'
+      ) {
+        payload.jawaban_benar = jawabanBenar;
+      }
+      // Tambahkan field lain sesuai kebutuhan
+      router.post(`/jadwal/soal`, payload, {
+        onSuccess: () => {
+          setLoading(false);
+          setOpen(false);
+          resetForm();
+          toast({
+            title: 'Berhasil',
+            description: 'Soal berhasil ditambahkan!',
+            status: 'success',
+          });
+          if (onSuccess) onSuccess();
+        },
+        onError: (err) => {
+          setLoading(false);
+          toast({
+            title: 'Gagal menyimpan soal',
+            description: err && typeof err === 'object' ? Object.values(err).join(' ') : String(err),
+            status: 'error',
+          });
+          if (err) setErrors(err);
+        },
+        preserveScroll: true,
+      });
     }
-    if (tipeJawaban === 'multi_choice') {
-      payload.opsi_a = opsi[0];
-      payload.opsi_b = opsi[1];
-      payload.opsi_c = opsi[2];
-      payload.opsi_d = opsi[3];
-      payload.jawaban_benar = jawabanBenarMulti.join(',');
-    }
-    // Tambahkan field lain sesuai kebutuhan
-    router.post(`/jadwal/soal`, payload, {
-      onSuccess: () => {
-        setLoading(false);
-        setOpen(false);
-        resetForm();
-        if (onSuccess) onSuccess();
-      },
-      onError: (err) => {
-        setLoading(false);
-        if (err) setErrors(err);
-      },
-      preserveScroll: true,
-    });
   };
 
   // Render opsi input sesuai tipe soal
@@ -209,6 +299,20 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
     return null;
   };
 
+  // Render input jawaban benar untuk essay
+  const renderEssayJawabanInput = () => {
+    if (tipeJawaban === 'essay' || tipeJawaban === 'essay_gambar' || tipeJawaban === 'essay_audio') {
+      return (
+        <div>
+          <label className="block font-medium mb-1">Jawaban Benar (Kunci)</label>
+          <Textarea placeholder="Jawaban benar/kunci" value={jawabanBenar} onChange={e => setJawabanBenar(e.target.value)} />
+          {errors.jawabanBenar && <span className="text-red-500 text-xs">{errors.jawabanBenar}</span>}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -236,6 +340,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
             {errors.pertanyaan && <span className="text-red-500 text-xs">{errors.pertanyaan}</span>}
           </div>
           {renderOpsiInput()}
+          {renderEssayJawabanInput()}
           {renderMediaInput()}
           {renderSkalaInput()}
           {renderEquationInput()}

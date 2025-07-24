@@ -40,6 +40,7 @@ class SoalController extends Controller
             'opsi_d' => 'nullable|string',
             // Untuk multi_choice, jawaban_benar bisa array
             'jawaban_benar' => 'nullable',
+            'media' => 'nullable|file|mimes:jpg,jpeg,png,mp3|max:4096', // 4096 KB = 4 MB
         ]);
 
         // Handle jawaban_benar untuk multi_choice
@@ -57,7 +58,7 @@ class SoalController extends Controller
         if ($request->hasFile('media')) {
             $file = $request->file('media');
             $path = $file->store('soal_media', 'public');
-            $validated['media_path'] = $path;
+            $validated['media'] = $path;
         }
 
         // Simpan ke database

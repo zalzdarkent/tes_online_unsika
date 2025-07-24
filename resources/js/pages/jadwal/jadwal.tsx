@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import JadwalFormModal from '@/components/JadwalFormModal';
+import JadwalFormModal from '@/components/modal/JadwalFormModal';
 
 import { ColumnDef } from '@tanstack/react-table';
 import { Eye, Edit, Trash2, MoreHorizontal, Plus } from 'lucide-react';

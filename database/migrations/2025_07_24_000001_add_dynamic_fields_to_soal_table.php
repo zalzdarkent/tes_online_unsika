@@ -15,9 +15,7 @@ return new class extends Migration
             $table->enum('tipe_jawaban', [
                 'single_choice', 'multi_choice', 'essay', 'essay_gambar', 'essay_audio', 'skala', 'equation'
             ])->default('single_choice')->after('jenis_soal');
-            $table->json('opsi_jawaban')->nullable()->after('opsi_d');
-            $table->json('jawaban_benar_multi')->nullable()->after('jawaban_benar');
-            $table->json('media')->nullable()->after('jawaban_benar_multi');
+            $table->string('media')->nullable()->after('jawaban_benar');
             $table->string('tipe_skala')->nullable()->after('media');
             $table->text('equation')->nullable()->after('tipe_skala');
         });
