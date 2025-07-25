@@ -20,7 +20,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 type ProfileForm = {
-    nama: string;
+    username: string;
     email: string;
 };
 
@@ -28,7 +28,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const { auth } = usePage<SharedData>().props;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
-        nama: auth.user.nama || '',
+        username: auth.user.username || '',
         email: auth.user.email || '',
     });
 
@@ -50,19 +50,19 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="nama">Nama</Label>
+                            <Label htmlFor="username">Username</Label>
 
                             <Input
-                                id="nama"
+                                id="username"
                                 className="mt-1 block w-full"
-                                value={data.nama}
-                                onChange={(e) => setData('nama', e.target.value)}
+                                value={data.username}
+                                onChange={(e) => setData('username', e.target.value)}
                                 required
-                                autoComplete="name"
-                                placeholder="Nama lengkap"
+                                autoComplete="username"
+                                placeholder="Username"
                             />
 
-                            <InputError className="mt-2" message={errors.nama} />
+                            <InputError className="mt-2" message={errors.username} />
                         </div>
 
                         <div className="grid gap-2">
