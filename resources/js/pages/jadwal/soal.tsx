@@ -6,7 +6,7 @@ import { Eye, Edit, Trash2, Plus } from 'lucide-react';
 import SoalFormModal from '@/components/modal/SoalFormModal';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColumnDef } from '@tanstack/react-table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -46,15 +46,31 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
     const { delete: deleteSoal } = useForm();
     const [selectedSoal, setSelectedSoal] = useState<SoalData | null>(null);
     const [showDetail, setShowDetail] = useState(false);
+    const [selectedRows, setSelectedRows] = useState<SoalData[]>([]);
+    const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
     // Handler bulk delete
-    const handleBulkDelete = (selectedRows: SoalData[]) => {
+    const handleBulkDelete = () => {
         if (selectedRows.length === 0) return;
-        deleteSoal(route('soal.bulkDelete'), {
-            ids: selectedRows.map(row => row.id),
-            onSuccess: () => toast({ title: 'Berhasil dihapus', description: `${selectedRows.length} soal dihapus.` }),
-            onError: () => toast({ title: 'Gagal menghapus', description: 'Terjadi kesalahan.' }),
-        });
+        setIsBulkDeleting(true);
+        router.post(
+            route('soal.bulkDelete'),
+            { ids: selectedRows.map(row => row.id) },
+            {
+                onSuccess: () => {
+                    toast({ title: 'Berhasil dihapus', description: `${selectedRows.length} soal dihapus.` });
+                    setIsBulkDeleteDialogOpen(false);
+                    setSelectedRows([]);
+                },
+                onError: () => {
+                    toast({ title: 'Gagal menghapus', description: 'Terjadi kesalahan.' });
+                    setIsBulkDeleteDialogOpen(false);
+                },
+                onFinish: () => setIsBulkDeleting(false),
+                preserveScroll: true,
+            }
+        );
     };
 
     // Kolom DataTable
@@ -64,14 +80,31 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
             header: ({ table }) => (
                 <Checkbox
                     checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
-                    onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+                    onCheckedChange={value => {
+                        table.toggleAllPageRowsSelected(!!value);
+                        // Update selectedRows state
+                        if (value) {
+                            setSelectedRows(table.getRowModel().rows.map(r => r.original));
+                        } else {
+                            setSelectedRows([]);
+                        }
+                    }}
                     aria-label="Select all"
                 />
             ),
             cell: ({ row }) => (
                 <Checkbox
                     checked={row.getIsSelected()}
-                    onCheckedChange={value => row.toggleSelected(!!value)}
+                    onCheckedChange={value => {
+                        row.toggleSelected(!!value);
+                        setSelectedRows(prev => {
+                            if (value) {
+                                return [...prev, row.original];
+                            } else {
+                                return prev.filter(s => s.id !== row.original.id);
+                            }
+                        });
+                    }}
                     aria-label="Select row"
                 />
             ),
@@ -85,46 +118,42 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
         },
         {
             accessorKey: 'jenis_soal',
-            header: 'Jenis',
+            header: 'Jenis Soal',
             cell: ({ row }) => {
-                const jenis = row.getValue('jenis_soal');
-                switch (jenis) {
-                    case 'pilihan_ganda':
-                        return 'Pilihan Ganda';
-                    case 'multi_choice':
-                        return 'Pilihan Ganda (Multi Jawaban)';
-                    case 'esai':
-                        return 'Esai';
-                    case 'essay_gambar':
-                        return 'Esai + Gambar';
-                    case 'essay_audio':
-                        return 'Esai + Audio';
-                    case 'skala':
-                        return 'Skala';
-                    case 'equation':
-                        return 'Equation';
-                    default:
-                        return jenis;
-                }
+                const jenisSoal = row.getValue('jenis_soal');
+                const label = (() => {
+                    switch (jenisSoal) {
+                        case 'pilihan_ganda': return 'Pilihan Ganda';
+                        case 'multi_choice': return 'Pilihan Ganda (Multi Jawaban)';
+                        case 'esai': return 'Esai';
+                        case 'essay_gambar': return 'Esai + Gambar';
+                        case 'essay_audio': return 'Esai + Audio';
+                        case 'skala': return 'Skala';
+                        case 'equation': return 'Equation';
+                        default: return jenisSoal;
+                    }
+                })();
+                return (
+                    <span className="text-sm font-medium">{label}</span>
+                );
             },
         },
         {
             accessorKey: 'pertanyaan',
             header: 'Pertanyaan',
-            cell: ({ row }) => <span>{row.getValue('pertanyaan')}</span>,
-        },
-        {
-            accessorKey: 'jawaban_benar',
-            header: 'Jawaban Benar',
-            cell: ({ row }) => <span>{row.getValue('jawaban_benar')}</span>,
+            cell: ({ row }) => (
+                <div className="max-w-[300px] truncate">
+                    {row.getValue('pertanyaan')}
+                </div>
+            ),
         },
         {
             accessorKey: 'skor',
             header: 'Skor',
-            cell: ({ row }) => <span>{row.getValue('skor')}</span>,
+            cell: ({ row }) => row.getValue('skor') + ' poin',
         },
         {
-            id: 'actions',
+            id: 'aksi',
             header: 'Aksi',
             cell: ({ row }) => (
                 <div className="flex gap-2">
@@ -153,7 +182,6 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
         },
     ];
 
-    // Modal detail soal
     // Modal detail soal yang diperbaiki
     const renderSoalDetailModal = () => (
         <Dialog open={showDetail} onOpenChange={setShowDetail}>
@@ -387,18 +415,29 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                             Tanggal: {jadwal.tanggal_mulai} s/d {jadwal.tanggal_berakhir}
                         </div>
                     </div>
-                    <SoalFormModal
-                        trigger={
-                            <Button className="cursor-pointer">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Tambah Soal
-                            </Button>
-                        }
-                        idJadwal={jadwal.id}
-                        onSuccess={() => {
-                            // TODO: reload data jika perlu
-                        }}
-                    />
+                    <div className="flex gap-2">
+                        <SoalFormModal
+                            trigger={
+                                <Button className="cursor-pointer">
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Tambah Soal
+                                </Button>
+                            }
+                            idJadwal={jadwal.id}
+                            onSuccess={() => {
+                                // TODO: reload data jika perlu
+                            }}
+                        />
+                        <Button
+                            variant="destructive"
+                            className="cursor-pointer"
+                            disabled={selectedRows.length === 0}
+                            onClick={() => setIsBulkDeleteDialogOpen(true)}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Hapus Terpilih
+                        </Button>
+                    </div>
                 </div>
                 <DataTable
                     columns={columns}
@@ -406,9 +445,26 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                     searchColumn="pertanyaan"
                     searchPlaceholder="Cari pertanyaan..."
                     emptyMessage={<div className="text-center w-full py-8 text-gray-500">Belum ada soal untuk jadwal ini.</div>}
-                    onBulkDelete={handleBulkDelete}
+                    // onBulkDelete dihapus, diganti dengan tombol di atas
                 />
                 {renderSoalDetailModal()}
+                {/* Bulk Delete Dialog */}
+                <Dialog open={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Konfirmasi Hapus Soal</DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4">
+                            Apakah Anda yakin ingin menghapus <b>{selectedRows.length}</b> soal yang dipilih? Tindakan ini tidak dapat dibatalkan.
+                        </div>
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button variant="outline" onClick={() => setIsBulkDeleteDialogOpen(false)} disabled={isBulkDeleting}>Batal</Button>
+                            <Button variant="destructive" onClick={handleBulkDelete} disabled={isBulkDeleting}>
+                                {isBulkDeleting ? 'Menghapus...' : 'Hapus'}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );

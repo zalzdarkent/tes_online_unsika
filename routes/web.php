@@ -21,6 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('jadwal/soal', [SoalController::class,'store'])->name('jadwal.soal.store');
         Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])->name('jadwal.bulk-destroy');
 
+        // Soal delete & bulk delete (dalam prefix /jadwal)
+        Route::delete('jadwal/soal/{id}', [SoalController::class, 'destroy'])->name('soal.destroy');
+        Route::post('jadwal/soal/bulk-delete', [SoalController::class, 'bulkDelete'])->name('soal.bulkDelete');
+
         Route::get('koreksi', function () {
             return Inertia::render('koreksi/koreksi');
         })->name('koreksi');

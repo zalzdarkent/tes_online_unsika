@@ -95,8 +95,23 @@ class SoalController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        //
+        $soal = \App\Models\Soal::findOrFail($id);
+        $soal->delete();
+        return redirect()->back()->with('success', 'Soal berhasil dihapus!');
+    }
+
+    /**
+     * Bulk delete soal.
+     */
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (!is_array($ids) || empty($ids)) {
+            return redirect()->back()->with('error', 'Tidak ada soal yang dipilih.');
+        }
+        \App\Models\Soal::whereIn('id', $ids)->delete();
+        return redirect()->back()->with('success', count($ids) . ' soal berhasil dihapus!');
     }
 }
