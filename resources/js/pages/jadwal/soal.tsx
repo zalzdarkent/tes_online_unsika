@@ -7,10 +7,72 @@ import SoalFormModal from '@/components/modal/SoalFormModal';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useForm, router } from '@inertiajs/react';
-import { Checkbox } from '@/components/ui/checkbox';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { ColumnDef } from '@tanstack/react-table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+
+// Komponen untuk tombol hapus individual dengan dialog konfirmasi
+function DeleteSoalButton({ soal, onDelete }: { soal: SoalData; onDelete: (soal: SoalData) => void }) {
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = () => {
+        setIsDeleting(true);
+        onDelete(soal);
+        // Don't close dialog immediately, let the parent handle success/error
+        setTimeout(() => {
+            setIsDeleting(false);
+            setIsDeleteDialogOpen(false);
+        }, 1000);
+    };
+
+    return (
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-red-600 cursor-pointer"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        setIsDeleteDialogOpen(true);
+                    }}
+                >
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Apakah Anda yakin ingin menghapus soal ini?
+                        Tindakan ini tidak dapat dibatalkan.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isDeleting}>
+                        Batal
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="bg-destructive text-white hover:bg-destructive/90"
+                    >
+                        {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
 
 // Type untuk data soal
 interface SoalData {
@@ -46,71 +108,41 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
     const { delete: deleteSoal } = useForm();
     const [selectedSoal, setSelectedSoal] = useState<SoalData | null>(null);
     const [showDetail, setShowDetail] = useState(false);
-    const [selectedRows, setSelectedRows] = useState<SoalData[]>([]);
-    const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
-    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
-    // Handler bulk delete
-    const handleBulkDelete = () => {
-        if (selectedRows.length === 0) return;
-        setIsBulkDeleting(true);
-        router.post(
-            route('soal.bulkDelete'),
-            { ids: selectedRows.map(row => row.id) },
-            {
-                onSuccess: () => {
-                    toast({ title: 'Berhasil dihapus', description: `${selectedRows.length} soal dihapus.` });
-                    setIsBulkDeleteDialogOpen(false);
-                    setSelectedRows([]);
-                },
-                onError: () => {
-                    toast({ title: 'Gagal menghapus', description: 'Terjadi kesalahan.' });
-                    setIsBulkDeleteDialogOpen(false);
-                },
-                onFinish: () => setIsBulkDeleting(false),
-                preserveScroll: true,
+    // Handler untuk menghapus satu soal
+    const handleDeleteSingle = (soal: SoalData) => {
+        console.log("Delete single soal:", soal.id);
+
+        router.delete(route('soal.destroy', soal.id), {
+            onSuccess: () => {
+                toast({
+                    variant: "success",
+                    title: "Berhasil!",
+                    description: `Soal berhasil dihapus.`,
+                });
+            },
+            onError: (errors: Record<string, string>) => {
+                console.log("Delete errors:", errors);
+                if (errors.error) {
+                    toast({
+                        variant: "destructive",
+                        title: "Error!",
+                        description: errors.error,
+                    });
+                } else {
+                    toast({
+                        variant: "destructive",
+                        title: "Error!",
+                        description: "Terjadi kesalahan saat menghapus soal.",
+                    });
+                }
             }
-        );
+        });
     };
 
     // Kolom DataTable
+
     const columns: ColumnDef<SoalData>[] = [
-        {
-            id: 'select',
-            header: ({ table }) => (
-                <Checkbox
-                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
-                    onCheckedChange={value => {
-                        table.toggleAllPageRowsSelected(!!value);
-                        // Update selectedRows state
-                        if (value) {
-                            setSelectedRows(table.getRowModel().rows.map(r => r.original));
-                        } else {
-                            setSelectedRows([]);
-                        }
-                    }}
-                    aria-label="Select all"
-                />
-            ),
-            cell: ({ row }) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={value => {
-                        row.toggleSelected(!!value);
-                        setSelectedRows(prev => {
-                            if (value) {
-                                return [...prev, row.original];
-                            } else {
-                                return prev.filter(s => s.id !== row.original.id);
-                            }
-                        });
-                    }}
-                    aria-label="Select row"
-                />
-            ),
-            enableSorting: false,
-            enableHiding: false,
-        },
         {
             accessorKey: 'id',
             header: 'No',
@@ -172,7 +204,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="sm" className="text-red-600 cursor-pointer"><Trash2 className="h-4 w-4" /></Button>
+                                <DeleteSoalButton soal={row.original} onDelete={handleDeleteSingle} />
                             </TooltipTrigger>
                             <TooltipContent>Hapus soal</TooltipContent>
                         </Tooltip>
@@ -428,15 +460,6 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                 // TODO: reload data jika perlu
                             }}
                         />
-                        <Button
-                            variant="destructive"
-                            className="cursor-pointer"
-                            disabled={selectedRows.length === 0}
-                            onClick={() => setIsBulkDeleteDialogOpen(true)}
-                        >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Hapus Terpilih
-                        </Button>
                     </div>
                 </div>
                 <DataTable
@@ -445,26 +468,8 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                     searchColumn="pertanyaan"
                     searchPlaceholder="Cari pertanyaan..."
                     emptyMessage={<div className="text-center w-full py-8 text-gray-500">Belum ada soal untuk jadwal ini.</div>}
-                    // onBulkDelete dihapus, diganti dengan tombol di atas
                 />
                 {renderSoalDetailModal()}
-                {/* Bulk Delete Dialog */}
-                <Dialog open={isBulkDeleteDialogOpen} onOpenChange={setIsBulkDeleteDialogOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Konfirmasi Hapus Soal</DialogTitle>
-                        </DialogHeader>
-                        <div className="py-4">
-                            Apakah Anda yakin ingin menghapus <b>{selectedRows.length}</b> soal yang dipilih? Tindakan ini tidak dapat dibatalkan.
-                        </div>
-                        <div className="flex justify-end gap-2 pt-4">
-                            <Button variant="outline" onClick={() => setIsBulkDeleteDialogOpen(false)} disabled={isBulkDeleting}>Batal</Button>
-                            <Button variant="destructive" onClick={handleBulkDelete} disabled={isBulkDeleting}>
-                                {isBulkDeleting ? 'Menghapus...' : 'Hapus'}
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
             </div>
         </AppLayout>
     );
