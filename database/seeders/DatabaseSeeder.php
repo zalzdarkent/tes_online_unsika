@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             SoalSeeder::class,
             JawabanSeeder::class,
             HasilTestPesertaSeeder::class,
+            KategoriTesSeeder::class,
         ]);
     }
 }

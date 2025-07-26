@@ -16,6 +16,7 @@ class Jadwal extends Model
         'auto_close',
         'user_id',
         'id_jadwal_sebelumnya',
+        'kategori_tes_id',
     ];
 
     protected $casts = [
@@ -49,5 +50,13 @@ class Jadwal extends Model
     public function soal()
     {
         return $this->hasMany(\App\Models\Soal::class, 'id_jadwal');
+    }
+
+    /**
+     * Relasi ke kategori tes
+     */
+    public function kategori()
+    {
+        return $this->belongsTo(KategoriTes::class, 'kategori_tes_id')->withTrashed();
     }
 }

@@ -50,4 +50,20 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get all categories owned by the user
+     */
+    public function kategoriTes()
+    {
+        return $this->hasMany(KategoriTes::class);
+    }
+
+    /**
+     * Get all jadwal owned by the user
+     */
+    public function jadwals()
+    {
+        return $this->hasMany(Jadwal::class);
+    }
 }

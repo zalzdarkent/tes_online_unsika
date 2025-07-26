@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Models\KategoriTes;
 
 class JadwalSeeder extends Seeder
 {
@@ -17,6 +18,9 @@ class JadwalSeeder extends Seeder
         // Ambil beberapa user untuk demo data
         $users = User::limit(3)->get();
 
+        // Ambil kategori untuk setiap user
+        $kategoris = KategoriTes::all()->groupBy('user_id');
+
         if ($users->count() === 0) {
             $this->command->info('No users found. Please run UsersSeeder first.');
             return;
@@ -24,6 +28,7 @@ class JadwalSeeder extends Seeder
 
         // Data jadwal untuk user pertama
         $firstUserId = $users->first()->id;
+        $firstUserKategori = $kategoris[$firstUserId] ?? collect();
 
         DB::table('jadwal')->insert([
             [
@@ -34,6 +39,7 @@ class JadwalSeeder extends Seeder
                 'auto_close' => true,
                 'user_id' => $firstUserId,
                 'id_jadwal_sebelumnya' => null,
+                'kategori_tes_id' => $firstUserKategori->first()->id ?? null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -45,6 +51,7 @@ class JadwalSeeder extends Seeder
                 'auto_close' => true,
                 'user_id' => $firstUserId,
                 'id_jadwal_sebelumnya' => null,
+                'kategori_tes_id' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -63,6 +70,7 @@ class JadwalSeeder extends Seeder
                     'auto_close' => true,
                     'user_id' => $secondUserId,
                     'id_jadwal_sebelumnya' => null,
+                    'kategori_tes_id' => null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],
@@ -74,6 +82,7 @@ class JadwalSeeder extends Seeder
                     'auto_close' => true,
                     'user_id' => $secondUserId,
                     'id_jadwal_sebelumnya' => null,
+                    'kategori_tes_id' => null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],
@@ -93,6 +102,7 @@ class JadwalSeeder extends Seeder
                     'auto_close' => true,
                     'user_id' => $thirdUserId,
                     'id_jadwal_sebelumnya' => null,
+                    'kategori_tes_id' => null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],
@@ -104,6 +114,7 @@ class JadwalSeeder extends Seeder
                     'auto_close' => true,
                     'user_id' => $thirdUserId,
                     'id_jadwal_sebelumnya' => null,
+                    'kategori_tes_id' => null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],

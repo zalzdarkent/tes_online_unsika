@@ -1,7 +1,7 @@
 import { Head } from "@inertiajs/react";
-import AppLayout from "@/layouts/app-layout";
-import JadwalLayout from "@/layouts/jadwal/layout";
+import AppLayout from "@/layouts/app-layout";;
 import { type BreadcrumbItem } from "@/types";
+import JadwalLayout from "@/layouts/jadwal/layout";
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
