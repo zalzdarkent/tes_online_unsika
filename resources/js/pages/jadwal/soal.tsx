@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import JadwalLayout from '@/layouts/jadwal/layout';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit, Trash2, Plus } from 'lucide-react';
@@ -439,8 +440,9 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
             { title: 'Soal', href: '#' },
         ]}>
             <Head title={`Soal - ${jadwal.nama_jadwal}`} />
-            <div className="flex flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
+            <JadwalLayout>
+                <div className="flex h-full flex-1 flex-col gap-4 rounded-xl overflow-x-auto">
+                    <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-bold mb-1">Soal untuk Jadwal: {jadwal.nama_jadwal}</h2>
                         <div className="text-sm text-muted-foreground">
@@ -471,6 +473,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                 />
                 {renderSoalDetailModal()}
             </div>
+            </JadwalLayout>
         </AppLayout>
     );
 }

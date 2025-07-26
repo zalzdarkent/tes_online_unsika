@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('password', 255);
             $table->enum('role', ['admin', 'teacher', 'peserta']);
             $table->string('foto', 255)->nullable();
+            $table->text('alamat')->nullable();
+            $table->string('no_hp', 20)->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

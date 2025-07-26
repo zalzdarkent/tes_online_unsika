@@ -19,6 +19,8 @@ type RegisterForm = {
     password: string;
     password_confirmation: string;
     foto?: File | null;
+    alamat: string | null;
+    no_hp?: string | null;
 };
 
 type ValidationState = 'idle' | 'checking' | 'available' | 'taken' | 'error';
@@ -31,6 +33,8 @@ export default function Register() {
         password: '',
         password_confirmation: '',
         foto: null,
+        alamat: null,
+        no_hp: null,
     });
 
     const [usernameValidation, setUsernameValidation] = useState<{
@@ -88,6 +92,10 @@ export default function Register() {
             // Menggunakan axios untuk API call
             const response = await axios.post(route('check-username'), {
                 username: username
+            }, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
             });
 
             const result = response.data;
@@ -142,6 +150,10 @@ export default function Register() {
             // Menggunakan axios untuk API call
             const response = await axios.post(route('check-email'), {
                 email: email
+            }, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
             });
 
             const result = response.data;
@@ -419,11 +431,43 @@ export default function Register() {
                                     id="foto"
                                     type="file"
                                     accept="image/*"
-                                    tabIndex={6}
+                                    tabIndex={7}
                                     onChange={(e) => setData('foto', e.target.files?.[0] || null)}
                                     disabled={processing}
                                 />
                                 <InputError message={errors.foto} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="alamat">Alamat (Optional)</Label>
+                                <div className="relative">
+                                    <textarea
+                                        id="alamat"
+                                        className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        tabIndex={5}
+                                        value={data.alamat || ''}
+                                        onChange={(e) => setData('alamat', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="Alamat lengkap (opsional)"
+                                    />
+                                </div>
+                                <InputError message={errors.alamat} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="no_hp">No. HP (Optional)</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="no_hp"
+                                        type="tel"
+                                        tabIndex={6}
+                                        value={data.no_hp || ''}
+                                        onChange={(e) => setData('no_hp', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="Nomor HP (opsional)"
+                                    />
+                                </div>
+                                <InputError message={errors.no_hp} />
                             </div>
 
                             <div className="grid gap-2">
@@ -518,7 +562,7 @@ export default function Register() {
                         <Button
                             type="submit"
                             className="mt-4 w-full"
-                            tabIndex={7}
+                            tabIndex={8}
                             disabled={
                                 processing ||
                                 usernameValidation.state === 'checking' ||
@@ -536,7 +580,7 @@ export default function Register() {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
-                            <TextLink href={route('login')} tabIndex={8}>
+                            <TextLink href={route('login')} tabIndex={9}>
                                 Log in
                             </TextLink>
                         </div>

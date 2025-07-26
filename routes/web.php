@@ -16,8 +16,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Routes yang hanya bisa diakses admin dan teacher
     Route::middleware(['role:admin,teacher'])->group(function () {
-        Route::resource('jadwal', JadwalController::class);
+        // Definisikan route spesifik sebelum resource route
+        Route::get('jadwal/kategori', function () {
+            return Inertia::render('jadwal/kategori');
+        })->name('jadwal.kategori');
         Route::get('jadwal/{jadwal}/soal', [JadwalController::class, 'soal'])->name('jadwal.soal');
+
+        // Resource route harus ditempatkan setelah route spesifik
+        Route::resource('jadwal', JadwalController::class);
         Route::post('jadwal/soal', [SoalController::class,'store'])->name('jadwal.soal.store');
         Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])->name('jadwal.bulk-destroy');
 

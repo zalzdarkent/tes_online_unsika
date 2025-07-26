@@ -15,6 +15,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import AppLayout from '@/layouts/app-layout';
+import JadwalLayout from '@/layouts/jadwal/layout';
 import { type BreadcrumbItem } from '@/types';
 import JadwalFormModal from '@/components/modal/JadwalFormModal';
 
@@ -400,9 +401,10 @@ export default function Jadwal({ jadwal }: JadwalProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Jadwal Tes" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold">Jadwal Tes</h2>
+            <JadwalLayout>
+                <div className="flex h-full flex-1 flex-col gap-4 rounded-xl overflow-x-auto">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold">Daftar Jadwal Tes</h2>
                     <JadwalFormModal
                         mode="create"
                         trigger={
@@ -425,7 +427,8 @@ export default function Jadwal({ jadwal }: JadwalProps) {
                         <div className="text-center w-full py-8 text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>
                     }
                 />
-            </div>
+                </div>
+            </JadwalLayout>
         </AppLayout>
     );
 }

@@ -44,6 +44,8 @@ class RegisteredUserController extends Controller
             'email' => 'nullable|string|lowercase|email|max:100|unique:users,email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'alamat' => 'nullable|string|max:255',
+            'no_hp' => 'nullable|string|max:20',
         ], [
             'username.unique' => 'Username sudah digunakan, silakan pilih username lain.',
             'username.regex' => 'Username hanya boleh mengandung huruf, angka, dan underscore.',
@@ -62,6 +64,8 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->input('password')),
             'role' => 'peserta', // default role untuk user baru
             'foto' => $fotoPath,
+            'alamat' => $request->input('alamat'),
+            'no_hp' => $request->input('no_hp'),
         ]);
 
         event(new Registered($user));

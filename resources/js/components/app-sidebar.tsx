@@ -29,6 +29,13 @@ const mainNavItems: NavItem[] = [
         icon: ClipboardCheck,
         roles: ['admin', 'teacher'],
     },
+    //menu untuk peserta
+    {
+        title: 'Daftar Tes',
+        href: '/daftar-tes',
+        icon: Calendar,
+        roles: ['peserta'],
+    },
 ];
 
 const adminNavItems: NavItem[] = [
