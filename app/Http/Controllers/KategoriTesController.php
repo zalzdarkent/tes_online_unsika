@@ -47,7 +47,6 @@ class KategoriTesController extends Controller
                 'max:255',
                 Rule::unique('kategori_tes', 'nama')
                     ->where('user_id', Auth::id())
-                    ->whereNull('deleted_at')
             ],
         ], [
             'nama.required' => 'Nama kategori harus diisi',
@@ -84,7 +83,28 @@ class KategoriTesController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $kategori = KategoriTes::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'nama' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('kategori_tes', 'nama')
+                    ->where('user_id', Auth::id())
+                    ->ignore($kategori->id)
+            ],
+        ], [
+            'nama.required' => 'Nama kategori harus diisi',
+            'nama.max' => 'Nama kategori maksimal 255 karakter',
+            'nama.unique' => 'Nama kategori sudah digunakan',
+        ]);
+
+        $kategori->update($validated);
+
+        return back();
     }
 
     /**

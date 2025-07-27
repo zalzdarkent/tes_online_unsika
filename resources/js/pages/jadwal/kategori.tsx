@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PlusIcon, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -36,21 +38,35 @@ type KategoriProps = {
 
 export default function KategoriTes({ kategori }: KategoriProps) {
     const { toast } = useToast();
+    const [deleteDialog, setDeleteDialog] = useState(false);
+    const [selectedKategori, setSelectedKategori] = useState<KategoriData | null>(null);
 
     const handleDeleteSingle = (kategori: KategoriData) => {
-        router.delete(route('kategori.destroy', kategori.id), {
+        setSelectedKategori(kategori);
+        setDeleteDialog(true);
+    };
+
+    const confirmDelete = () => {
+        if (!selectedKategori) return;
+
+        router.delete(route('kategori.destroy', selectedKategori.id), {
             onSuccess: () => {
                 toast({
                     title: "Berhasil",
-                    description: "Kategori berhasil dihapus",
+                    description: `Kategori "${selectedKategori.nama}" berhasil dihapus`,
                 });
+                setDeleteDialog(false);
+                setSelectedKategori(null);
             },
-            onError: () => {
+            onError: (errors) => {
+                console.error("Delete error:", errors);
                 toast({
-                    title: "Gagal",
-                    description: "Gagal menghapus kategori",
                     variant: "destructive",
+                    title: "Gagal",
+                    description: errors.error || "Terjadi kesalahan saat menghapus kategori",
                 });
+                setDeleteDialog(false);
+                setSelectedKategori(null);
             },
         });
     };
@@ -134,14 +150,19 @@ export default function KategoriTes({ kategori }: KategoriProps) {
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="cursor-pointer"
-                                        onClick={() => router.get(route('kategori.edit', kategori.id))}
-                                    >
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
+                                    <KategoriFormModal
+                                        mode="edit"
+                                        trigger={
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="cursor-pointer"
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        }
+                                        kategori={kategori}
+                                    />
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>Edit kategori</p>
@@ -201,6 +222,36 @@ export default function KategoriTes({ kategori }: KategoriProps) {
                         }
                     />
                 </div>
+
+                <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Hapus Kategori</DialogTitle>
+                            <DialogDescription>
+                                Apakah Anda yakin ingin menghapus kategori "{selectedKategori?.nama}"?
+                                {selectedKategori?.jumlah_jadwal ? (
+                                    <p className="mt-2 text-destructive">
+                                        Kategori ini memiliki {selectedKategori.jumlah_jadwal} jadwal terkait.
+                                    </p>
+                                ) : null}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => setDeleteDialog(false)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={confirmDelete}
+                            >
+                                Hapus
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </JadwalLayout>
         </AppLayout>
     );
