@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Trash2, ArrowUpDown, ChevronDown, Settings2 } from "lucide-react"
+import { Trash2, ArrowUpDown, ChevronDown, Settings2, ArrowUp, ArrowDown } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -177,23 +177,28 @@ export function DataTable<TData, TValue>({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  )
-                })}
+              {table.getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                const headerText = (() => {
+                  const header = column.columnDef.header
+                  if (typeof header === "string") return header
+                  if (typeof header === "function") return column.id
+                  const rendered = flexRender(header, {} as any)
+                  return typeof rendered === "string" ? rendered : column.id
+                })()
+
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  >
+                    {headerText}
+                  </DropdownMenuCheckboxItem>
+                )
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -224,13 +229,15 @@ export function DataTable<TData, TValue>({
                             header.column.columnDef.header,
                             header.getContext()
                           )}
-                          {header.column.getCanSort() && (
-                            <ArrowUpDown className="h-4 w-4" />
-                          )}
-                          {{
-                            asc: ' 🔼',
-                            desc: ' 🔽',
-                          }[header.column.getIsSorted() as string] ?? null}
+                            {header.column.getCanSort() && !header.column.getIsSorted() && (
+                              <ArrowUpDown className="h-4 w-4" />
+                            )}                         
+                           {header.column.getIsSorted() === 'asc' && (
+                              <ArrowUp className="h-4 w-4" />
+                            )}
+                            {header.column.getIsSorted() === 'desc' && (
+                              <ArrowDown className="h-4 w-4" />
+                            )}
                         </div>
                       )}
                     </TableHead>

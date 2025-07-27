@@ -153,7 +153,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
             accessorKey: 'jenis_soal',
             header: 'Jenis Soal',
             cell: ({ row }) => {
-                const jenisSoal = row.getValue('jenis_soal');
+                const jenisSoal = row.getValue('jenis_soal') as string;
                 const label = (() => {
                     switch (jenisSoal) {
                         case 'pilihan_ganda': return 'Pilihan Ganda';

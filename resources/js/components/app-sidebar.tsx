@@ -5,7 +5,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { filterMenuByRole } from '@/lib/auth-utils';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Calendar, ClipboardCheck, Folder, LayoutGrid, Settings } from 'lucide-react';
+import { BookOpen, Calendar, ClipboardCheck, Folder, History, LayoutGrid, Settings } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const platformNavItems: NavItem[] = [
@@ -34,6 +34,12 @@ const mainNavItems: NavItem[] = [
         title: 'Daftar Tes',
         href: '/daftar-tes',
         icon: Calendar,
+        roles: ['peserta'],
+    },
+    {
+        title: 'Riwayat Tes',
+        href: '/riwayat',
+        icon: History,
         roles: ['peserta'],
     },
 ];
@@ -83,15 +89,9 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                {filteredPlatformItems.length > 0 && (
-                    <NavMain items={filteredPlatformItems} label="Platform" />
-                )}
-                {filteredMainItems.length > 0 && (
-                    <NavMain items={filteredMainItems} label="Main" />
-                )}
-                {filteredAdminItems.length > 0 && (
-                    <NavMain items={filteredAdminItems} label="Administration" />
-                )}
+                {filteredPlatformItems.length > 0 && <NavMain items={filteredPlatformItems} label="Platform" />}
+                {filteredMainItems.length > 0 && <NavMain items={filteredMainItems} label="Main" />}
+                {filteredAdminItems.length > 0 && <NavMain items={filteredAdminItems} label="Administration" />}
             </SidebarContent>
 
             <SidebarFooter>

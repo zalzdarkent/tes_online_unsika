@@ -3,9 +3,17 @@
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\KategoriTesController;
 use App\Http\Controllers\SoalController;
+use App\Http\Controllers\PesertaTesController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// peserta routes
+Route::middleware(['auth', 'role:peserta'])->group(function () {
+    Route::get('/daftar-tes', [PesertaTesController::class, 'index'])->name('peserta.daftar-tes');
+    Route::get('/tes/{id}/soal', [PesertaTesController::class, 'soal'])->name('peserta.soal');
+    Route::post('/submit', [PesertaTesController::class, 'submit'])->name('peserta.submit');
+});
+    
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', function () {
         return Inertia::render('dashboard');

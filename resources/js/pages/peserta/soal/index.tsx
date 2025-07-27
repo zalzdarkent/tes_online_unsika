@@ -1,0 +1,301 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
+import { Head, router } from '@inertiajs/react';
+import { Menu } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+interface Soal {
+    id: number;
+    pertanyaan: string;
+    jenis_soal: 'pilihan_ganda' | 'multi_choice' | 'esai' | 'essay_gambar' | 'essay_audio';
+    opsi_a?: string;
+    opsi_b?: string;
+    opsi_c?: string;
+    opsi_d?: string;
+    media?: string;
+}
+
+interface Props {
+    jadwal: {
+        id: number;
+        nama_jadwal: string;
+    };
+    soal: Soal[];
+}
+
+const renderMedia = (url: string) => {
+    const ext = url.split('.').pop()?.toLowerCase();
+
+    if (!ext) return null;
+
+    if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+        return (
+            <div>
+                <Label className="mb-1 block">Gambar Pendukung</Label>
+                <img src={`/storage/${url}`} alt="Gambar Soal" className="max-w-full rounded-md border" />
+            </div>
+        );
+    }
+
+    if (['mp3', 'ogg', 'wav', 'm4a'].includes(ext)) {
+        return (
+            <div>
+                <Label className="mb-1 block">Audio Pendukung</Label>
+                <audio controls src={`/storage/${url}`} className="w-full" />
+            </div>
+        );
+    }
+
+    return null;
+};
+
+export default function SoalTes({ jadwal, soal }: Props) {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [jawaban, setJawaban] = useState<Record<number, string[]>>({});
+    const [timeLeft, setTimeLeft] = useState(60 * 60);
+    const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
+
+    const currentSoal = soal[currentIndex];
+
+    useEffect(() => {
+        if (timeLeft <= 0) {
+            setShowTimeoutDialog(true);
+            return;
+        }
+        const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+        return () => clearInterval(timer);
+    }, [timeLeft]);
+
+    const formatTime = (totalSeconds: number) => {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+
+    const renderOpsi = (s: Soal) => {
+        const opsi = [
+            { label: 'A', text: s.opsi_a },
+            { label: 'B', text: s.opsi_b },
+            { label: 'C', text: s.opsi_c },
+            { label: 'D', text: s.opsi_d },
+        ].filter((o) => o.text !== undefined);
+
+        if (s.jenis_soal === 'pilihan_ganda') {
+            return (
+                <RadioGroup
+                    className="mt-4 space-y-2"
+                    value={jawaban[s.id]?.[0] || ''}
+                    onValueChange={(val) => setJawaban({ ...jawaban, [s.id]: [val] })}
+                >
+                    {opsi.map((o, i) => (
+                        <div key={i} className="flex items-center space-x-2">
+                            <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} />
+                            <Label htmlFor={`soal_${s.id}_${o.label}`}>
+                                {o.label}. {o.text}
+                            </Label>
+                        </div>
+                    ))}
+                </RadioGroup>
+            );
+        }
+
+        if (s.jenis_soal === 'multi_choice') {
+            return (
+                <div className="mt-4 space-y-4">
+                    {opsi.map((o, i) => {
+                        const selected = jawaban[s.id] || [];
+                        return (
+                            <div key={i} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`soal_${s.id}_${o.label}`}
+                                    checked={selected.includes(o.label)}
+                                    onCheckedChange={(checked) => {
+                                        const next = checked ? [...selected, o.label] : selected.filter((item) => item !== o.label);
+                                        setJawaban({ ...jawaban, [s.id]: next });
+                                    }}
+                                />
+                                <Label htmlFor={`soal_${s.id}_${o.label}`}>
+                                    {o.label}. {o.text}
+                                </Label>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        if (['esai', 'essay_gambar', 'essay_audio'].includes(s.jenis_soal)) {
+            return (
+                <div className="mt-4 space-y-4">
+                    {s.media && renderMedia(s.media)}
+                    <div>
+                        <Label htmlFor={`soal_${s.id}_essay`} className="mb-1 block">
+                            Jawaban Anda
+                        </Label>
+                        <Textarea
+                            id={`soal_${s.id}_essay`}
+                            placeholder="Tulis jawaban Anda di sini..."
+                            value={jawaban[s.id]?.[0] || ''}
+                            onChange={(e) => setJawaban({ ...jawaban, [s.id]: [e.target.value] })}
+                        />
+                    </div>
+                </div>
+            );
+        }
+
+        return null;
+    };
+
+    const handleNext = () => {
+        if (currentIndex < soal.length - 1) setCurrentIndex(currentIndex + 1);
+    };
+
+    const handlePrev = () => {
+        if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
+    };
+
+    const handleSubmit = () => {
+        console.log('Jawaban peserta:', jawaban);
+        console.log('id jadwal:', jadwal.id);
+        router.post('/submit', {
+            jawaban,
+            jadwal_id: jadwal.id,
+        });
+    };
+
+    return (
+        <>
+            <Head title="Soal Tes" />
+            <div className="flex min-h-screen">
+                {/* Desktop Sidebar */}
+                <div className="hidden w-64 border-r p-4 md:block">
+                    <p className="mb-2 text-xl font-semibold">{jadwal.nama_jadwal}</p>
+                    <div className="grid grid-cols-5 gap-2">
+                        {soal.map((_, i) => (
+                            <Button
+                                key={i}
+                                variant={currentIndex === i ? 'default' : 'outline'}
+                                className="px-0 py-2"
+                                onClick={() => setCurrentIndex(i)}
+                            >
+                                {i + 1}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Mobile Sidebar Sheet */}
+                <Sheet>
+                    <div className="absolute top-4 left-4 z-10 md:hidden">
+                        <SheetTrigger asChild>
+                            <Button size="icon" variant="outline">
+                                <Menu className="h-4 w-4" />
+                            </Button>
+                        </SheetTrigger>
+                    </div>
+                    <SheetContent side="left" className="p-4">
+                        <SheetHeader>
+                            <SheetTitle className="text-2xl">{jadwal.nama_jadwal}</SheetTitle>
+                        </SheetHeader>
+                        <div className="grid grid-cols-5 gap-2 px-4">
+                            {soal.map((_, i) => (
+                                <Button
+                                    key={i}
+                                    variant={currentIndex === i ? 'default' : 'outline'}
+                                    className="px-0 py-2"
+                                    onClick={() => setCurrentIndex(i)}
+                                >
+                                    {i + 1}
+                                </Button>
+                            ))}
+                        </div>
+                    </SheetContent>
+                </Sheet>
+
+                {/* Main Content */}
+                <div className="mt-4 flex-1 p-6 md:mt-0">
+                    <div className="space-y-4 p-4">
+                        <div>
+                            <div className="mb-2 flex items-center justify-between">
+                                <p className="text-sm text-muted-foreground">
+                                    Soal ke {currentIndex + 1} dari {soal.length}
+                                </p>
+                                <div className="rounded-md bg-muted px-3 py-1.5">
+                                    <p className="text-sm font-bold text-muted-foreground">{formatTime(timeLeft)}</p>
+                                </div>
+                            </div>
+
+                            <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p>
+                            {renderOpsi(currentSoal)}
+                        </div>
+
+                        <div>
+                            <div className="flex justify-between pt-6">
+                                <Button onClick={handlePrev} disabled={currentIndex === 0} variant="outline">
+                                    Sebelumnya
+                                </Button>
+                                {currentIndex === soal.length - 1 ? (
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button>Selesaikan</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Yakin ingin mengumpulkan?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Pastikan semua soal telah dijawab. Jawaban yang dikumpulkan tidak bisa diubah.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                                <AlertDialogAction asChild>
+                                                    <Button onClick={handleSubmit}>Kirim Jawaban</Button>
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                ) : (
+                                    <Button onClick={handleNext}>Selanjutnya</Button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* timeout */}
+            {showTimeoutDialog && (
+                <AlertDialog open={showTimeoutDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Waktu Habis</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim secara otomatis.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogAction className="cursor-pointer" onClick={() => router.visit('/daftar-tes')}>
+                                Kembali ke Daftar Tes
+                            </AlertDialogAction>{' '}
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+        </>
+    );
+}
