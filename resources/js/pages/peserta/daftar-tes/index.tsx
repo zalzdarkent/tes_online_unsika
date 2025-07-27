@@ -26,6 +26,7 @@ interface JadwalData {
         id: number;
         nama_jadwal: string;
     } | null;
+    sudah_kerjakan_jadwal_sebelumnya: boolean;
 }
 
 interface Props {
@@ -107,7 +108,11 @@ export default function DaftarTes({ jadwal }: Props) {
             id: 'actions',
             header: 'Aksi',
             cell: ({ row }) => {
-                const { id } = row.original;
+                const { id, sudah_kerjakan_jadwal_sebelumnya } = row.original;
+
+                if (!sudah_kerjakan_jadwal_sebelumnya) {
+                    return <span className="text-sm text-muted-foreground italic">Anda belum mengerjakan tes sebelumnya</span>;
+                }
                 return (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>

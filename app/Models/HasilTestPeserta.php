@@ -19,4 +19,9 @@ class HasilTestPeserta extends Model
     ];
 
     public $timestamps = false;
+
+    public function jadwal()
+    {
+        return $this->belongsTo(Jadwal::class, 'id_jadwal');
+    }
 }

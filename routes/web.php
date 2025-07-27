@@ -12,8 +12,9 @@ Route::middleware(['auth', 'role:peserta'])->group(function () {
     Route::get('/daftar-tes', [PesertaTesController::class, 'index'])->name('peserta.daftar-tes');
     Route::get('/tes/{id}/soal', [PesertaTesController::class, 'soal'])->name('peserta.soal');
     Route::post('/submit', [PesertaTesController::class, 'submit'])->name('peserta.submit');
+    Route::get('/riwayat', [PesertaTesController::class, 'riwayat'])->name('peserta.riwayat');
 });
-    
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', function () {
         return Inertia::render('dashboard');
@@ -35,7 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('jadwal', JadwalController::class);
         Route::resource('kategori', KategoriTesController::class);
         Route::post('kategori/bulk-destroy', [KategoriTesController::class, 'bulkDestroy'])->name('kategori.bulk-destroy');
-        Route::post('jadwal/soal', [SoalController::class,'store'])->name('jadwal.soal.store');
+        Route::post('jadwal/soal', [SoalController::class, 'store'])->name('jadwal.soal.store');
         Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])->name('jadwal.bulk-destroy');
 
         // Soal delete & bulk delete (dalam prefix /jadwal)
@@ -55,5 +56,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';

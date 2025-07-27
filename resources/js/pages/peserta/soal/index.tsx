@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/hooks/use-toast';
 import { Head, router } from '@inertiajs/react';
 import { Menu } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -67,19 +68,19 @@ const renderMedia = (url: string) => {
 export default function SoalTes({ jadwal, soal }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [jawaban, setJawaban] = useState<Record<number, string[]>>({});
-    const [timeLeft, setTimeLeft] = useState(60 * 60);
     const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
-
-    const currentSoal = soal[currentIndex];
+    const [timeLeft, setTimeLeft] = useState(60 * 60);
 
     useEffect(() => {
+        if (soal.length === 0) return;
+
         if (timeLeft <= 0) {
             setShowTimeoutDialog(true);
             return;
         }
         const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
         return () => clearInterval(timer);
-    }, [timeLeft]);
+    }, [timeLeft, soal]);
 
     const formatTime = (totalSeconds: number) => {
         const minutes = Math.floor(totalSeconds / 60);
@@ -170,13 +171,59 @@ export default function SoalTes({ jadwal, soal }: Props) {
     };
 
     const handleSubmit = () => {
-        console.log('Jawaban peserta:', jawaban);
-        console.log('id jadwal:', jadwal.id);
-        router.post('/submit', {
-            jawaban,
-            jadwal_id: jadwal.id,
-        });
+        router.post(
+            route('peserta.submit'),
+            {
+                jawaban,
+                jadwal_id: jadwal.id,
+            },
+            {
+                onSuccess: () => {
+                    toast({
+                        variant: 'success',
+                        title: 'Tes Selesai',
+                        description: 'Jawaban Anda berhasil dikirim.',
+                    });
+                    router.visit(route('peserta.riwayat'));
+                },
+                onError: (errors: Record<string, string>) => {
+                    console.log(errors.error);
+                    if (errors.error) {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Gagal Mengirim Tes',
+                            description: errors.error,
+                        });
+                    } else {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Error',
+                            description: 'Terjadi kesalahan saat mengirim jawaban.',
+                        });
+                    }
+                },
+            },
+        );
     };
+
+    if (!soal.length) {
+        return (
+            <>
+                <Head title="Soal Tes" />
+                <div className="flex min-h-screen items-center justify-center">
+                    <div className="space-y-2 text-center">
+                        <h2 className="text-2xl font-semibold">Soal belum tersedia</h2>
+                        <p className="text-muted-foreground">Silakan kembali ke halaman sebelumnya atau hubungi pengawas.</p>
+                        <Button onClick={() => router.visit('/daftar-tes')} className="mt-4 cursor-pointer">
+                            Kembali
+                        </Button>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+    const currentSoal = soal[currentIndex];
 
     return (
         <>

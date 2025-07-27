@@ -59,4 +59,9 @@ class Jadwal extends Model
     {
         return $this->belongsTo(KategoriTes::class, 'kategori_tes_id')->withTrashed();
     }
+
+    public function hasil()
+    {
+        return $this->hasMany(\App\Models\HasilTestPeserta::class, 'id_jadwal', 'id');
+    }
 }
