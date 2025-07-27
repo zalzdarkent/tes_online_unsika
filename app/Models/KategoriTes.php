@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class KategoriTes extends Model
 {
-    use SoftDeletes;
     protected $table = 'kategori_tes';
 
     protected $fillable = [

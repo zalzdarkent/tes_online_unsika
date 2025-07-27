@@ -9,7 +9,7 @@ import { type PropsWithChildren } from 'react';
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Kategori Tes',
-        href: '/jadwal/kategori',
+        href: '/kategori',
         icon: null,
     },
     {

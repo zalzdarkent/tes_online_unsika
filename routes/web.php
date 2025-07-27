@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\JadwalController;
+use App\Http\Controllers\KategoriTesController;
 use App\Http\Controllers\SoalController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -17,13 +18,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Routes yang hanya bisa diakses admin dan teacher
     Route::middleware(['role:admin,teacher'])->group(function () {
         // Definisikan route spesifik sebelum resource route
-        Route::get('jadwal/kategori', function () {
-            return Inertia::render('jadwal/kategori');
-        })->name('jadwal.kategori');
+        // Route::get('jadwal/kategori', function () {
+        //     return Inertia::render('jadwal/kategori');
+        // })->name('jadwal.kategori');
         Route::get('jadwal/{jadwal}/soal', [JadwalController::class, 'soal'])->name('jadwal.soal');
 
         // Resource route harus ditempatkan setelah route spesifik
         Route::resource('jadwal', JadwalController::class);
+        Route::resource('kategori', KategoriTesController::class);
+        Route::post('kategori/bulk-destroy', [KategoriTesController::class, 'bulkDestroy'])->name('kategori.bulk-destroy');
         Route::post('jadwal/soal', [SoalController::class,'store'])->name('jadwal.soal.store');
         Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])->name('jadwal.bulk-destroy');
 

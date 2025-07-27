@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('nama');
             $table->unsignedBigInteger('user_id'); // User yang membuat kategori
             $table->timestamps();
-            $table->softDeletes(); // Menambahkan kolom deleted_at untuk soft delete
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->unique(['nama', 'user_id']); // Nama kategori harus unik per user
