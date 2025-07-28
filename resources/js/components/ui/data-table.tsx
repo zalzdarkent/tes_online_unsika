@@ -53,6 +53,7 @@ interface DataTableProps<TData, TValue> {
   searchColumn?: string
   searchPlaceholder?: string
   emptyMessage?: React.ReactNode
+  initialColumnVisibility?: VisibilityState
 }
 
 export function DataTable<TData, TValue>({
@@ -64,10 +65,11 @@ export function DataTable<TData, TValue>({
   searchColumn,
   searchPlaceholder = "Cari data...",
   emptyMessage,
+  initialColumnVisibility = {},
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(initialColumnVisibility)
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
 
   const table = useReactTable({
@@ -184,7 +186,7 @@ export function DataTable<TData, TValue>({
                   const header = column.columnDef.header
                   if (typeof header === "string") return header
                   if (typeof header === "function") return column.id
-                  const rendered = flexRender(header, {} as any)
+                  const rendered = flexRender(header, {})
                   return typeof rendered === "string" ? rendered : column.id
                 })()
 
@@ -231,7 +233,7 @@ export function DataTable<TData, TValue>({
                           )}
                             {header.column.getCanSort() && !header.column.getIsSorted() && (
                               <ArrowUpDown className="h-4 w-4" />
-                            )}                         
+                            )}
                            {header.column.getIsSorted() === 'asc' && (
                               <ArrowUp className="h-4 w-4" />
                             )}

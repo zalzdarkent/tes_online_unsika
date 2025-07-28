@@ -25,8 +25,16 @@ type JadwalData = {
     // status: string; // status tidak perlu diinput manual
     auto_close?: boolean;
     id_jadwal_sebelumnya: number | null;
+    kategori_tes_id: number | null;
+    durasi: number | null;
     created_at: string;
     updated_at: string;
+};
+
+// Type untuk kategori tes
+type KategoriTesData = {
+    id: number;
+    nama: string;
 };
 
 type JadwalFormModalProps = {
@@ -34,6 +42,7 @@ type JadwalFormModalProps = {
     trigger: React.ReactNode;
     jadwal?: JadwalData; // Data jadwal untuk edit mode
     allJadwal: JadwalData[]; // Semua jadwal untuk dropdown
+    kategoriTes: KategoriTesData[]; // Data kategori tes untuk dropdown
     onSuccess: () => void; // Callback setelah berhasil
 };
 
@@ -59,7 +68,7 @@ const parseDateTime = (dateTimeString: string) => {
     };
 };
 
-export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSuccess }: JadwalFormModalProps) {
+export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kategoriTes, onSuccess }: JadwalFormModalProps) {
     const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
 
@@ -71,6 +80,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
         tanggal_berakhir: '',
         auto_close: true as boolean,
         id_jadwal_sebelumnya: null as number | null,
+        kategori_tes_id: null as number | null,
+        durasi: null as number | null,
     });
 
     console.log("Form state:", { data, processing, errors });
@@ -124,6 +135,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
             // status tidak perlu di-set manual
             setData('auto_close', jadwal.auto_close ?? true);
             setData('id_jadwal_sebelumnya', jadwal.id_jadwal_sebelumnya || null);
+            setData('kategori_tes_id', jadwal.kategori_tes_id || null);
+            setData('durasi', jadwal.durasi || null);
 
             // Set date time inputs
             setDateTimeInputs({
@@ -240,6 +253,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
             tanggal_berakhir,
             auto_close: data.auto_close,
             id_jadwal_sebelumnya: data.id_jadwal_sebelumnya,
+            kategori_tes_id: data.kategori_tes_id,
+            durasi: data.durasi,
         };
 
         console.log(`${mode === 'create' ? 'Creating' : 'Updating'} jadwal with data:`, submitData);
@@ -407,6 +422,52 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, onSu
                                 {errors.tanggal_berakhir && (
                                     <InputError message={errors.tanggal_berakhir} />
                                 )}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor={`${mode}_kategori_tes_id`}>Kategori Tes</Label>
+                                <Select
+                                    value={data.kategori_tes_id?.toString() || "0"}
+                                    onValueChange={(value) => setData('kategori_tes_id', value === "0" ? null : parseInt(value))}
+                                    disabled={processing}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih kategori tes" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="0">Tidak ada</SelectItem>
+                                        {kategoriTes && kategoriTes.length > 0 ? kategoriTes.map((kategori) => (
+                                            <SelectItem key={kategori.id} value={kategori.id.toString()}>
+                                                {kategori.nama}
+                                            </SelectItem>
+                                        )) : null}
+                                    </SelectContent>
+                                </Select>
+                                {errors.kategori_tes_id && (
+                                    <InputError message={errors.kategori_tes_id} />
+                                )}
+                            </div>
+                            <div>
+                                <Label htmlFor={`${mode}_durasi`}>Durasi (menit)</Label>
+                                <Input
+                                    id={`${mode}_durasi`}
+                                    type="number"
+                                    placeholder="Masukkan durasi dalam menit"
+                                    value={data.durasi?.toString() || ''}
+                                    onChange={(e) => setData('durasi', e.target.value ? parseInt(e.target.value) : null)}
+                                    min="1"
+                                    max="1440"
+                                    disabled={processing}
+                                    readOnly={false}
+                                />
+                                {errors.durasi && (
+                                    <InputError message={errors.durasi} />
+                                )}
+                                <div className="text-xs text-muted-foreground mt-1">
+                                    Maksimal 1440 menit (24 jam)
+                                </div>
                             </div>
                         </div>
 

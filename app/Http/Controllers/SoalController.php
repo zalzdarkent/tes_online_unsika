@@ -40,7 +40,7 @@ class SoalController extends Controller
             'opsi_d' => 'nullable|string',
             // Untuk multi_choice, jawaban_benar bisa array
             'jawaban_benar' => 'nullable',
-            'media' => 'nullable|file|mimes:jpg,jpeg,png,mp3|max:4096', // 4096 KB = 4 MB
+            'media' => 'nullable|file|mimes:jpg,jpeg,png,mp3,mpeg|max:5120', // 5120 KB = 5 MB
         ]);
 
         // Handle jawaban_benar untuk multi_choice

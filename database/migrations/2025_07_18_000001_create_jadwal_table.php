@@ -18,6 +18,7 @@ return new class extends Migration
             $table->dateTime('tanggal_berakhir');
             $table->enum('status', ['Buka', 'Tutup']);
             $table->boolean('auto_close')->default(true);
+            $table->integer('durasi');
             $table->unsignedBigInteger('user_id'); // User yang membuat jadwal
             $table->unsignedBigInteger('id_jadwal_sebelumnya')->nullable();
             $table->unsignedBigInteger('kategori_tes_id')->nullable(); // Kategori tes

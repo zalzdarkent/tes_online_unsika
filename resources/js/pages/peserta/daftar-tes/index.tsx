@@ -31,6 +31,15 @@ interface JadwalData {
 
 interface Props {
     jadwal: JadwalData[];
+    debug?: {
+        total_jadwal_in_db: number;
+        jadwal_status_buka: number;
+        jadwal_belum_dikerjakan: number;
+        total_jadwal_found: number;
+        current_time: string;
+        user_id: number;
+        note: string;
+    };
 }
 
 export default function DaftarTes({ jadwal }: Props) {
@@ -141,6 +150,22 @@ export default function DaftarTes({ jadwal }: Props) {
             <Head title="Daftar Tes" />
             <div className="space-y-6 p-6">
                 <h1 className="text-2xl font-bold">Daftar Tes Tersedia</h1>
+
+                {/* Debug Info - Hapus setelah troubleshooting selesai */}
+                {/* {debug && (
+                    <div className="rounded-lg bg-yellow-50 p-4 text-sm">
+                        <h3 className="font-semibold text-yellow-800">Debug Info:</h3>
+                        <div className="mt-2 space-y-1 text-yellow-700">
+                            <p>Total jadwal di database: {debug.total_jadwal_in_db}</p>
+                            <p>Jadwal dengan status BUKA: {debug.jadwal_status_buka}</p>
+                            <p>Jadwal belum dikerjakan: {debug.jadwal_belum_dikerjakan}</p>
+                            <p>Total jadwal yang ditemukan: {debug.total_jadwal_found}</p>
+                            <p>Waktu sekarang: {debug.current_time}</p>
+                            <p>User ID: {debug.user_id}</p>
+                            <p className="font-semibold">{debug.note}</p>
+                        </div>
+                    </div>
+                )} */}
 
                 <DataTable
                     columns={columns}

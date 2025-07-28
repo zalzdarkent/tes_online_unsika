@@ -35,6 +35,7 @@ interface Props {
     jadwal: {
         id: number;
         nama_jadwal: string;
+        durasi: number | null; // durasi dalam menit
     };
     soal: Soal[];
 }
@@ -46,18 +47,25 @@ const renderMedia = (url: string) => {
 
     if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
         return (
-            <div>
-                <Label className="mb-1 block">Gambar Pendukung</Label>
-                <img src={`/storage/${url}`} alt="Gambar Soal" className="max-w-full rounded-md border" />
+            <div className="my-3">
+                <Label className="mb-2 block text-sm font-medium">Gambar Pendukung</Label>
+                <div className="flex justify-center">
+                    <img
+                        src={`/storage/${url}`}
+                        alt="Gambar Soal"
+                        className="max-w-sm max-h-60 w-auto h-auto rounded-md border shadow-sm object-contain"
+                        style={{ maxWidth: '300px', maxHeight: '240px' }}
+                    />
+                </div>
             </div>
         );
     }
 
     if (['mp3', 'ogg', 'wav', 'm4a'].includes(ext)) {
         return (
-            <div>
-                <Label className="mb-1 block">Audio Pendukung</Label>
-                <audio controls src={`/storage/${url}`} className="w-full" />
+            <div className="my-3">
+                <Label className="mb-2 block text-sm font-medium">Audio Pendukung</Label>
+                <audio controls src={`/storage/${url}`} className="w-full max-w-sm" />
             </div>
         );
     }
@@ -69,7 +77,14 @@ export default function SoalTes({ jadwal, soal }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [jawaban, setJawaban] = useState<Record<number, string[]>>({});
     const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(60 * 60);
+
+    // Gunakan durasi dari database (dalam menit), default 60 menit jika null
+    const durasiMenit = jadwal.durasi || 60;
+    const [timeLeft, setTimeLeft] = useState(durasiMenit * 60); // konversi ke detik
+
+    // Debug log untuk memastikan durasi terkirim dengan benar
+    console.log('Durasi tes dari database:', jadwal.durasi, 'menit');
+    console.log('Durasi yang digunakan:', durasiMenit, 'menit =', durasiMenit * 60, 'detik');
 
     useEffect(() => {
         if (soal.length === 0) return;
@@ -142,10 +157,10 @@ export default function SoalTes({ jadwal, soal }: Props) {
 
         if (['esai', 'essay_gambar', 'essay_audio'].includes(s.jenis_soal)) {
             return (
-                <div className="mt-4 space-y-4">
+                <div className="mt-4 space-y-3">
                     {s.media && renderMedia(s.media)}
                     <div>
-                        <Label htmlFor={`soal_${s.id}_essay`} className="mb-1 block">
+                        <Label htmlFor={`soal_${s.id}_essay`} className="mb-2 block text-sm font-medium">
                             Jawaban Anda
                         </Label>
                         <Textarea
@@ -153,6 +168,7 @@ export default function SoalTes({ jadwal, soal }: Props) {
                             placeholder="Tulis jawaban Anda di sini..."
                             value={jawaban[s.id]?.[0] || ''}
                             onChange={(e) => setJawaban({ ...jawaban, [s.id]: [e.target.value] })}
+                            className="min-h-[120px] resize-y"
                         />
                     </div>
                 </div>

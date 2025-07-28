@@ -14,6 +14,7 @@ class Jadwal extends Model
         'tanggal_berakhir',
         'status',
         'auto_close',
+        'durasi',
         'user_id',
         'id_jadwal_sebelumnya',
         'kategori_tes_id',
@@ -57,11 +58,63 @@ class Jadwal extends Model
      */
     public function kategori()
     {
-        return $this->belongsTo(KategoriTes::class, 'kategori_tes_id')->withTrashed();
+        return $this->belongsTo(\App\Models\KategoriTes::class, 'kategori_tes_id');
     }
 
     public function hasil()
     {
         return $this->hasMany(\App\Models\HasilTestPeserta::class, 'id_jadwal', 'id');
+    }
+
+    /**
+     * Check dan update status jadwal berdasarkan tanggal berakhir
+     */
+    public function checkAndUpdateStatus()
+    {
+        $now = \Carbon\Carbon::now();
+        $tanggalBerakhir = $this->tanggal_berakhir instanceof \Carbon\Carbon
+            ? $this->tanggal_berakhir
+            : \Carbon\Carbon::parse($this->tanggal_berakhir);
+
+        $shouldBeClosed = $now->gt($tanggalBerakhir);
+
+        if ($shouldBeClosed && $this->status === 'Buka') {
+            $this->update(['status' => 'Tutup']);
+            \Illuminate\Support\Facades\Log::info("Auto-closed jadwal: {$this->nama_jadwal} (ID: {$this->id})");
+        }
+
+        return $shouldBeClosed ? 'Tutup' : 'Buka';
+    }
+
+    /**
+     * Get real-time status (akan auto-update jika diperlukan)
+     */
+    public function getRealTimeStatus()
+    {
+        return $this->checkAndUpdateStatus();
+    }
+
+    /**
+     * Static method untuk bulk update status expired jadwal
+     */
+    public static function updateExpiredJadwalStatus()
+    {
+        $now = \Carbon\Carbon::now();
+
+        $expiredJadwal = self::where('status', 'Buka')
+            ->where('tanggal_berakhir', '<', $now)
+            ->get();
+
+        $updatedCount = 0;
+        foreach ($expiredJadwal as $jadwal) {
+            $jadwal->update(['status' => 'Tutup']);
+            $updatedCount++;
+        }
+
+        if ($updatedCount > 0) {
+            \Illuminate\Support\Facades\Log::info("Bulk updated {$updatedCount} expired jadwal to Tutup status");
+        }
+
+        return $updatedCount;
     }
 }

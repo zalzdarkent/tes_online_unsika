@@ -9,6 +9,7 @@ use App\Models\Jadwal;
 use App\Models\HasilTestPeserta;
 use App\Models\Soal;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 
 class PesertaTesController extends Controller
@@ -18,16 +19,49 @@ class PesertaTesController extends Controller
      */
     public function index()
     {
-        $userId = auth()->id();
+        // Auto-update expired jadwal status setiap kali ada request
+        Jadwal::updateExpiredJadwalStatus();
+
+        $userId = Auth::id();
+        $now = now();
+
+        // Debug: Hitung total jadwal di database
+        $totalJadwalInDB = Jadwal::count();
+
+        // Debug: Hitung jadwal berdasarkan kondisi terpisah
+        $jadwalStatusBuka = Jadwal::get()->filter(function($item) use ($now) {
+            $tanggalBerakhir = $item->tanggal_berakhir instanceof \Carbon\Carbon
+                ? $item->tanggal_berakhir
+                : \Carbon\Carbon::parse($item->tanggal_berakhir);
+            return !$now->gt($tanggalBerakhir); // Status Buka jika belum melewati tanggal berakhir
+        })->count();
+
+        $jadwalBelumDikerjakan = Jadwal::whereDoesntHave('hasil', function ($query) use ($userId) {
+            $query->where('id_user', $userId);
+        })->count();
 
         $jadwal = Jadwal::with('jadwalSebelumnya')
-            ->whereDate('tanggal_mulai', '<=', now())
-            ->whereDate('tanggal_berakhir', '>=', now())
+            // TIDAK ada filter user_id karena peserta harus bisa lihat semua jadwal tes
+            // HAPUS filter tanggal mulai - tampilkan semua jadwal
+            // ->where('tanggal_mulai', '<=', $now) // DIHAPUS
+            // ->where('tanggal_berakhir', '>=', $now) // DIHAPUS - akan difilter di map()
             ->whereDoesntHave('hasil', function ($query) use ($userId) {
                 $query->where('id_user', $userId);
             })
             ->get()
-            ->map(function ($item) use ($userId) {
+            ->map(function ($item) use ($userId, $now) {
+                // Hitung status seperti di JadwalController
+                $tanggalBerakhir = $item->tanggal_berakhir instanceof \Carbon\Carbon
+                    ? $item->tanggal_berakhir
+                    : \Carbon\Carbon::parse($item->tanggal_berakhir);
+                $status = ($now->gt($tanggalBerakhir)) ? 'Tutup' : 'Buka';
+
+                // Hanya tampilkan yang statusnya Buka
+                if ($status !== 'Buka') {
+                    return null;
+                }
+
+                $item->status = $status;
                 $item->sudah_kerjakan_jadwal_sebelumnya = true;
                 if ($item->jadwalSebelumnya) {
                     $item->sudah_kerjakan_jadwal_sebelumnya = HasilTestPeserta::where('id_user', $userId)
@@ -35,10 +69,21 @@ class PesertaTesController extends Controller
                         ->exists();
                 }
                 return $item;
-            });
+            })
+            ->filter() // Hapus item yang null (status Tutup)
+            ->values(); // Reset array keys setelah filter
 
         return Inertia::render('peserta/daftar-tes/index', [
             'jadwal' => $jadwal,
+            'debug' => [
+                'total_jadwal_in_db' => $totalJadwalInDB,
+                'jadwal_status_buka' => $jadwalStatusBuka,
+                'jadwal_belum_dikerjakan' => $jadwalBelumDikerjakan,
+                'total_jadwal_found' => $jadwal->count(),
+                'current_time' => $now->format('Y-m-d H:i:s'),
+                'user_id' => $userId,
+                'note' => 'Filter: Hanya tampilkan jadwal dengan status BUKA (tanggal_berakhir >= sekarang)',
+            ],
         ]);
     }
 
@@ -106,7 +151,7 @@ class PesertaTesController extends Controller
             'jadwal_id' => 'required|exists:jadwal,id',
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
         $jadwalId = $request->jadwal_id;
         $jawabanPeserta = $request->jawaban;
 
@@ -161,7 +206,7 @@ class PesertaTesController extends Controller
 
     public function riwayat()
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
 
         $riwayat = HasilTestPeserta::select(
             'id_jadwal',

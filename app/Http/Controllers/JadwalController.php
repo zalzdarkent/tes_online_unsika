@@ -29,26 +29,29 @@ class JadwalController extends Controller
 
     public function index()
     {
+        // Auto-update expired jadwal status setiap kali ada request
+        Jadwal::updateExpiredJadwalStatus();
+
         // Hanya tampilkan jadwal milik user yang sedang login
         $userId = Auth::id();
         $jadwal = Jadwal::where('user_id', $userId)
+            ->with('kategori') // Load relasi kategori
             ->orderBy('created_at', 'asc')
             ->get()
             ->map(function ($item) {
-                $now = now();
-                $tanggalBerakhir = $item->tanggal_berakhir instanceof \Carbon\Carbon
-                    ? $item->tanggal_berakhir
-                    : \Carbon\Carbon::parse($item->tanggal_berakhir);
-                $status = ($now->gt($tanggalBerakhir)) ? 'Tutup' : 'Buka';
+                // Status sudah diupdate otomatis di atas, langsung ambil dari database
                 return [
                     'id' => $item->id,
                     'nama_jadwal' => $item->nama_jadwal,
                     'tanggal_mulai' => $item->tanggal_mulai,
                     'tanggal_berakhir' => $item->tanggal_berakhir,
-                    'status' => $status,
+                    'status' => $item->status, // Langsung ambil dari database
                     'auto_close' => $item->auto_close,
                     'user_id' => $item->user_id,
                     'id_jadwal_sebelumnya' => $item->id_jadwal_sebelumnya,
+                    'durasi' => $item->durasi,
+                    'kategori' => $item->kategori ? $item->kategori->nama : '-',
+                    'kategori_tes_id' => $item->kategori_tes_id,
                     'created_at' => $item->created_at,
                     'updated_at' => $item->updated_at,
                 ];
@@ -57,6 +60,7 @@ class JadwalController extends Controller
         // return inertia rendering the index view with jadwal data
         return inertia('jadwal/jadwal', [
             'jadwal' => $jadwal,
+            'kategoriTes' => \App\Models\KategoriTes::where('user_id', $userId)->get(['id', 'nama']),
         ]);
     }
 
@@ -81,6 +85,8 @@ class JadwalController extends Controller
             // 'status' dihapus, otomatis diisi
             'auto_close' => 'boolean',
             'id_jadwal_sebelumnya' => 'nullable|exists:jadwal,id',
+            'kategori_tes_id' => 'nullable|exists:kategori_tes,id',
+            'durasi' => 'nullable|integer|min:1|max:1440', // maksimal 24 jam (1440 menit)
         ], [
             'nama_jadwal.required' => 'Nama jadwal wajib diisi.',
             'tanggal_mulai.required' => 'Tanggal mulai wajib diisi.',
@@ -90,6 +96,10 @@ class JadwalController extends Controller
             'tanggal_berakhir.after' => 'Tanggal berakhir harus setelah tanggal mulai.',
             // 'status' dihapus
             'id_jadwal_sebelumnya.exists' => 'Jadwal sebelumnya tidak valid.',
+            'kategori_tes_id.exists' => 'Kategori tes tidak valid.',
+            'durasi.integer' => 'Durasi harus berupa angka.',
+            'durasi.min' => 'Durasi minimal 1 menit.',
+            'durasi.max' => 'Durasi maksimal 1440 menit (24 jam).',
         ]);
 
         $userId = Auth::id();
@@ -182,8 +192,16 @@ class JadwalController extends Controller
      */
     public function edit(string $id)
     {
-        $jadwal = Jadwal::findOrFail($id);
-        return response()->json($jadwal);
+        $userId = Auth::id();
+        $jadwal = Jadwal::where('id', $id)
+            ->where('user_id', $userId)
+            ->with('kategori')
+            ->firstOrFail();
+
+        return response()->json([
+            'jadwal' => $jadwal,
+            'kategoriTes' => \App\Models\KategoriTes::where('user_id', $userId)->get(['id', 'nama']),
+        ]);
     }
 
     /**
@@ -206,6 +224,8 @@ class JadwalController extends Controller
             // 'status' dihapus, otomatis diisi
             'auto_close' => 'boolean',
             'id_jadwal_sebelumnya' => 'nullable|exists:jadwal,id',
+            'kategori_tes_id' => 'nullable|exists:kategori_tes,id',
+            'durasi' => 'nullable|integer|min:1|max:1440', // maksimal 24 jam (1440 menit)
         ], [
             'nama_jadwal.required' => 'Nama jadwal wajib diisi.',
             'tanggal_mulai.required' => 'Tanggal mulai wajib diisi.',
@@ -215,6 +235,10 @@ class JadwalController extends Controller
             'tanggal_berakhir.after' => 'Tanggal berakhir harus setelah tanggal mulai.',
             // 'status' dihapus
             'id_jadwal_sebelumnya.exists' => 'Jadwal sebelumnya tidak valid.',
+            'kategori_tes_id.exists' => 'Kategori tes tidak valid.',
+            'durasi.integer' => 'Durasi harus berupa angka.',
+            'durasi.min' => 'Durasi minimal 1 menit.',
+            'durasi.max' => 'Durasi maksimal 1440 menit (24 jam).',
         ]);
 
         // Validasi unique nama_jadwal per user (kecuali untuk jadwal yang sedang diedit)

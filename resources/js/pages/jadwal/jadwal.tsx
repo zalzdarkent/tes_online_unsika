@@ -98,6 +98,9 @@ type JadwalData = {
     status: string;
     auto_close?: boolean;
     id_jadwal_sebelumnya: number | null;
+    durasi: number | null;
+    kategori: string;
+    kategori_tes_id: number | null;
     created_at: string;
     updated_at: string;
 };
@@ -105,6 +108,13 @@ type JadwalData = {
 // Type untuk props yang diterima dari controller
 type JadwalProps = {
     jadwal: JadwalData[];
+    kategoriTes: KategoriTesData[];
+};
+
+// Type untuk kategori tes
+type KategoriTesData = {
+    id: number;
+    nama: string;
 };
 
 // Komponen untuk tombol hapus individual dengan dialog konfirmasi
@@ -161,7 +171,7 @@ function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete
     );
 }
 
-export default function Jadwal({ jadwal }: JadwalProps) {
+export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
     const { toast } = useToast();
 
     console.log("Jadwal component rendered with:", jadwal?.length || 0, "items");
@@ -339,10 +349,33 @@ export default function Jadwal({ jadwal }: JadwalProps) {
             },
         },
         {
+            accessorKey: "kategori",
+            header: "Kategori",
+            enableSorting: true,
+            enableHiding: true,
+            cell: ({ row }) => {
+                const kategori = row.getValue("kategori") as string;
+                return <div className="text-muted-foreground">{kategori || '-'}</div>;
+            },
+        },
+        {
+            accessorKey: "durasi",
+            header: "Durasi (menit)",
+            enableSorting: true,
+            enableHiding: true,
+            cell: ({ row }) => {
+                const durasi = row.getValue("durasi") as number | null;
+                return <div className="text-muted-foreground">{durasi ? `${durasi} menit` : '-'}</div>;
+            },
+        },
+        {
             accessorKey: "id_jadwal_sebelumnya",
             header: "Jadwal Sebelumnya",
             enableSorting: true,
             enableHiding: true,
+            meta: {
+                defaultHidden: true,
+            },
             cell: ({ row }) => {
                 const idJadwalSebelumnya = row.getValue("id_jadwal_sebelumnya") as number | null;
                 const namaJadwal = findJadwalNameById(idJadwalSebelumnya);
@@ -385,6 +418,7 @@ export default function Jadwal({ jadwal }: JadwalProps) {
                                 }
                                 jadwal={jadwalItem}
                                 allJadwal={jadwal || []}
+                                kategoriTes={kategoriTes || []}
                                 onSuccess={handleEditJadwal}
                             />
                             <DeleteJadwalButton
@@ -414,6 +448,7 @@ export default function Jadwal({ jadwal }: JadwalProps) {
                             </Button>
                         }
                         allJadwal={jadwal || []}
+                        kategoriTes={kategoriTes || []}
                         onSuccess={handleAddJadwal}
                     />
                 </div>
@@ -423,6 +458,9 @@ export default function Jadwal({ jadwal }: JadwalProps) {
                     searchColumn="nama_jadwal"
                     searchPlaceholder="Cari jadwal..."
                     onBulkDelete={handleBulkDelete}
+                    initialColumnVisibility={{
+                        id_jadwal_sebelumnya: false
+                    }}
                     emptyMessage={
                         <div className="text-center w-full py-8 text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>
                     }
