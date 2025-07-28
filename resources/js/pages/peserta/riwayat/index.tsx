@@ -27,7 +27,7 @@ export default function RiwayatTes({ riwayat }: Props) {
         },
         {
             accessorKey: 'waktu_ujian',
-            header: 'Waktu Ujian',
+            header: 'Waktu Mengerjakan',
             cell: ({ row }) => formatDateTime(row.original.waktu_ujian),
         },
         // {
@@ -46,6 +46,7 @@ export default function RiwayatTes({ riwayat }: Props) {
             <div className="space-y-6 p-6">
                 <h1 className="text-2xl font-bold">Riwayat Tes</h1>
 
+                {/* <div className="mx-auto md:max-w-3xl"> */}
                 <DataTable
                     columns={columns}
                     data={riwayat}
@@ -53,6 +54,7 @@ export default function RiwayatTes({ riwayat }: Props) {
                     searchPlaceholder="Cari nama tes..."
                     emptyMessage={<div className="w-full py-8 text-center text-gray-500">Belum ada tes yang dikerjakan.</div>}
                 />
+                {/* </div> */}
             </div>
         </AppLayout>
     );

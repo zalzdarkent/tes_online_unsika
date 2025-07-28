@@ -17,25 +17,33 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { Head, router } from '@inertiajs/react';
+import 'katex/dist/katex.min.css';
 import { Menu } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { BlockMath } from 'react-katex';
 
 interface Soal {
     id: number;
     pertanyaan: string;
-    jenis_soal: 'pilihan_ganda' | 'multi_choice' | 'esai' | 'essay_gambar' | 'essay_audio';
+    jenis_soal: 'pilihan_ganda' | 'multi_choice' | 'esai' | 'essay_gambar' | 'essay_audio' | 'skala' | 'equation';
     opsi_a?: string;
     opsi_b?: string;
     opsi_c?: string;
     opsi_d?: string;
     media?: string;
+
+    // untuk skala
+    skala_min?: number;
+    skala_maks?: number;
+    skala_label_min?: string;
+    skala_label_maks?: string;
 }
 
 interface Props {
     jadwal: {
         id: number;
         nama_jadwal: string;
-        durasi: number | null; // durasi dalam menit
+        durasi: number | null;
     };
     soal: Soal[];
 }
@@ -49,14 +57,12 @@ const renderMedia = (url: string) => {
         return (
             <div className="my-3">
                 <Label className="mb-2 block text-sm font-medium">Gambar Pendukung</Label>
-                <div className="flex justify-center">
-                    <img
-                        src={`/storage/${url}`}
-                        alt="Gambar Soal"
-                        className="max-w-sm max-h-60 w-auto h-auto rounded-md border shadow-sm object-contain"
-                        style={{ maxWidth: '300px', maxHeight: '240px' }}
-                    />
-                </div>
+                <img
+                    src={`/storage/${url}`}
+                    alt="Gambar Soal"
+                    className="h-auto max-h-60 w-auto max-w-sm rounded-md border object-contain shadow-sm"
+                    style={{ maxWidth: '300px', maxHeight: '240px' }}
+                />
             </div>
         );
     }
@@ -78,13 +84,8 @@ export default function SoalTes({ jadwal, soal }: Props) {
     const [jawaban, setJawaban] = useState<Record<number, string[]>>({});
     const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
 
-    // Gunakan durasi dari database (dalam menit), default 60 menit jika null
     const durasiMenit = jadwal.durasi || 60;
     const [timeLeft, setTimeLeft] = useState(durasiMenit * 60); // konversi ke detik
-
-    // Debug log untuk memastikan durasi terkirim dengan benar
-    console.log('Durasi tes dari database:', jadwal.durasi, 'menit');
-    console.log('Durasi yang digunakan:', durasiMenit, 'menit =', durasiMenit * 60, 'detik');
 
     useEffect(() => {
         if (soal.length === 0) return;
@@ -169,6 +170,81 @@ export default function SoalTes({ jadwal, soal }: Props) {
                             value={jawaban[s.id]?.[0] || ''}
                             onChange={(e) => setJawaban({ ...jawaban, [s.id]: [e.target.value] })}
                             className="min-h-[120px] resize-y"
+                        />
+                    </div>
+                </div>
+            );
+        }
+
+        if (s.jenis_soal === 'skala') {
+            const skalaMin = s.skala_min ?? 1;
+            const skalaMaks = s.skala_maks ?? 5;
+            const labelMin = s.skala_label_min ?? 'Sangat Tidak Setuju';
+            const labelMaks = s.skala_label_maks ?? 'Sangat Setuju';
+
+            const range = Array.from({ length: skalaMaks - skalaMin + 1 }, (_, i) => skalaMin + i);
+
+            return (
+                <div className="mt-4">
+                    <RadioGroup
+                        value={jawaban[s.id]?.[0] || ''}
+                        onValueChange={(val) => setJawaban({ ...jawaban, [s.id]: [val] })}
+                        className="space-y-2"
+                    >
+                        {/* Grid Container */}
+                        <div
+                            className="grid items-center gap-y-2"
+                            style={{
+                                gridTemplateColumns: `auto repeat(${range.length}, minmax(0, 1fr)) auto`,
+                            }}
+                        >
+                            {/* Label Min (left) */}
+                            <div className="text-center text-sm">{labelMin}</div>
+
+                            {/* Angka Skala */}
+                            {range.map((val) => (
+                                <div key={`angka_${val}`} className="text-center text-sm">
+                                    {val}
+                                </div>
+                            ))}
+
+                            {/* Label Max (right) */}
+                            <div className="text-center text-sm">{labelMaks}</div>
+
+                            {/* Spacer kiri */}
+                            <div></div>
+
+                            {/* Radio Items */}
+                            {range.map((val) => (
+                                <div key={`radio_${val}`} className="flex justify-center">
+                                    <RadioGroupItem value={String(val)} id={`skala_${s.id}_${val}`} className="size-6 cursor-pointer md:size-8" />
+                                </div>
+                            ))}
+
+                            {/* Spacer kanan */}
+                            <div></div>
+                        </div>
+                    </RadioGroup>
+                </div>
+            );
+        }
+
+        if (s.jenis_soal === 'equation') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <p className="text-sm text-muted-foreground">Soal Equation (LaTeX):</p>
+                    <div className="rounded-md border p-4">
+                        <BlockMath math={s.pertanyaan} />
+                    </div>
+                    <div>
+                        <Label htmlFor={`soal_${s.id}_jawaban`} className="block font-medium">
+                            Jawaban Anda (LaTeX)
+                        </Label>
+                        <Textarea
+                            id={`soal_${s.id}_jawaban`}
+                            placeholder="Tulis jawaban dalam format LaTeX..."
+                            value={jawaban[s.id]?.[0] || ''}
+                            onChange={(e) => setJawaban({ ...jawaban, [s.id]: [e.target.value] })}
                         />
                     </div>
                 </div>
@@ -291,7 +367,7 @@ export default function SoalTes({ jadwal, soal }: Props) {
                 </Sheet>
 
                 {/* Main Content */}
-                <div className="mt-4 flex-1 p-6 md:mt-0">
+                <div className="mx-auto mt-4 flex-1 p-6 md:mt-0 md:max-w-4xl">
                     <div className="space-y-4 p-4">
                         <div>
                             <div className="mb-2 flex items-center justify-between">
