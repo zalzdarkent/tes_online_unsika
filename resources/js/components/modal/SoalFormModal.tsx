@@ -34,7 +34,10 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
   const [jawabanBenarMulti, setJawabanBenarMulti] = useState<string[]>([]);
   const [skor, setSkor] = useState(1);
   const [media, setMedia] = useState<File | null>(null);
-  const [tipeSkala, setTipeSkala] = useState('');
+  const [skalaMin, setSkalaMin] = useState(1);
+  const [skalaMaks, setSkalaMaks] = useState(5);
+  const [skalaLabelMin, setSkalaLabelMin] = useState('');
+  const [skalaLabelMaks, setSkalaLabelMaks] = useState('');
   const [equation, setEquation] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -47,8 +50,12 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
     setJawabanBenarMulti([]);
     setSkor(1);
     setMedia(null);
-    setTipeSkala('');
+    setSkalaMin(1);
+    setSkalaMaks(5);
+    setSkalaLabelMin('');
+    setSkalaLabelMaks('');
     setEquation('');
+    setErrors({});
   };
 
   // Handler submit
@@ -67,6 +74,17 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
         if (!o.trim()) newErrors[`opsi_${i}`] = `Opsi ${String.fromCharCode(65 + i)} wajib diisi.`;
       });
       if (jawabanBenarMulti.length === 0) newErrors.jawabanBenarMulti = 'Pilih minimal satu jawaban benar.';
+    }
+    // Validasi untuk skala
+    if (tipeJawaban === 'skala') {
+      if (skalaMin >= skalaMaks) newErrors.skala = 'Nilai minimum harus lebih kecil dari maksimum.';
+      if (!skalaLabelMin.trim()) newErrors.skalaLabelMin = 'Label minimum wajib diisi.';
+      if (!skalaLabelMaks.trim()) newErrors.skalaLabelMaks = 'Label maksimum wajib diisi.';
+      if (!jawabanBenar.trim()) newErrors.jawabanBenar = 'Jawaban benar (nilai target) wajib diisi.';
+      const jawabanBenarNum = Number(jawabanBenar);
+      if (isNaN(jawabanBenarNum) || jawabanBenarNum < skalaMin || jawabanBenarNum > skalaMaks) {
+        newErrors.jawabanBenar = `Jawaban benar harus berupa angka antara ${skalaMin} dan ${skalaMaks}.`;
+      }
     }
     // Validasi wajib untuk essay
     if (
@@ -89,7 +107,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
       toast({
         title: 'Gagal menyimpan soal',
         description: Object.values(newErrors).join(' '),
-        status: 'error',
+        variant: 'destructive',
       });
       return;
     }
@@ -123,6 +141,13 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
       ) {
         formData.append('jawaban_benar', jawabanBenar);
       }
+      if (tipeJawaban === 'skala') {
+        formData.append('skala_min', String(skalaMin));
+        formData.append('skala_maks', String(skalaMaks));
+        formData.append('skala_label_min', skalaLabelMin);
+        formData.append('skala_label_maks', skalaLabelMaks);
+        formData.append('jawaban_benar', jawabanBenar);
+      }
       formData.append('media', media);
       // Tambahkan field lain sesuai kebutuhan
       router.post(`/jadwal/soal`, formData, {
@@ -133,7 +158,6 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
           toast({
             title: 'Berhasil',
             description: 'Soal berhasil ditambahkan!',
-            status: 'success',
           });
           if (onSuccess) onSuccess();
         },
@@ -143,7 +167,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
           toast({
             title: 'Gagal menyimpan soal',
             description: err && typeof err === 'object' ? Object.values(err).join(' ') : String(err),
-            status: 'error',
+            variant: 'destructive',
           });
           if (err) setErrors(err);
         },
@@ -178,6 +202,13 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
       ) {
         payload.jawaban_benar = jawabanBenar;
       }
+      if (tipeJawaban === 'skala') {
+        payload.skala_min = skalaMin;
+        payload.skala_maks = skalaMaks;
+        payload.skala_label_min = skalaLabelMin;
+        payload.skala_label_maks = skalaLabelMaks;
+        payload.jawaban_benar = jawabanBenar;
+      }
       // Tambahkan field lain sesuai kebutuhan
       router.post(`/jadwal/soal`, payload, {
         onSuccess: () => {
@@ -187,7 +218,6 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
           toast({
             title: 'Berhasil',
             description: 'Soal berhasil ditambahkan!',
-            status: 'success',
           });
           if (onSuccess) onSuccess();
         },
@@ -196,7 +226,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
           toast({
             title: 'Gagal menyimpan soal',
             description: err && typeof err === 'object' ? Object.values(err).join(' ') : String(err),
-            status: 'error',
+            variant: 'destructive',
           });
           if (err) setErrors(err);
         },
@@ -229,7 +259,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
                   <input
                     type="checkbox"
                     checked={jawabanBenarMulti.includes(String.fromCharCode(65 + idx))}
-                    onChange={e => {
+                    onChange={() => {
                       const key = String.fromCharCode(65 + idx);
                       setJawabanBenarMulti(jawabanBenarMulti.includes(key)
                         ? jawabanBenarMulti.filter(j => j !== key)
@@ -276,9 +306,65 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: {
   const renderSkalaInput = () => {
     if (tipeJawaban === 'skala') {
       return (
-        <div>
-          <label className="block font-medium mb-1">Tipe Skala</label>
-          <Input placeholder="Tipe Skala (misal: likert, rating, dst)" value={tipeSkala} onChange={e => setTipeSkala(e.target.value)} />
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block font-medium mb-1">Rentang Minimum</label>
+              <Input
+                type="number"
+                min={1}
+                value={skalaMin}
+                onChange={e => setSkalaMin(Number(e.target.value))}
+                placeholder="1"
+              />
+              {errors.skala && <span className="text-red-500 text-xs">{errors.skala}</span>}
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Rentang Maksimum</label>
+              <Input
+                type="number"
+                min={2}
+                value={skalaMaks}
+                onChange={e => setSkalaMaks(Number(e.target.value))}
+                placeholder="5"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block font-medium mb-1">Label Minimum</label>
+              <Input
+                placeholder="Sangat Tidak Setuju"
+                value={skalaLabelMin}
+                onChange={e => setSkalaLabelMin(e.target.value)}
+              />
+              {errors.skalaLabelMin && <span className="text-red-500 text-xs">{errors.skalaLabelMin}</span>}
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Label Maksimum</label>
+              <Input
+                placeholder="Sangat Setuju"
+                value={skalaLabelMaks}
+                onChange={e => setSkalaLabelMaks(e.target.value)}
+              />
+              {errors.skalaLabelMaks && <span className="text-red-500 text-xs">{errors.skalaLabelMaks}</span>}
+            </div>
+          </div>
+          <div>
+            <label className="block font-medium mb-1">Nilai Target</label>
+            <Input
+              type="number"
+              min={skalaMin}
+              max={skalaMaks}
+              value={jawabanBenar}
+              onChange={e => setJawabanBenar(e.target.value)}
+              placeholder={`Nilai antara ${skalaMin} - ${skalaMaks}`}
+            />
+            {errors.jawabanBenar && <span className="text-red-500 text-xs">{errors.jawabanBenar}</span>}
+            <div className="text-xs text-gray-500 mt-1">
+              Preview: {skalaMin} ({skalaLabelMin}) ... {skalaMaks} ({skalaLabelMaks})
+            </div>
+          </div>
         </div>
       );
     }

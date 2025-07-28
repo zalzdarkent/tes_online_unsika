@@ -41,6 +41,11 @@ class SoalController extends Controller
             // Untuk multi_choice, jawaban_benar bisa array
             'jawaban_benar' => 'nullable',
             'media' => 'nullable|file|mimes:jpg,jpeg,png,mp3,mpeg|max:5120', // 5120 KB = 5 MB
+            // Validasi untuk skala
+            'skala_min' => 'nullable|integer|min:1',
+            'skala_maks' => 'nullable|integer|min:2',
+            'skala_label_min' => 'nullable|string|max:255',
+            'skala_label_maks' => 'nullable|string|max:255',
         ]);
 
         // Handle jawaban_benar untuk multi_choice
@@ -54,11 +59,33 @@ class SoalController extends Controller
             }
         }
 
+        // Validasi khusus untuk skala
+        if ($request->jenis_soal === 'skala') {
+            $request->validate([
+                'skala_min' => 'required|integer|min:1',
+                'skala_maks' => 'required|integer|min:2|gt:skala_min',
+                'skala_label_min' => 'required|string|max:255',
+                'skala_label_maks' => 'required|string|max:255',
+                'jawaban_benar' => 'required|numeric|between:' . $request->skala_min . ',' . $request->skala_maks,
+            ], [
+                'skala_maks.gt' => 'Nilai maksimum harus lebih besar dari nilai minimum.',
+                'jawaban_benar.between' => 'Jawaban benar harus berada dalam rentang skala yang ditentukan.',
+            ]);
+        }
+
         // Handle file upload jika ada media
         if ($request->hasFile('media')) {
             $file = $request->file('media');
             $path = $file->store('soal_media', 'public');
             $validated['media'] = $path;
+        }
+
+        // Tambahkan data skala jika jenis soal adalah skala
+        if ($request->jenis_soal === 'skala') {
+            $validated['skala_min'] = $request->skala_min;
+            $validated['skala_maks'] = $request->skala_maks;
+            $validated['skala_label_min'] = $request->skala_label_min;
+            $validated['skala_label_maks'] = $request->skala_label_maks;
         }
 
         // Simpan ke database

@@ -18,7 +18,10 @@ class Soal extends Model
         'opsi_d',
         'jawaban_benar',
         'media',
-        'tipe_skala',
+        'skala_min',
+        'skala_maks',
+        'skala_label_min',
+        'skala_label_maks',
         'equation',
         'skor'
     ];

@@ -88,6 +88,10 @@ interface SoalData {
     jawaban_benar: string;
     skor: number;
     media?: string;
+    skala_min?: number;
+    skala_maks?: number;
+    skala_label_min?: string;
+    skala_label_maks?: string;
     created_at: string;
     updated_at: string;
 }
@@ -320,92 +324,179 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                     </svg>
                                     Pilihan Jawaban
                                 </h3>
+                                {selectedSoal.jenis_soal === 'multi_choice' && (
+                                    <div className="mb-3 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md p-2">
+                                        <strong>Multi Jawaban:</strong> Soal ini memiliki lebih dari satu jawaban benar
+                                    </div>
+                                )}
                                 <div className="space-y-3">
-                                    {selectedSoal.opsi_a && (
-                                        <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${selectedSoal.jawaban_benar.toLowerCase() === 'a'
-                                                ? 'bg-green-50 border-2 border-green-200'
-                                                : 'bg-blue-100 border border-blue-200'
-                                            }`}>
-                                            <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${selectedSoal.jawaban_benar.toLowerCase() === 'a'
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-gray-300 text-gray-700'
-                                                }`}>
-                                                A
-                                            </span>
-                                            <span className="text-gray-800">{selectedSoal.opsi_a}</span>
-                                            {selectedSoal.jawaban_benar.toLowerCase() === 'a' && (
-                                                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    )}
+                                    {(() => {
+                                        // Helper function untuk mengecek apakah opsi adalah jawaban benar
+                                        const isCorrectAnswer = (option: string) => {
+                                            const jawabanBenar = selectedSoal.jawaban_benar.toLowerCase();
+                                            // Untuk multi choice, jawaban bisa berupa "a,c" atau "b,d", dll
+                                            // Untuk pilihan ganda biasa, jawaban berupa "a", "b", dll
+                                            return jawabanBenar.includes(option.toLowerCase());
+                                        };
 
-                                    {selectedSoal.opsi_b && (
-                                        <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${selectedSoal.jawaban_benar.toLowerCase() === 'b'
-                                                ? 'bg-green-50 border-2 border-green-200'
-                                                : 'bg-blue-100 border border-blue-200'
-                                            }`}>
-                                            <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${selectedSoal.jawaban_benar.toLowerCase() === 'b'
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-gray-300 text-gray-700'
-                                                }`}>
-                                                B
-                                            </span>
-                                            <span className="text-gray-800">{selectedSoal.opsi_b}</span>
-                                            {selectedSoal.jawaban_benar.toLowerCase() === 'b' && (
-                                                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    )}
+                                        return (
+                                            <>
+                                                {selectedSoal.opsi_a && (
+                                                    <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${isCorrectAnswer('a')
+                                                            ? 'bg-green-50 border-2 border-green-200'
+                                                            : 'bg-blue-100 border border-blue-200'
+                                                        }`}>
+                                                        <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${isCorrectAnswer('a')
+                                                                ? 'bg-green-500 text-white'
+                                                                : 'bg-gray-300 text-gray-700'
+                                                            }`}>
+                                                            A
+                                                        </span>
+                                                        <span className="text-gray-800">{selectedSoal.opsi_a}</span>
+                                                        {isCorrectAnswer('a') && (
+                                                            <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                )}
 
-                                    {selectedSoal.opsi_c && (
-                                        <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${selectedSoal.jawaban_benar.toLowerCase() === 'c'
-                                                ? 'bg-green-50 border-2 border-green-200'
-                                                : 'bg-blue-100 border border-blue-200'
-                                            }`}>
-                                            <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${selectedSoal.jawaban_benar.toLowerCase() === 'c'
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-gray-300 text-gray-700'
-                                                }`}>
-                                                C
-                                            </span>
-                                            <span className="text-gray-800">{selectedSoal.opsi_c}</span>
-                                            {selectedSoal.jawaban_benar.toLowerCase() === 'c' && (
-                                                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    )}
+                                                {selectedSoal.opsi_b && (
+                                                    <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${isCorrectAnswer('b')
+                                                            ? 'bg-green-50 border-2 border-green-200'
+                                                            : 'bg-blue-100 border border-blue-200'
+                                                        }`}>
+                                                        <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${isCorrectAnswer('b')
+                                                                ? 'bg-green-500 text-white'
+                                                                : 'bg-gray-300 text-gray-700'
+                                                            }`}>
+                                                            B
+                                                        </span>
+                                                        <span className="text-gray-800">{selectedSoal.opsi_b}</span>
+                                                        {isCorrectAnswer('b') && (
+                                                            <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                )}
 
-                                    {selectedSoal.opsi_d && (
-                                        <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${selectedSoal.jawaban_benar.toLowerCase() === 'd'
-                                                ? 'bg-green-50 border-2 border-green-200'
-                                                : 'bg-blue-100 border border-blue-200'
-                                            }`}>
-                                            <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${selectedSoal.jawaban_benar.toLowerCase() === 'd'
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-gray-300 text-gray-700'
-                                                }`}>
-                                                D
-                                            </span>
-                                            <span className="text-gray-800">{selectedSoal.opsi_d}</span>
-                                            {selectedSoal.jawaban_benar.toLowerCase() === 'd' && (
-                                                <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    )}
+                                                {selectedSoal.opsi_c && (
+                                                    <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${isCorrectAnswer('c')
+                                                            ? 'bg-green-50 border-2 border-green-200'
+                                                            : 'bg-blue-100 border border-blue-200'
+                                                        }`}>
+                                                        <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${isCorrectAnswer('c')
+                                                                ? 'bg-green-500 text-white'
+                                                                : 'bg-gray-300 text-gray-700'
+                                                            }`}>
+                                                            C
+                                                        </span>
+                                                        <span className="text-gray-800">{selectedSoal.opsi_c}</span>
+                                                        {isCorrectAnswer('c') && (
+                                                            <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {selectedSoal.opsi_d && (
+                                                    <div className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${isCorrectAnswer('d')
+                                                            ? 'bg-green-50 border-2 border-green-200'
+                                                            : 'bg-blue-100 border border-blue-200'
+                                                        }`}>
+                                                        <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${isCorrectAnswer('d')
+                                                                ? 'bg-green-500 text-white'
+                                                                : 'bg-gray-300 text-gray-700'
+                                                            }`}>
+                                                            D
+                                                        </span>
+                                                        <span className="text-gray-800">{selectedSoal.opsi_d}</span>
+                                                        {isCorrectAnswer('d') && (
+                                                            <svg className="w-5 h-5 text-green-500 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         )}
 
-                        {/* Jawaban Benar untuk soal non-pilihan ganda */}
-                        {!selectedSoal.opsi_a && !selectedSoal.opsi_b && !selectedSoal.opsi_c && !selectedSoal.opsi_d && (
+                        {/* Tampilan khusus untuk soal skala */}
+                        {selectedSoal.jenis_soal === 'skala' && selectedSoal.skala_min && selectedSoal.skala_maks && (
+                            <div className="border border-white-200 rounded-lg p-5">
+                                <h3 className="font-medium text-white-900 mb-4 flex items-center gap-2">
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                    Rentang Skala
+                                </h3>
+
+                                <div className="space-y-4">
+                                    {/* Info Rentang */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                            <div className="text-sm font-medium text-blue-800">Rentang Minimum</div>
+                                            <div className="text-lg font-bold text-blue-900">{selectedSoal.skala_min}</div>
+                                            <div className="text-sm text-blue-700">{selectedSoal.skala_label_min}</div>
+                                        </div>
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                            <div className="text-sm font-medium text-blue-800">Rentang Maksimum</div>
+                                            <div className="text-lg font-bold text-blue-900">{selectedSoal.skala_maks}</div>
+                                            <div className="text-sm text-blue-700">{selectedSoal.skala_label_maks}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Visual Skala */}
+                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                        <div className="text-sm font-medium text-gray-800 mb-3">Preview Skala:</div>
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-center">
+                                                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold mb-1">
+                                                    {selectedSoal.skala_min}
+                                                </div>
+                                                <div className="text-xs text-gray-600 max-w-20">{selectedSoal.skala_label_min}</div>
+                                            </div>
+
+                            {/* Titik-titik di tengah */}
+                            <div className="flex-1 flex items-center justify-center gap-1 mx-4">
+                                {Array.from({ length: Math.max(0, (selectedSoal.skala_maks || 5) - (selectedSoal.skala_min || 1) - 1) }, (_, i) => (
+                                    <div key={i} className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-xs font-medium">
+                                        {(selectedSoal.skala_min || 1) + i + 1}
+                                    </div>
+                                ))}
+                            </div>                                            <div className="text-center">
+                                                <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold mb-1">
+                                                    {selectedSoal.skala_maks}
+                                                </div>
+                                                <div className="text-xs text-gray-600 max-w-20">{selectedSoal.skala_label_maks}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Nilai Target */}
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                        <div className="text-sm font-medium text-green-800 mb-2">Nilai Target (Jawaban Benar):</div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                                                {selectedSoal.jawaban_benar}
+                                            </div>
+                                            <div className="text-green-700">
+                                                Nilai yang diharapkan dalam rentang {selectedSoal.skala_min} - {selectedSoal.skala_maks}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Jawaban Benar untuk soal non-pilihan ganda dan non-skala */}
+                        {!selectedSoal.opsi_a && !selectedSoal.opsi_b && !selectedSoal.opsi_c && !selectedSoal.opsi_d && selectedSoal.jenis_soal !== 'skala' && (
                             <div className="border border-white-200 rounded-lg p-5">
                                 <h3 className="font-medium text-white-800 mb-3 flex items-center gap-2">
                                     <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
