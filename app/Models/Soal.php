@@ -26,6 +26,19 @@ class Soal extends Model
         'skor'
     ];
 
+    /**
+     * Delete media file associated with the soal
+     */
+    public function deleteMedia()
+    {
+        if ($this->media) {
+            $path = storage_path('app/public/' . $this->media);
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
+    }
+
     public function jadwal()
     {
         return $this->belongsTo('App\Models\Jadwal', 'id_jadwal');
