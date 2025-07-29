@@ -36,7 +36,7 @@ class PesertaTesController extends Controller
             return !$now->gt($tanggalBerakhir); // Status Buka jika belum melewati tanggal berakhir
         })->count();
 
-        $jadwalBelumDikerjakan = Jadwal::whereDoesntHave('hasil', function ($query) use ($userId) {
+        $jadwalBelumDikerjakan = Jadwal::whereDoesntHave('jawaban', function ($query) use ($userId) {
             $query->where('id_user', $userId);
         })->count();
 
@@ -45,7 +45,7 @@ class PesertaTesController extends Controller
             // HAPUS filter tanggal mulai - tampilkan semua jadwal
             // ->where('tanggal_mulai', '<=', $now) // DIHAPUS
             // ->where('tanggal_berakhir', '>=', $now) // DIHAPUS - akan difilter di map()
-            ->whereDoesntHave('hasil', function ($query) use ($userId) {
+            ->whereDoesntHave('jawaban', function ($query) use ($userId) {
                 $query->where('id_user', $userId);
             })
             ->get()
@@ -64,7 +64,7 @@ class PesertaTesController extends Controller
                 $item->status = $status;
                 $item->sudah_kerjakan_jadwal_sebelumnya = true;
                 if ($item->jadwalSebelumnya) {
-                    $item->sudah_kerjakan_jadwal_sebelumnya = HasilTestPeserta::where('id_user', $userId)
+                    $item->sudah_kerjakan_jadwal_sebelumnya = \App\Models\Jawaban::where('id_user', $userId)
                         ->where('id_jadwal', $item->jadwalSebelumnya->id)
                         ->exists();
                 }
@@ -155,8 +155,9 @@ class PesertaTesController extends Controller
         $jadwalId = $request->jadwal_id;
         $jawabanPeserta = $request->jawaban;
 
+        // Cek apakah sudah ada jawaban untuk jadwal ini
         if (
-            HasilTestPeserta::where('id_user', $user->id)
+            \App\Models\Jawaban::where('id_user', $user->id)
             ->where('id_jadwal', $jadwalId)
             ->exists()
         ) {
@@ -167,26 +168,14 @@ class PesertaTesController extends Controller
 
         DB::transaction(function () use ($jawabanPeserta, $jadwalId, $user) {
             foreach ($jawabanPeserta as $idSoal => $jawaban) {
-                $soal = Soal::find($idSoal);
-                $jawabanBenar = $soal->jawaban_benar;
-                $skor = $soal->skor;
-
-                // Normalize jawaban dan kunci untuk membandingkan
+                // Normalize jawaban jika array
                 $userAnswer = is_array($jawaban) ? implode(',', $jawaban) : $jawaban;
 
-                $isCorrect = false;
-                if ($jawabanBenar !== null) {
-                    $isCorrect = $this->bandingkanJawaban($userAnswer, $jawabanBenar);
-                }
-
-                HasilTestPeserta::create([
-                    'id_jadwal'     => $jadwalId,
-                    'id_user'       => $user->id,
-                    'id_soal'       => $idSoal,
-                    'jawaban'       => $userAnswer,
-                    'waktu_ujian'   => now(),
-                    'jawaban_benar' => $jawabanBenar,
-                    'skor'          => $isCorrect ? $skor : 0
+                \App\Models\Jawaban::create([
+                    'id_jadwal' => $jadwalId,
+                    'id_user'   => $user->id,
+                    'id_soal'   => $idSoal,
+                    'jawaban'   => $userAnswer,
                 ]);
             }
         });
@@ -208,13 +197,12 @@ class PesertaTesController extends Controller
     {
         $userId = Auth::id();
 
-        $riwayat = HasilTestPeserta::select(
+        $riwayat = \App\Models\Jawaban::select(
             'id_jadwal',
-            DB::raw('MAX(waktu_ujian) as waktu_ujian'),
-            DB::raw('SUM(skor) as total_skor')
+            DB::raw('MIN(created_at) as waktu_ujian') // Menggunakan waktu jawaban pertama sebagai waktu mengerjakan
         )
             ->where('id_user', $userId)
-            ->with('jadwal')
+            ->with('jadwal') // Menggunakan relasi yang sudah didefinisikan di model Jawaban
             ->groupBy('id_jadwal')
             ->get();
 

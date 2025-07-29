@@ -24,7 +24,7 @@ class KategoriTes extends Model
     /**
      * Get all jadwal in this category
      */
-    public function jadwals()
+    public function jadwal()
     {
         return $this->hasMany(Jadwal::class, 'kategori_tes_id');
     }

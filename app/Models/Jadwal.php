@@ -48,6 +48,14 @@ class Jadwal extends Model
         return $this->hasMany(Jadwal::class, 'id_jadwal_sebelumnya');
     }
 
+    /**
+     * Relasi ke jawaban peserta
+     */
+    public function jawaban()
+    {
+        return $this->hasMany(Jawaban::class, 'id_jadwal');
+    }
+
     public function soal()
     {
         return $this->hasMany(\App\Models\Soal::class, 'id_jadwal');
