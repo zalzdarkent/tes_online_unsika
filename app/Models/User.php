@@ -66,4 +66,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Jadwal::class);
     }
+
+    public function jawaban()
+    {
+        return $this->hasMany(Jawaban::class, 'id_user');
+    }
+
+    public function hasilTestPeserta()
+    {
+        return $this->hasMany(HasilTestPeserta::class, 'id_user');
+    }
 }

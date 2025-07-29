@@ -1,7 +1,26 @@
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import { Button } from '@/components/ui/button';
+import { DataTable } from '@/components/ui/data-table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AppLayout from '@/layouts/app-layout';
+import { formatDateTime } from '@/lib/format-date';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
+import { ClipboardCheck, Trash2 } from 'lucide-react';
+import { ColumnDef } from '@tanstack/react-table';
+
+interface DataKoreksi {
+    id_user: number;
+    id_jadwal: number;
+    nama_peserta: string;
+    nama_jadwal: string;
+    total_soal: number;
+    total_skor: number | null;
+    waktu_ujian: string;
+}
+
+interface Props {
+    data: DataKoreksi[];
+}
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -10,14 +29,100 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Koreksi() {
+export default function Koreksi({ data }: Props) {
+    const columns: ColumnDef<DataKoreksi>[] = [
+        {
+            accessorKey: 'nama_peserta',
+            header: 'Nama Peserta',
+        },
+        {
+            accessorKey: 'nama_jadwal',
+            header: 'Jadwal Tes',
+        },
+        {
+            accessorKey: 'total_soal',
+            header: 'Total Soal',
+        },
+        {
+            accessorKey: 'total_skor',
+            header: 'Total Skor',
+            cell: ({ row }) => {
+                const skor = row.original.total_skor;
+                return skor !== null ? skor : 'Belum dikoreksi';
+            },
+        },
+        {
+            accessorKey: 'waktu_ujian',
+            header: 'Waktu Ujian',
+            cell: ({ row }) => formatDateTime(row.original.waktu_ujian),
+        },
+        {
+            id: 'actions',
+            header: 'Aksi',
+            cell: ({ row }) => {
+                const data = row.original;
+
+                return (
+                    <div className="flex items-center gap-2">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="border-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950 cursor-pointer"
+                                        onClick={() => {
+                                            // TODO: Implementasi fungsi koreksi
+                                            console.log('Koreksi:', data);
+                                        }}
+                                    >
+                                        <ClipboardCheck className="h-4 w-4 text-green-500" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Koreksi</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="border-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                                        onClick={() => {
+                                            // TODO: Implementasi fungsi hapus
+                                            console.log('Hapus:', data);
+                                        }}
+                                    >
+                                        <Trash2 className="h-4 w-4 text-destructive hover:text-destructive/90 dark:text-red-400 dark:hover:text-red-300" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Hapus</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                );
+            },
+        },
+    ];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Koreksi Peserta" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+            <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <h2 className="text-2xl font-bold">Koreksi Peserta</h2>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 p-6 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />{' '}
+                <div className="rounded-xl border p-6">
+                    <DataTable
+                        columns={columns}
+                        data={data}
+                        searchColumn="nama_peserta"
+                        searchPlaceholder="Cari nama peserta..."
+                    />
                 </div>
             </div>
         </AppLayout>

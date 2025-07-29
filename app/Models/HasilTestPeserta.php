@@ -9,19 +9,20 @@ class HasilTestPeserta extends Model
     protected $table = 'hasil_test_peserta';
 
     protected $fillable = [
-        'id_jadwal',
+        'id_jawaban',
         'id_user',
-        'id_soal',
-        'jawaban',
-        'jawaban_benar',
-        'skor',
+        'total_skor',
         'waktu_ujian',
     ];
 
-    public $timestamps = false;
 
-    public function jadwal()
+    public function jawaban()
     {
-        return $this->belongsTo(Jadwal::class, 'id_jadwal');
+        return $this->belongsTo(Jawaban::class, 'id_jawaban');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user');
     }
 }

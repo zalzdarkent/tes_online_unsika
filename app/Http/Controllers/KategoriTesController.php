@@ -16,10 +16,10 @@ class KategoriTesController extends Controller
     public function index()
     {
         $kategori = KategoriTes::byUser(Auth::id())
-            ->withCount('jadwals') // Ini akan menambahkan kolom jadwals_count
+            ->withCount('jadwal') // Ini akan menambahkan kolom jadwal_count
             ->get()
             ->map(function ($kategori) {
-                $kategori->jumlah_jadwal = $kategori->jadwals_count;
+                $kategori->jumlah_jadwal = $kategori->jadwal_count;
                 return $kategori;
             });
         return Inertia::render('jadwal/kategori', [
@@ -116,7 +116,7 @@ class KategoriTesController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        if ($kategori->jadwals()->exists()) {
+        if ($kategori->jadwal()->exists()) {
             return back()->withErrors(['error' => 'Kategori ini masih memiliki jadwal terkait']);
         }
 
@@ -140,7 +140,7 @@ class KategoriTesController extends Controller
 
         // Check if any of the categories have related schedules
         foreach ($kategoris as $kategori) {
-            if ($kategori->jadwals()->exists()) {
+            if ($kategori->jadwal()->exists()) {
                 return back()->withErrors(['error' => 'Beberapa kategori masih memiliki jadwal terkait']);
             }
         }
