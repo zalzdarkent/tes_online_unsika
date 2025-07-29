@@ -46,6 +46,7 @@ class SoalController extends Controller
             'skala_maks' => 'nullable|integer|min:2',
             'skala_label_min' => 'nullable|string|max:255',
             'skala_label_maks' => 'nullable|string|max:255',
+            'equation' => 'nullable|string'
         ]);
 
         // Handle jawaban_benar untuk multi_choice
@@ -73,6 +74,13 @@ class SoalController extends Controller
             ]);
         }
 
+        if ($request->jenis_soal === 'equation') {
+            $request->validate([
+                'equation' => 'required|string',
+                'jawaban_benar' => 'required|string',
+            ]);
+        }
+
         // Handle file upload jika ada media
         if ($request->hasFile('media')) {
             $file = $request->file('media');
@@ -81,12 +89,6 @@ class SoalController extends Controller
         }
 
         // Tambahkan data skala jika jenis soal adalah skala
-        if ($request->jenis_soal === 'skala') {
-            $validated['skala_min'] = $request->skala_min;
-            $validated['skala_maks'] = $request->skala_maks;
-            $validated['skala_label_min'] = $request->skala_label_min;
-            $validated['skala_label_maks'] = $request->skala_label_maks;
-        }
 
         // Simpan ke database
         $soal = \App\Models\Soal::create($validated);

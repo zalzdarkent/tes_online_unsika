@@ -31,12 +31,11 @@ interface Soal {
     opsi_c?: string;
     opsi_d?: string;
     media?: string;
-
-    // untuk skala
     skala_min?: number;
     skala_maks?: number;
     skala_label_min?: string;
     skala_label_maks?: string;
+    equation?: string;
 }
 
 interface Props {
@@ -57,12 +56,7 @@ const renderMedia = (url: string) => {
         return (
             <div className="my-3">
                 <Label className="mb-2 block text-sm font-medium">Gambar Pendukung</Label>
-                <img
-                    src={`/storage/${url}`}
-                    alt="Gambar Soal"
-                    className="h-auto max-h-60 w-auto max-w-sm rounded-md border object-contain shadow-sm"
-                    style={{ maxWidth: '300px', maxHeight: '240px' }}
-                />
+                <img src={`/storage/${url}`} alt="Gambar Soal" className="h-auto max-h-60 w-auto rounded-md shadow-sm md:max-w-xl" />
             </div>
         );
     }
@@ -114,20 +108,24 @@ export default function SoalTes({ jadwal, soal }: Props) {
 
         if (s.jenis_soal === 'pilihan_ganda') {
             return (
-                <RadioGroup
-                    className="mt-4 space-y-2"
-                    value={jawaban[s.id]?.[0] || ''}
-                    onValueChange={(val) => setJawaban({ ...jawaban, [s.id]: [val] })}
-                >
-                    {opsi.map((o, i) => (
-                        <div key={i} className="flex items-center space-x-2">
-                            <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} />
-                            <Label htmlFor={`soal_${s.id}_${o.label}`}>
-                                {o.label}. {o.text}
-                            </Label>
-                        </div>
-                    ))}
-                </RadioGroup>
+                <div>
+                    {s.media && renderMedia(s.media)}
+
+                    <RadioGroup
+                        className="mt-4 space-y-2"
+                        value={jawaban[s.id]?.[0] || ''}
+                        onValueChange={(val) => setJawaban({ ...jawaban, [s.id]: [val] })}
+                    >
+                        {opsi.map((o, i) => (
+                            <div key={i} className="flex items-center space-x-2">
+                                <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} />
+                                <Label htmlFor={`soal_${s.id}_${o.label}`}>
+                                    {o.label}. {o.text}
+                                </Label>
+                            </div>
+                        ))}
+                    </RadioGroup>
+                </div>
             );
         }
 
@@ -232,17 +230,16 @@ export default function SoalTes({ jadwal, soal }: Props) {
         if (s.jenis_soal === 'equation') {
             return (
                 <div className="mt-4 space-y-4">
-                    <p className="text-sm text-muted-foreground">Soal Equation (LaTeX):</p>
                     <div className="rounded-md border p-4">
-                        <BlockMath math={s.pertanyaan} />
+                        <BlockMath math={s.equation} errorColor="#cc0000" />
                     </div>
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor={`soal_${s.id}_jawaban`} className="block font-medium">
-                            Jawaban Anda (LaTeX)
+                            Jawaban Anda
                         </Label>
                         <Textarea
                             id={`soal_${s.id}_jawaban`}
-                            placeholder="Tulis jawaban dalam format LaTeX..."
+                            placeholder="Tulis jawaban Anda di sini..."
                             value={jawaban[s.id]?.[0] || ''}
                             onChange={(e) => setJawaban({ ...jawaban, [s.id]: [e.target.value] })}
                         />

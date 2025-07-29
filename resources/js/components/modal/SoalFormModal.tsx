@@ -6,11 +6,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { router } from '@inertiajs/react';
 import { DialogTrigger } from '@radix-ui/react-dialog';
+import 'katex/dist/katex.min.css';
 import { useState } from 'react';
+import { BlockMath } from 'react-katex';
 
 // Tipe soal yang didukung
 const SOAL_TYPES = [
     { value: 'single_choice', label: 'Multiple Choice (Satu Jawaban)' },
+    { value: 'single_choice_gambar', label: 'Multiple Choice (Satu Jawaban) + Gambar' },
     { value: 'multi_choice', label: 'Multiple Choice (Banyak Jawaban)' },
     { value: 'essay', label: 'Essay' },
     { value: 'essay_gambar', label: 'Essay + Gambar' },
@@ -59,7 +62,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
         const newErrors: Record<string, string> = {};
         if (!pertanyaan.trim()) newErrors.pertanyaan = 'Pertanyaan wajib diisi.';
         if (!skor || skor < 1) newErrors.skor = 'Skor minimal 1.';
-        if (tipeJawaban === 'single_choice') {
+        if (tipeJawaban === 'single_choice' || tipeJawaban === 'single_choice_gambar') {
             opsi.forEach((o, i) => {
                 if (!o.trim()) newErrors[`opsi_${i}`] = `Opsi ${String.fromCharCode(65 + i)} wajib diisi.`;
             });
@@ -103,13 +106,21 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
             });
             return;
         }
+
         setLoading(true);
         // Kirim data ke backend
         let formData: FormData | null = null;
         if (media) {
             formData = new FormData();
             formData.append('id_jadwal', String(idJadwal));
-            formData.append('jenis_soal', tipeJawaban === 'single_choice' ? 'pilihan_ganda' : tipeJawaban === 'essay' ? 'esai' : tipeJawaban);
+            formData.append(
+                'jenis_soal',
+                tipeJawaban === 'single_choice' || tipeJawaban === 'single_choice_gambar'
+                    ? 'pilihan_ganda'
+                    : tipeJawaban === 'essay'
+                      ? 'esai'
+                      : tipeJawaban,
+            );
             formData.append('pertanyaan', pertanyaan);
             formData.append('skor', String(skor));
             if (tipeJawaban === 'single_choice') {
@@ -126,6 +137,14 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                 formData.append('opsi_d', opsi[3]);
                 formData.append('jawaban_benar', jawabanBenarMulti.join(','));
             }
+            if (tipeJawaban === 'single_choice_gambar') {
+                formData.append('opsi_a', opsi[0]);
+                formData.append('opsi_b', opsi[1]);
+                formData.append('opsi_c', opsi[2]);
+                formData.append('opsi_d', opsi[3]);
+                formData.append('jawaban_benar', jawabanBenar);
+            }
+
             if (tipeJawaban === 'essay' || tipeJawaban === 'essay_gambar' || tipeJawaban === 'essay_audio') {
                 formData.append('jawaban_benar', jawabanBenar);
             }
@@ -134,6 +153,10 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                 formData.append('skala_maks', String(skalaMaks));
                 formData.append('skala_label_min', skalaLabelMin);
                 formData.append('skala_label_maks', skalaLabelMaks);
+                formData.append('jawaban_benar', jawabanBenar);
+            }
+            if (tipeJawaban === 'equation') {
+                formData.append('equation', equation);
                 formData.append('jawaban_benar', jawabanBenar);
             }
             formData.append('media', media);
@@ -176,6 +199,14 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                 payload.opsi_d = opsi[3];
                 payload.jawaban_benar = jawabanBenar;
             }
+            if (tipeJawaban === 'single_choice_gambar') {
+                payload.opsi_a = opsi[0];
+                payload.opsi_b = opsi[1];
+                payload.opsi_c = opsi[2];
+                payload.opsi_d = opsi[3];
+                payload.jawaban_benar = jawabanBenar;
+            }
+
             if (tipeJawaban === 'multi_choice') {
                 payload.opsi_a = opsi[0];
                 payload.opsi_b = opsi[1];
@@ -191,6 +222,10 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                 payload.skala_maks = skalaMaks;
                 payload.skala_label_min = skalaLabelMin;
                 payload.skala_label_maks = skalaLabelMaks;
+                payload.jawaban_benar = jawabanBenar;
+            }
+            if (tipeJawaban === 'equation') {
+                payload.equation = equation;
                 payload.jawaban_benar = jawabanBenar;
             }
             // Tambahkan field lain sesuai kebutuhan
@@ -221,7 +256,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
 
     // Render opsi input sesuai tipe soal
     const renderOpsiInput = () => {
-        if (tipeJawaban === 'single_choice' || tipeJawaban === 'multi_choice') {
+        if (tipeJawaban === 'single_choice' || tipeJawaban === 'multi_choice' || tipeJawaban === 'single_choice_gambar') {
             return (
                 <div className="space-y-2">
                     <label className="mb-1 block font-medium">Opsi Jawaban</label>
@@ -279,13 +314,15 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
 
     // Render upload media jika essay_gambar/essay_audio
     const renderMediaInput = () => {
-        if (tipeJawaban === 'essay_gambar' || tipeJawaban === 'essay_audio') {
+        if (tipeJawaban === 'essay_gambar' || tipeJawaban === 'essay_audio' || tipeJawaban === 'single_choice_gambar') {
             return (
                 <div>
-                    <label className="mb-1 block font-medium">{tipeJawaban === 'essay_gambar' ? 'Upload Gambar' : 'Upload Audio'}</label>
+                    <label className="mb-1 block font-medium">
+                        {tipeJawaban === 'essay_gambar' || tipeJawaban === 'single_choice_gambar' ? 'Upload Gambar' : 'Upload Audio'}
+                    </label>
                     <Input
                         type="file"
-                        accept={tipeJawaban === 'essay_gambar' ? 'image/*' : 'audio/*'}
+                        accept={tipeJawaban === 'essay_gambar' || tipeJawaban === 'single_choice_gambar' ? 'image/*' : 'audio/*'}
                         onChange={(e) => setMedia(e.target.files?.[0] || null)}
                     />
                 </div>
@@ -375,9 +412,18 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
     const renderEquationInput = () => {
         if (tipeJawaban === 'equation') {
             return (
-                <div>
+                <div className="space-y-2">
                     <label className="mb-1 block font-medium">Equation (LaTeX/Math)</label>
                     <Textarea placeholder="Equation (LaTeX/Math)" value={equation} onChange={(e) => setEquation(e.target.value)} />
+
+                    <label className="mt-2 mb-1 block font-medium">Preview LaTeX</label>
+                    <div className="min-h-[60px] w-full rounded-md border px-3 py-2 font-mono text-sm">
+                        <BlockMath math={equation} errorColor="#cc0000" />
+                    </div>
+
+                    <label className="mb-1 block font-medium">Jawaban Benar (Kunci)</label>
+                    <Textarea placeholder="Jawaban benar/kunci" value={jawabanBenar} onChange={(e) => setJawabanBenar(e.target.value)} />
+                    {errors.jawabanBenar && <span className="text-xs text-red-500">{errors.jawabanBenar}</span>}
                 </div>
             );
         }
