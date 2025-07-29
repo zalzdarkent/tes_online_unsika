@@ -1,3 +1,4 @@
+import RichTextEditor from '@/components/rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -447,7 +448,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-background text-foreground shadow-xl sm:max-w-[700px]">
                 <DialogHeader>
                     <DialogTitle>Tambah Soal</DialogTitle>
                 </DialogHeader>
@@ -469,9 +470,11 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                     </div>
                     <div>
                         <label className="mb-1 block font-medium">Pertanyaan</label>
-                        <Textarea placeholder="Pertanyaan" value={pertanyaan} onChange={(e) => setPertanyaan(e.target.value)} required />
+                        {/* <Textarea placeholder="Pertanyaan" value={pertanyaan} onChange={(e) => setPertanyaan(e.target.value)} required /> */}
+                        <RichTextEditor value={pertanyaan} onChange={setPertanyaan} />
                         {errors.pertanyaan && <span className="text-xs text-red-500">{errors.pertanyaan}</span>}
                     </div>
+
                     {renderOpsiInput()}
                     {renderEssayJawabanInput()}
                     {renderMediaInput()}

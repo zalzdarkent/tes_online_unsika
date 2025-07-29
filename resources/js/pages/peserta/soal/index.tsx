@@ -1,3 +1,4 @@
+import RichTextViewer from '@/components/rich-text-viewer';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -376,7 +377,9 @@ export default function SoalTes({ jadwal, soal }: Props) {
                                 </div>
                             </div>
 
-                            <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p>
+                            {/* <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p> */}
+                            <RichTextViewer content={currentSoal.pertanyaan} />
+
                             {renderOpsi(currentSoal)}
                         </div>
 
