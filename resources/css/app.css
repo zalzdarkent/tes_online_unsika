@@ -157,3 +157,17 @@
         @apply bg-background text-foreground;
     }
 }
+
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator {
+    filter: invert(0);
+}
+
+.dark input[type='date']::-webkit-calendar-picker-indicator,
+.dark input[type='time']::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+.ProseMirror {
+    @apply rounded-none border-none outline-none;
+}

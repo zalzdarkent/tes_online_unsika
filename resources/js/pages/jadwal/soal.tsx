@@ -177,10 +177,23 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                 return <span className="text-sm font-medium">{label}</span>;
             },
         },
+        // {
+        //     accessorKey: 'pertanyaan',
+        //     header: 'Pertanyaan',
+        //     cell: ({ row }) => <div className="max-w-[300px] truncate">{row.getValue('pertanyaan')}</div>,
+        // },
         {
             accessorKey: 'pertanyaan',
             header: 'Pertanyaan',
-            cell: ({ row }) => <div className="max-w-[300px] truncate">{row.getValue('pertanyaan')}</div>,
+            cell: ({ row }) => {
+                const html = row.getValue('pertanyaan') as string;
+                return (
+                    <div
+                        className="prose line-clamp-4 max-w-[300px] overflow-hidden whitespace-pre-wrap"
+                        dangerouslySetInnerHTML={{ __html: html }}
+                    />
+                );
+            },
         },
         {
             accessorKey: 'skor',
