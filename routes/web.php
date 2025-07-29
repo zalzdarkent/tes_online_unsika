@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\KategoriTesController;
+use App\Http\Controllers\KoreksiController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\PesertaTesController;
 use Illuminate\Support\Facades\Route;
@@ -43,9 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('jadwal/soal/{id}', [SoalController::class, 'destroy'])->name('soal.destroy');
         Route::post('jadwal/soal/bulk-delete', [SoalController::class, 'bulkDelete'])->name('soal.bulkDelete');
 
-        Route::get('koreksi', function () {
-            return Inertia::render('koreksi/koreksi');
-        })->name('koreksi');
+        Route::get('koreksi', [App\Http\Controllers\KoreksiController::class, 'index'])->name('koreksi');
     });
 
     // Routes yang hanya bisa diakses admin

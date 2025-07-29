@@ -29,4 +29,10 @@ class Jawaban extends Model
     {
         return $this->belongsTo(Soal::class, 'id_soal');
     }
+
+    public function hasilTestPeserta()
+    {
+        return $this->hasOne(HasilTestPeserta::class, 'id_jadwal', 'id_jadwal')
+            ->where('id_user', $this->id_user);
+    }
 }
