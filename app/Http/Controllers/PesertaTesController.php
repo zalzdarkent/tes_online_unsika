@@ -135,28 +135,33 @@ class PesertaTesController extends Controller
         //
     }
 
+    // track start time 
     public function startTest(Request $request)
     {
         $request->validate([
-            'jadwal_id' => 'required|exists:jadwal,id',
+            'id_jadwal' => 'required|exists:jadwal,id',
         ]);
 
         $userId = Auth::id();
-        $jadwalId = $request->jadwal_id;
+        $jadwalId = $request->id_jadwal;
 
         HasilTestPeserta::firstOrCreate(
             [
                 'id_user' => $userId,
                 'id_jadwal' => $jadwalId,
+
             ],
             [
                 'start_time' => now(),
+                'total_skor' => null,
+                'total_nilai' => null,
             ]
         );
 
         return back();
     }
 
+    // get soal ujian
     public function soal($id)
     {
         $jadwal = Jadwal::with('soal')->findOrFail($id);
@@ -225,13 +230,9 @@ class PesertaTesController extends Controller
     {
         $userId = Auth::id();
 
-        $riwayat = \App\Models\Jawaban::select(
-            'id_jadwal',
-            DB::raw('MIN(created_at) as waktu_ujian') // Menggunakan waktu jawaban pertama sebagai waktu mengerjakan
-        )
-            ->where('id_user', $userId)
-            ->with('jadwal') // Menggunakan relasi yang sudah didefinisikan di model Jawaban
-            ->groupBy('id_jadwal')
+        $riwayat = \App\Models\HasilTestPeserta::where('id_user', $userId)
+            ->with('jadwal')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('peserta/riwayat/index', [

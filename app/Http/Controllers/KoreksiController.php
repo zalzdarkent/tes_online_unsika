@@ -156,9 +156,9 @@ class KoreksiController extends Controller
             DB::beginTransaction();
 
             // Hapus hasil tes yang mungkin sudah ada sebelumnya
-            HasilTestPeserta::where('id_user', $userId)
-                ->where('id_jadwal', $jadwalId)
-                ->delete();
+            // HasilTestPeserta::where('id_user', $userId)
+            //     ->where('id_jadwal', $jadwalId)
+            //     ->delete();
 
             // Simpan hasil tes baru
             $jawaban = Jawaban::where('id_user', $userId)
@@ -171,14 +171,24 @@ class KoreksiController extends Controller
             $totalNilai = $request->total_nilai;
 
             // Simpan hasil untuk setiap jawaban
-            foreach ($request->skor_data as $data) {
-                $hasil = HasilTestPeserta::create([
-                    'id_jadwal' => $jadwalId,
-                    'id_user' => $userId,
-                    'total_skor' => $data['skor_didapat'], // Menggunakan skor individual
+            // foreach ($request->skor_data as $data) {
+            //     $hasil = HasilTestPeserta::create([
+            //         'id_jadwal' => $jadwalId,
+            //         'id_user' => $userId,
+            //         'total_skor' => $data['skor_didapat'], // Menggunakan skor individual
+            //         'total_nilai' => $totalNilai,
+            //     ]);
+            //     \Log::info('Created HasilTestPeserta:', $hasil->toArray());
+            // }
+            $hasil = HasilTestPeserta::where('id_user', $userId)
+                ->where('id_jadwal', $jadwalId)
+                ->first();
+
+            if ($hasil) {
+                $hasil->update([
+                    'total_skor' => $totalSkor,
                     'total_nilai' => $totalNilai,
                 ]);
-                \Log::info('Created HasilTestPeserta:', $hasil->toArray());
             }
 
             DB::commit();

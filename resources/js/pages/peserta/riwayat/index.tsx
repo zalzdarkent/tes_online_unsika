@@ -10,8 +10,8 @@ interface RiwayatTes {
         id: number;
         nama_jadwal: string;
     };
-    waktu_ujian: string;
-    total_skor?: number | null;
+    start_time: string;
+    total_nilai?: number | null;
 }
 
 interface Props {
@@ -26,18 +26,18 @@ export default function RiwayatTes({ riwayat }: Props) {
             cell: ({ row }) => row.original.jadwal?.nama_jadwal ?? '-',
         },
         {
-            accessorKey: 'waktu_ujian',
+            accessorKey: 'start_time',
             header: 'Waktu Mengerjakan',
-            cell: ({ row }) => formatDateTime(row.original.waktu_ujian),
+            cell: ({ row }) => formatDateTime(row.original.start_time),
         },
-        // {
-        //     accessorKey: 'total_skor',
-        //     header: 'Total Skor',
-        //     cell: ({ row }) => {
-        //         const total_skor = row.original.total_skor;
-        //         return total_skor !== null && total_skor !== undefined ? `${total_skor}` : 'Belum dikoreksi';
-        //     },
-        // },
+        {
+            accessorKey: 'total_nilai',
+            header: 'Skor',
+            cell: ({ row }) => {
+                const total_nilai = row.original.total_nilai;
+                return total_nilai !== null && total_nilai !== undefined ? `${total_nilai}` : 'Belum dikoreksi';
+            },
+        },
     ];
 
     return (

@@ -140,7 +140,7 @@ export default function DaftarTes({ jadwal }: Props) {
                                         onClick={() => {
                                             router.post(
                                                 route('peserta.start'),
-                                                { jadwal_id: id },
+                                                { id_jadwal: id },
                                                 {
                                                     onSuccess: () => router.visit(`/tes/${id}/soal`),
                                                     onError: () => {

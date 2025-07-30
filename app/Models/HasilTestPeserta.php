@@ -11,10 +11,9 @@ class HasilTestPeserta extends Model
     protected $fillable = [
         'id_jadwal',
         'id_user',
-        'jawaban_benar',
-        'skor',
-        'waktu_ujian',
+        'total_skor',
         'total_nilai',
+        'start_time'
     ];
 
     public function jadwal()
