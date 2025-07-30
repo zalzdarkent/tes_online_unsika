@@ -15,7 +15,10 @@ import { BlockMath } from 'react-katex';
 const SOAL_TYPES = [
     { value: 'single_choice', label: 'Multiple Choice (Satu Jawaban)' },
     { value: 'single_choice_gambar', label: 'Multiple Choice (Satu Jawaban) + Gambar' },
+    { value: 'single_choice_audio', label: 'Multiple Choice (Satu Jawaban) + Audio' },
     { value: 'multi_choice', label: 'Multiple Choice (Banyak Jawaban)' },
+    { value: 'multi_choice_gambar', label: 'Multiple Choice (Banyak Jawaban) + Gambar' },
+    { value: 'multi_choice_audio', label: 'Multiple Choice (Banyak Jawaban) + Audio' },
     { value: 'essay', label: 'Essay' },
     { value: 'essay_gambar', label: 'Essay + Gambar' },
     { value: 'essay_audio', label: 'Essay + Audio' },
@@ -63,13 +66,13 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
         const newErrors: Record<string, string> = {};
         if (!pertanyaan.trim()) newErrors.pertanyaan = 'Pertanyaan wajib diisi.';
         if (!skor || skor < 1) newErrors.skor = 'Skor minimal 1.';
-        if (tipeJawaban === 'single_choice' || tipeJawaban === 'single_choice_gambar') {
+        if (tipeJawaban.startsWith('single_choice')) {
             opsi.forEach((o, i) => {
                 if (!o.trim()) newErrors[`opsi_${i}`] = `Opsi ${String.fromCharCode(65 + i)} wajib diisi.`;
             });
             if (!jawabanBenar) newErrors.jawabanBenar = 'Jawaban benar wajib dipilih.';
         }
-        if (tipeJawaban === 'multi_choice') {
+        if (tipeJawaban.startsWith('multi_choice')) {
             opsi.forEach((o, i) => {
                 if (!o.trim()) newErrors[`opsi_${i}`] = `Opsi ${String.fromCharCode(65 + i)} wajib diisi.`;
             });
@@ -116,11 +119,13 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
             formData.append('id_jadwal', String(idJadwal));
             formData.append(
                 'jenis_soal',
-                tipeJawaban === 'single_choice' || tipeJawaban === 'single_choice_gambar'
+                tipeJawaban.startsWith('single_choice')
                     ? 'pilihan_ganda'
-                    : tipeJawaban === 'essay'
-                      ? 'esai'
-                      : tipeJawaban,
+                    : tipeJawaban.startsWith('multi_choice')
+                      ? 'pilihan_ganda_multi'
+                      : tipeJawaban === 'essay'
+                        ? 'esai'
+                        : tipeJawaban,
             );
             formData.append('pertanyaan', pertanyaan);
             formData.append('skor', String(skor));
@@ -189,7 +194,13 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
         } else {
             const payload: any = {
                 id_jadwal: idJadwal,
-                jenis_soal: tipeJawaban === 'single_choice' ? 'pilihan_ganda' : tipeJawaban === 'essay' ? 'esai' : tipeJawaban,
+                jenis_soal: tipeJawaban.startsWith('single_choice')
+                    ? 'pilihan_ganda'
+                    : tipeJawaban.startsWith('multi_choice')
+                      ? 'pilihan_ganda_multi'
+                      : tipeJawaban === 'essay'
+                        ? 'esai'
+                        : tipeJawaban,
                 pertanyaan,
                 skor,
             };
@@ -257,7 +268,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
 
     // Render opsi input sesuai tipe soal
     const renderOpsiInput = () => {
-        if (tipeJawaban === 'single_choice' || tipeJawaban === 'multi_choice' || tipeJawaban === 'single_choice_gambar') {
+        if (tipeJawaban.startsWith('single_choice') || tipeJawaban.startsWith('multi_choice')) {
             return (
                 <div className="space-y-2">
                     <label className="mb-1 block font-medium">Opsi Jawaban</label>
@@ -274,7 +285,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                                 }}
                             />
                             {errors[`opsi_${idx}`] && <span className="ml-2 text-xs text-red-500">{errors[`opsi_${idx}`]}</span>}
-                            {tipeJawaban === 'multi_choice' ? (
+                            {tipeJawaban.startsWith('multi_choice') ? (
                                 <label className="flex items-center gap-1">
                                     <input
                                         type="checkbox"
@@ -303,8 +314,8 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                             )}
                         </div>
                     ))}
-                    {tipeJawaban === 'single_choice' && errors.jawabanBenar && <span className="text-xs text-red-500">{errors.jawabanBenar}</span>}
-                    {tipeJawaban === 'multi_choice' && errors.jawabanBenarMulti && (
+                    {tipeJawaban.startsWith('single_choice') && errors.jawabanBenar && <span className="text-xs text-red-500">{errors.jawabanBenar}</span>}
+                    {tipeJawaban.startsWith('multi_choice') && errors.jawabanBenarMulti && (
                         <span className="text-xs text-red-500">{errors.jawabanBenarMulti}</span>
                     )}
                 </div>
@@ -313,17 +324,27 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
         return null;
     };
 
-    // Render upload media jika essay_gambar/essay_audio
+    // Render upload media jika ada gambar/audio
     const renderMediaInput = () => {
-        if (tipeJawaban === 'essay_gambar' || tipeJawaban === 'essay_audio' || tipeJawaban === 'single_choice_gambar') {
+        const withMedia = [
+            'essay_gambar',
+            'essay_audio',
+            'single_choice_gambar',
+            'single_choice_audio',
+            'multi_choice_gambar',
+            'multi_choice_audio'
+        ];
+
+        if (withMedia.includes(tipeJawaban)) {
+            const isAudio = tipeJawaban.endsWith('_audio');
             return (
                 <div>
                     <label className="mb-1 block font-medium">
-                        {tipeJawaban === 'essay_gambar' || tipeJawaban === 'single_choice_gambar' ? 'Upload Gambar' : 'Upload Audio'}
+                        {isAudio ? 'Upload Audio' : 'Upload Gambar'}
                     </label>
                     <Input
                         type="file"
-                        accept={tipeJawaban === 'essay_gambar' || tipeJawaban === 'single_choice_gambar' ? 'image/*' : 'audio/*'}
+                        accept={isAudio ? 'audio/*' : 'image/*'}
                         onChange={(e) => setMedia(e.target.files?.[0] || null)}
                     />
                 </div>
