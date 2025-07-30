@@ -45,6 +45,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('jadwal/soal/bulk-delete', [SoalController::class, 'bulkDelete'])->name('soal.bulkDelete');
 
         Route::get('koreksi', [App\Http\Controllers\KoreksiController::class, 'index'])->name('koreksi');
+        Route::get('koreksi/{userId}/{jadwalId}', [App\Http\Controllers\KoreksiController::class, 'show'])->name('koreksi.detail');
+        Route::post('koreksi/{userId}/{jadwalId}', [App\Http\Controllers\KoreksiController::class, 'update'])->name('koreksi.update');
     });
 
     // Routes yang hanya bisa diakses admin

@@ -9,16 +9,16 @@ class HasilTestPeserta extends Model
     protected $table = 'hasil_test_peserta';
 
     protected $fillable = [
-        'id_jawaban',
+        'id_jadwal',
         'id_user',
         'total_skor',
         'waktu_ujian',
+        'total_nilai',
     ];
 
-
-    public function jawaban()
+    public function jadwal()
     {
-        return $this->belongsTo(Jawaban::class, 'id_jawaban');
+        return $this->belongsTo(Jadwal::class, 'id_jadwal');
     }
 
     public function user()

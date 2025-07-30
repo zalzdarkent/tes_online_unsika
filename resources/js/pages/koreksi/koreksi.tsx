@@ -72,8 +72,7 @@ export default function Koreksi({ data }: Props) {
                                         size="icon"
                                         className="border-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950 cursor-pointer"
                                         onClick={() => {
-                                            // TODO: Implementasi fungsi koreksi
-                                            console.log('Koreksi:', data);
+                                            window.location.href = `/koreksi/${data.id_user}/${data.id_jadwal}`;
                                         }}
                                     >
                                         <ClipboardCheck className="h-4 w-4 text-green-500" />
