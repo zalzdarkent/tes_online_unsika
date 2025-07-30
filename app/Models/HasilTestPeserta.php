@@ -11,7 +11,8 @@ class HasilTestPeserta extends Model
     protected $fillable = [
         'id_jadwal',
         'id_user',
-        'total_skor',
+        'jawaban_benar',
+        'skor',
         'waktu_ujian',
         'total_nilai',
     ];

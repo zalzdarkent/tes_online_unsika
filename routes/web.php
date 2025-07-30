@@ -11,6 +11,7 @@ use Inertia\Inertia;
 // peserta routes
 Route::middleware(['auth', 'role:peserta'])->group(function () {
     Route::get('/daftar-tes', [PesertaTesController::class, 'index'])->name('peserta.daftar-tes');
+    Route::post('/peserta/start', [PesertaTesController::class, 'startTest'])->name('peserta.start');
     Route::get('/tes/{id}/soal', [PesertaTesController::class, 'soal'])->name('peserta.soal');
     Route::post('/submit', [PesertaTesController::class, 'submit'])->name('peserta.submit');
     Route::get('/riwayat', [PesertaTesController::class, 'riwayat'])->name('peserta.riwayat');

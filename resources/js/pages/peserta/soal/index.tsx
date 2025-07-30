@@ -46,6 +46,7 @@ interface Props {
         durasi: number | null;
     };
     soal: Soal[];
+    start_time: string;
 }
 
 const renderMedia = (url: string) => {
@@ -74,24 +75,36 @@ const renderMedia = (url: string) => {
     return null;
 };
 
-export default function SoalTes({ jadwal, soal }: Props) {
+export default function SoalTes({ jadwal, soal, start_time }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [jawaban, setJawaban] = useState<Record<number, string[]>>({});
     const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
 
     const durasiMenit = jadwal.durasi || 60;
-    const [timeLeft, setTimeLeft] = useState(durasiMenit * 60); // konversi ke detik
+    const [timeLeft, setTimeLeft] = useState(() => {
+        const start = new Date(start_time).getTime();
+        const end = start + durasiMenit * 60 * 1000;
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((end - now) / 1000));
+        return remaining;
+    });
 
     useEffect(() => {
-        if (soal.length === 0) return;
+        if (soal.length === 0 || timeLeft <= 0) return;
 
-        if (timeLeft <= 0) {
-            setShowTimeoutDialog(true);
-            return;
-        }
-        const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
-        return () => clearInterval(timer);
-    }, [timeLeft, soal]);
+        const interval = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    setShowTimeoutDialog(true);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [soal, timeLeft]);
 
     const formatTime = (totalSeconds: number) => {
         const minutes = Math.floor(totalSeconds / 60);

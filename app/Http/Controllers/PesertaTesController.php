@@ -29,7 +29,7 @@ class PesertaTesController extends Controller
         $totalJadwalInDB = Jadwal::count();
 
         // Debug: Hitung jadwal berdasarkan kondisi terpisah
-        $jadwalStatusBuka = Jadwal::get()->filter(function($item) use ($now) {
+        $jadwalStatusBuka = Jadwal::get()->filter(function ($item) use ($now) {
             $tanggalBerakhir = $item->tanggal_berakhir instanceof \Carbon\Carbon
                 ? $item->tanggal_berakhir
                 : \Carbon\Carbon::parse($item->tanggal_berakhir);
@@ -135,15 +135,43 @@ class PesertaTesController extends Controller
         //
     }
 
+    public function startTest(Request $request)
+    {
+        $request->validate([
+            'jadwal_id' => 'required|exists:jadwal,id',
+        ]);
+
+        $userId = Auth::id();
+        $jadwalId = $request->jadwal_id;
+
+        HasilTestPeserta::firstOrCreate(
+            [
+                'id_user' => $userId,
+                'id_jadwal' => $jadwalId,
+            ],
+            [
+                'start_time' => now(),
+            ]
+        );
+
+        return back();
+    }
+
     public function soal($id)
     {
         $jadwal = Jadwal::with('soal')->findOrFail($id);
 
+        $hasil = HasilTestPeserta::where('id_user', Auth::id())
+            ->where('id_jadwal', $jadwal->id)
+            ->first();
+
         return Inertia::render('peserta/soal/index', [
             'jadwal' => $jadwal,
             'soal' => $jadwal->soal,
+            'start_time' => $hasil->start_time,
         ]);
     }
+
 
     public function submit(Request $request)
     {

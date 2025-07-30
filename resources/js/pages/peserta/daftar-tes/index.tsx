@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
+import { toast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { Head, router } from '@inertiajs/react';
@@ -135,7 +136,26 @@ export default function DaftarTes({ jadwal }: Props) {
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Batal</AlertDialogCancel>
                                 <AlertDialogAction asChild>
-                                    <Button onClick={() => router.visit(`/tes/${id}/soal`)}>Ya, Mulai</Button>
+                                    <Button
+                                        onClick={() => {
+                                            router.post(
+                                                route('peserta.start'),
+                                                { jadwal_id: id },
+                                                {
+                                                    onSuccess: () => router.visit(`/tes/${id}/soal`),
+                                                    onError: () => {
+                                                        toast({
+                                                            variant: 'destructive',
+                                                            title: 'Gagal memulai tes',
+                                                            description: 'Terjadi kesalahan saat menyimpan waktu mulai.',
+                                                        });
+                                                    },
+                                                },
+                                            );
+                                        }}
+                                    >
+                                        Ya, Mulai
+                                    </Button>
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
