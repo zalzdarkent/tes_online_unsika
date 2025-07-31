@@ -38,6 +38,32 @@ class KategoriTesController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    private function generateKodeKategori($nama)
+    {
+        // Ambil 2-3 huruf pertama dari setiap kata
+        $words = explode(' ', strtoupper($nama));
+        $kode = '';
+        foreach ($words as $word) {
+            $kode .= substr($word, 0, min(strlen($word), 2));
+        }
+        $kode = substr($kode, 0, 4); // Ambil maksimal 4 karakter
+
+        // Cari nomor urut terakhir dengan prefix yang sama
+        $lastKode = KategoriTes::where('kode_kategori', 'like', $kode . '%')
+            ->orderBy('kode_kategori', 'desc')
+            ->first();
+
+        if ($lastKode) {
+            // Ambil 3 digit terakhir dan tambah 1
+            $lastNumber = intval(substr($lastKode->kode_kategori, -3));
+            $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '001';
+        }
+
+        return $kode . $newNumber;
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -57,6 +83,7 @@ class KategoriTesController extends Controller
         $kategori = new KategoriTes();
         $kategori->nama = $validated['nama'];
         $kategori->user_id = Auth::id();
+        $kategori->kode_kategori = $this->generateKodeKategori($validated['nama']);
         $kategori->save();
 
         return redirect()->back();
@@ -101,6 +128,11 @@ class KategoriTesController extends Controller
             'nama.max' => 'Nama kategori maksimal 255 karakter',
             'nama.unique' => 'Nama kategori sudah digunakan',
         ]);
+
+        // Jika nama berubah, generate kode baru
+        if ($kategori->nama !== $validated['nama']) {
+            $validated['kode_kategori'] = $this->generateKodeKategori($validated['nama']);
+        }
 
         $kategori->update($validated);
 

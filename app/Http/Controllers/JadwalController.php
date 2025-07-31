@@ -75,6 +75,35 @@ class JadwalController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    private function generateKodeJadwal($namaJadwal)
+    {
+        // Ambil 2-3 huruf pertama dari setiap kata
+        $words = explode(' ', strtoupper($namaJadwal));
+        $kode = '';
+        foreach ($words as $word) {
+            $kode .= substr($word, 0, min(strlen($word), 2));
+        }
+        $kode = substr($kode, 0, 3); // Ambil maksimal 3 karakter
+
+        // Tambahkan 2 digit tahun
+        $kode .= date('y');
+
+        // Cari nomor urut terakhir dengan prefix yang sama
+        $lastKode = Jadwal::where('kode_jadwal', 'like', $kode . '%')
+            ->orderBy('kode_jadwal', 'desc')
+            ->first();
+
+        if ($lastKode) {
+            // Ambil 3 digit terakhir dan tambah 1
+            $lastNumber = intval(substr($lastKode->kode_jadwal, -3));
+            $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '001';
+        }
+
+        return $kode . $newNumber;
+    }
+
     public function store(Request $request)
     {
         // Validasi input
@@ -167,6 +196,9 @@ class JadwalController extends Controller
             // Konversi tanggal ke format database yang benar
             $validated['tanggal_mulai'] = \Carbon\Carbon::parse($validated['tanggal_mulai'])->format('Y-m-d H:i:s');
             $validated['tanggal_berakhir'] = \Carbon\Carbon::parse($validated['tanggal_berakhir'])->format('Y-m-d H:i:s');
+
+            // Generate dan set kode jadwal
+            $validated['kode_jadwal'] = $this->generateKodeJadwal($validated['nama_jadwal']);
 
             // Simpan jadwal baru
             $jadwal = Jadwal::create($validated);
@@ -310,6 +342,11 @@ class JadwalController extends Controller
             // Konversi tanggal ke format database yang benar
             $validated['tanggal_mulai'] = \Carbon\Carbon::parse($validated['tanggal_mulai'])->format('Y-m-d H:i:s');
             $validated['tanggal_berakhir'] = \Carbon\Carbon::parse($validated['tanggal_berakhir'])->format('Y-m-d H:i:s');
+
+            // Jika nama jadwal berubah, generate kode baru
+            if ($jadwal->nama_jadwal !== $validated['nama_jadwal']) {
+                $validated['kode_jadwal'] = $this->generateKodeJadwal($validated['nama_jadwal']);
+            }
 
             // Update jadwal
             $jadwal->update($validated);

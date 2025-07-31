@@ -9,6 +9,7 @@ class KategoriTes extends Model
     protected $table = 'kategori_tes';
 
     protected $fillable = [
+        'kode_kategori',
         'nama',
         'user_id',
     ];
