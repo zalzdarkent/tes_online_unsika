@@ -348,6 +348,15 @@ class JadwalController extends Controller
                 $validated['kode_jadwal'] = $this->generateKodeJadwal($validated['nama_jadwal']);
             }
 
+            // Cek apakah perlu update status
+            $now = now()->setTimezone('Asia/Jakarta');
+            $newEnd = \Carbon\Carbon::parse($validated['tanggal_berakhir'])->setTimezone('Asia/Jakarta');
+
+            // Jika tanggal berakhir yang baru masih di masa depan, set status ke Buka
+            if ($newEnd->gt($now)) {
+                $validated['status'] = 'Buka';
+            }
+
             // Update jadwal
             $jadwal->update($validated);
 
