@@ -230,8 +230,9 @@ class JadwalController extends Controller
             ->with('kategori')
             ->firstOrFail();
 
-        return response()->json([
+        return inertia('jadwal/edit', [
             'jadwal' => $jadwal,
+            'allJadwal' => Jadwal::where('user_id', $userId)->get(),
             'kategoriTes' => \App\Models\KategoriTes::where('user_id', $userId)->get(['id', 'nama']),
         ]);
     }

@@ -17,12 +17,11 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
 import { type BreadcrumbItem } from '@/types';
-import JadwalFormModal from '@/components/modal/JadwalFormModal';
-
 import { ColumnDef } from '@tanstack/react-table';
 import { Eye, Edit, Trash2, MoreHorizontal, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import JadwalFormModal from '@/components/modal/JadwalFormModal';
 
 // Helper function untuk format tanggal tanpa timezone conversion
 const formatDateTime = (dateTimeString: string): string => {
@@ -200,12 +199,6 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
         // Callback ini akan dipanggil setelah modal ditutup
         // Untuk refresh data atau trigger reload
         console.log("Jadwal berhasil ditambahkan, refresh data jika perlu");
-    };
-
-    const handleEditJadwal = () => {
-        // Callback ini akan dipanggil setelah modal edit ditutup
-        // Untuk refresh data atau trigger reload
-        console.log("Jadwal berhasil diupdate, refresh data jika perlu");
     };
 
     const handleBulkDelete = (selectedData: JadwalData[]) => {
@@ -405,22 +398,15 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                                 <Eye className="mr-2 h-4 w-4" />
                                 Lihat Soal
                             </DropdownMenuItem>
-                            <JadwalFormModal
-                                mode="edit"
-                                trigger={
-                                    <DropdownMenuItem
-                                        className="cursor-pointer"
-                                        onSelect={(e) => e.preventDefault()}
-                                    >
-                                        <Edit className="mr-2 h-4 w-4" />
-                                        Edit
-                                    </DropdownMenuItem>
-                                }
-                                jadwal={jadwalItem}
-                                allJadwal={jadwal || []}
-                                kategoriTes={kategoriTes || []}
-                                onSuccess={handleEditJadwal}
-                            />
+                            <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => {
+                                    router.visit(route('jadwal.edit', jadwalItem.id));
+                                }}
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                            </DropdownMenuItem>
                             <DeleteJadwalButton
                                 jadwal={jadwalItem}
                                 onDelete={handleDeleteSingle}
