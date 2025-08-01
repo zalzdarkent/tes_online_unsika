@@ -1,10 +1,11 @@
-import { Head, useForm, router } from "@inertiajs/react";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { Head, router, useForm } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 // Helper function untuk parsing tanggal dari database
 const parseDateTime = (dateTimeString: string) => {
@@ -110,7 +111,7 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
         const updatedInputs = {
             ...dateTimeInputs,
             tanggal_mulai_date: newDate,
-            tanggal_mulai_time: newTime
+            tanggal_mulai_time: newTime,
         };
         setDateTimeInputs(updatedInputs);
 
@@ -128,7 +129,7 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
         const updatedInputs = {
             ...dateTimeInputs,
             tanggal_berakhir_date: newDate,
-            tanggal_berakhir_time: newTime
+            tanggal_berakhir_time: newTime,
         };
         setDateTimeInputs(updatedInputs);
 
@@ -137,7 +138,8 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
         } else {
             setData('tanggal_berakhir', '');
         }
-    };    const handleSubmit = (e: React.FormEvent) => {
+    };
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         // Validasi frontend sederhana
@@ -282,19 +284,21 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                     <label htmlFor="kategori_tes_id" className="text-sm font-medium">
                                         Kategori Tes
                                     </label>
-                                    <select
-                                        id="kategori_tes_id"
-                                        className="w-full px-3 py-2 border rounded-md bg-background"
-                                        value={data.kategori_tes_id || ''}
-                                        onChange={(e) => setData('kategori_tes_id', e.target.value ? Number(e.target.value) : null)}
+                                    <Select
+                                        value={data.kategori_tes_id?.toString() || ''}
+                                        onValueChange={(value) => setData('kategori_tes_id', value ? Number(value) : null)}
                                     >
-                                        <option value="">Pilih Kategori</option>
-                                        {kategoriTes.map((kategori) => (
-                                            <option key={kategori.id} value={kategori.id}>
-                                                {kategori.nama}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Pilih Kategori" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {kategoriTes.map((kategori) => (
+                                                <SelectItem key={kategori.id} value={kategori.id.toString()}>
+                                                    {kategori.nama}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
 
                                 <div className="space-y-2">
@@ -317,31 +321,28 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                 <label htmlFor="id_jadwal_sebelumnya" className="text-sm font-medium">
                                     Jadwal Sebelumnya
                                 </label>
-                                <select
-                                    id="id_jadwal_sebelumnya"
-                                    className="w-full px-3 py-2 border rounded-md bg-background"
-                                    value={data.id_jadwal_sebelumnya || ''}
-                                    onChange={(e) => setData('id_jadwal_sebelumnya', e.target.value ? Number(e.target.value) : null)}
+                                <Select
+                                    value={data.id_jadwal_sebelumnya?.toString() || ''}
+                                    onValueChange={(value) => setData('id_jadwal_sebelumnya', value ? Number(value) : null)}
                                 >
-                                    <option value="">Pilih Jadwal Sebelumnya</option>
-                                    {allJadwal
-                                        .filter((j) => j.id !== jadwal.id)
-                                        .map((j) => (
-                                            <option key={j.id} value={j.id}>
-                                                {j.nama_jadwal}
-                                            </option>
-                                        ))}
-                                </select>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih Jadwal Sebelumnya" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {allJadwal
+                                            .filter((j) => j.id !== jadwal.id)
+                                            .map((j) => (
+                                                <SelectItem key={j.id} value={j.id.toString()}>
+                                                    {j.nama_jadwal}
+                                                </SelectItem>
+                                            ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
 
                         <div className="flex justify-end gap-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => router.visit(route('jadwal.index'))}
-                                disabled={processing}
-                            >
+                            <Button type="button" variant="outline" onClick={() => router.visit(route('jadwal.index'))} disabled={processing}>
                                 Batal
                             </Button>
                             <Button type="submit" disabled={processing}>

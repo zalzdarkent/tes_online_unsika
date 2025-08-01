@@ -1,8 +1,4 @@
-import { Button } from '@/components/ui/button';
-import { Head, router } from "@inertiajs/react";
-import { Checkbox } from '@/components/ui/checkbox';
-import { DataTable } from '@/components/ui/data-table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import JadwalFormModal from '@/components/modal/JadwalFormModal';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -14,20 +10,24 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DataTable } from '@/components/ui/data-table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
 import { type BreadcrumbItem } from '@/types';
+import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Eye, Edit, Trash2, MoreHorizontal, Plus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Edit, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import JadwalFormModal from '@/components/modal/JadwalFormModal';
 
 // Helper function untuk format tanggal tanpa timezone conversion
 const formatDateTime = (dateTimeString: string): string => {
     if (!dateTimeString) return '';
 
-    console.log("Original dateTimeString:", dateTimeString);
+    console.log('Original dateTimeString:', dateTimeString);
 
     // Handle format dari database yang langsung: "2025-07-23 10:30:00"
     let dateStr = dateTimeString;
@@ -50,24 +50,24 @@ const formatDateTime = (dateTimeString: string): string => {
     // Ambil bagian tanggal dan waktu
     const parts = dateStr.trim().split(' ');
     if (parts.length < 2) {
-        console.log("Invalid date format:", dateTimeString);
+        console.log('Invalid date format:', dateTimeString);
         return dateTimeString;
     }
 
     const datePart = parts[0]; // 2025-07-23
     const timePart = parts[1]; // 10:30:00
 
-    console.log("Date part:", datePart, "Time part:", timePart);
+    console.log('Date part:', datePart, 'Time part:', timePart);
 
     const [year, month, day] = datePart.split('-');
     const timeComponents = timePart.split(':');
     const hour = timeComponents[0];
     const minute = timeComponents[1];
 
-    console.log("Parsed:", { year, month, day, hour, minute });
+    console.log('Parsed:', { year, month, day, hour, minute });
 
     if (!year || !month || !day || !hour || !minute) {
-        console.log("Missing date/time components");
+        console.log('Missing date/time components');
         return dateTimeString;
     }
 
@@ -76,7 +76,7 @@ const formatDateTime = (dateTimeString: string): string => {
     const formattedTime = `${hour.padStart(2, '0')}.${minute.padStart(2, '0')}`;
 
     const result = `${formattedDate}, ${formattedTime}`;
-    console.log("Formatted result:", result);
+    console.log('Formatted result:', result);
 
     return result;
 };
@@ -135,7 +135,7 @@ function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
                 <DropdownMenuItem
-                    className="text-red-600 cursor-pointer"
+                    className="cursor-pointer text-red-600"
                     onSelect={(e) => {
                         e.preventDefault();
                         setIsDeleteDialogOpen(true);
@@ -149,19 +149,12 @@ function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete
                 <AlertDialogHeader>
                     <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Apakah Anda yakin ingin menghapus jadwal "{jadwal.nama_jadwal}"?
-                        Tindakan ini tidak dapat dibatalkan.
+                        Apakah Anda yakin ingin menghapus jadwal "{jadwal.nama_jadwal}"? Tindakan ini tidak dapat dibatalkan.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>
-                        Batal
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="bg-destructive text-white hover:bg-destructive/90"
-                    >
+                    <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive text-white hover:bg-destructive/90">
                         {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
                     </AlertDialogAction>
                 </AlertDialogFooter>
@@ -173,16 +166,16 @@ function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete
 export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
     const { toast } = useToast();
 
-    console.log("Jadwal component rendered with:", jadwal?.length || 0, "items");
+    console.log('Jadwal component rendered with:', jadwal?.length || 0, 'items');
 
     // Safety check untuk props
     if (!jadwal) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="Jadwal Tes" />
-                <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                     <h2 className="text-2xl font-bold">Jadwal Tes</h2>
-                    <div className="text-center py-8">Loading...</div>
+                    <div className="py-8 text-center">Loading...</div>
                 </div>
             </AppLayout>
         );
@@ -191,200 +184,198 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
     // Helper function untuk mencari nama jadwal berdasarkan ID
     const findJadwalNameById = (id: number | null): string => {
         if (!id) return '-';
-        const found = jadwal.find(j => j.id === id);
+        const found = jadwal.find((j) => j.id === id);
         return found ? found.nama_jadwal : '-';
     };
 
     const handleAddJadwal = () => {
         // Callback ini akan dipanggil setelah modal ditutup
         // Untuk refresh data atau trigger reload
-        console.log("Jadwal berhasil ditambahkan, refresh data jika perlu");
+        console.log('Jadwal berhasil ditambahkan, refresh data jika perlu');
     };
 
     const handleBulkDelete = (selectedData: JadwalData[]) => {
-        const selectedIds = selectedData.map(item => item.id);
-        console.log("Bulk delete for IDs:", selectedIds);
+        const selectedIds = selectedData.map((item) => item.id);
+        console.log('Bulk delete for IDs:', selectedIds);
 
         // Gunakan router.post untuk mengirim request bulk delete
-        router.post(route('jadwal.bulk-destroy'),
+        router.post(
+            route('jadwal.bulk-destroy'),
             { ids: selectedIds },
             {
                 onSuccess: () => {
                     toast({
-                        variant: "success",
-                        title: "Berhasil!",
+                        variant: 'success',
+                        title: 'Berhasil!',
                         description: `${selectedData.length} jadwal berhasil dihapus.`,
                     });
                 },
                 onError: (errors: Record<string, string>) => {
-                    console.log("Delete errors:", errors);
+                    console.log('Delete errors:', errors);
                     if (errors.error) {
                         toast({
-                            variant: "destructive",
-                            title: "Error!",
+                            variant: 'destructive',
+                            title: 'Error!',
                             description: errors.error,
                         });
                     } else {
                         toast({
-                            variant: "destructive",
-                            title: "Error!",
-                            description: "Terjadi kesalahan saat menghapus jadwal.",
+                            variant: 'destructive',
+                            title: 'Error!',
+                            description: 'Terjadi kesalahan saat menghapus jadwal.',
                         });
                     }
-                }
-            }
+                },
+            },
         );
     };
 
     const handleDeleteSingle = (jadwal: JadwalData) => {
-        console.log("Delete single jadwal:", jadwal.id);
+        console.log('Delete single jadwal:', jadwal.id);
 
         // Gunakan router untuk mengirim request delete
         router.delete(route('jadwal.destroy', jadwal.id), {
             onSuccess: () => {
                 toast({
-                    variant: "success",
-                    title: "Berhasil!",
+                    variant: 'success',
+                    title: 'Berhasil!',
                     description: `Jadwal "${jadwal.nama_jadwal}" berhasil dihapus.`,
                 });
             },
             onError: (errors: Record<string, string>) => {
-                console.log("Delete errors:", errors);
+                console.log('Delete errors:', errors);
                 if (errors.error) {
                     toast({
-                        variant: "destructive",
-                        title: "Error!",
+                        variant: 'destructive',
+                        title: 'Error!',
                         description: errors.error,
                     });
                 } else {
                     toast({
-                        variant: "destructive",
-                        title: "Error!",
-                        description: "Terjadi kesalahan saat menghapus jadwal.",
+                        variant: 'destructive',
+                        title: 'Error!',
+                        description: 'Terjadi kesalahan saat menghapus jadwal.',
                     });
                 }
-            }
+            },
         });
     };
 
     const columns: ColumnDef<JadwalData>[] = [
         {
-            id: "select",
+            id: 'select',
             header: ({ table }) => (
                 <Checkbox
-                    checked={
-                        table.getIsAllPageRowsSelected() ||
-                        (table.getIsSomePageRowsSelected() && "indeterminate")
-                    }
+                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
                     onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                     aria-label="Select all"
+                    className="cursor-pointer"
                 />
             ),
             cell: ({ row }) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
-                />
+                <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label="Select row" />
             ),
             enableSorting: false,
             enableHiding: false,
         },
         {
-            accessorKey: "id",
-            header: "No",
+            accessorKey: 'id',
+            header: 'No',
             enableHiding: true,
             cell: ({ row }) => {
                 return <div className="font-medium">{row.index + 1}</div>;
             },
         },
         {
-            accessorKey: "nama_jadwal",
-            header: "Nama Jadwal",
+            accessorKey: 'nama_jadwal',
+            header: 'Nama Jadwal',
             enableSorting: true,
             enableHiding: true,
         },
         {
-            accessorKey: "tanggal_mulai",
-            header: "Tanggal Mulai",
+            accessorKey: 'tanggal_mulai',
+            header: 'Tanggal Mulai',
             enableSorting: true,
             enableHiding: true,
             cell: ({ row }) => {
-                const tanggal = row.getValue("tanggal_mulai") as string;
+                const tanggal = row.getValue('tanggal_mulai') as string;
                 return formatDateTime(tanggal);
             },
         },
         {
-            accessorKey: "tanggal_berakhir",
-            header: "Tanggal Berakhir",
+            accessorKey: 'tanggal_berakhir',
+            header: 'Tanggal Berakhir',
             enableSorting: true,
             enableHiding: true,
             cell: ({ row }) => {
-                const tanggal = row.getValue("tanggal_berakhir") as string;
+                const tanggal = row.getValue('tanggal_berakhir') as string;
                 return formatDateTime(tanggal);
             },
         },
         {
-            accessorKey: "status",
-            header: "Status",
+            accessorKey: 'status',
+            header: 'Status',
             enableSorting: true,
             enableHiding: true,
             cell: ({ row }) => {
-                const status = row.getValue("status") as string;
+                const status = row.getValue('status') as string;
                 return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${status === 'Buka'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                        }`}>
+                    <span
+                        className={`rounded-full px-2 py-1 text-xs font-medium ${
+                            status === 'Buka'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                        }`}
+                    >
                         {status}
                     </span>
                 );
             },
         },
         {
-            accessorKey: "kategori",
-            header: "Kategori",
+            accessorKey: 'kategori',
+            header: 'Kategori',
             enableSorting: true,
             enableHiding: true,
             cell: ({ row }) => {
-                const kategori = row.getValue("kategori") as string;
+                const kategori = row.getValue('kategori') as string;
                 return <div className="text-muted-foreground">{kategori || '-'}</div>;
             },
         },
         {
-            accessorKey: "durasi",
-            header: "Durasi (menit)",
+            accessorKey: 'durasi',
+            header: 'Durasi (menit)',
             enableSorting: true,
             enableHiding: true,
             cell: ({ row }) => {
-                const durasi = row.getValue("durasi") as number | null;
+                const durasi = row.getValue('durasi') as number | null;
                 return <div className="text-muted-foreground">{durasi ? `${durasi} menit` : '-'}</div>;
             },
         },
         {
-            accessorKey: "id_jadwal_sebelumnya",
-            header: "Jadwal Sebelumnya",
+            accessorKey: 'id_jadwal_sebelumnya',
+            header: 'Jadwal Sebelumnya',
             enableSorting: true,
             enableHiding: true,
             meta: {
                 defaultHidden: true,
             },
             cell: ({ row }) => {
-                const idJadwalSebelumnya = row.getValue("id_jadwal_sebelumnya") as number | null;
+                const idJadwalSebelumnya = row.getValue('id_jadwal_sebelumnya') as number | null;
                 const namaJadwal = findJadwalNameById(idJadwalSebelumnya);
                 return <div className="text-muted-foreground">{namaJadwal}</div>;
             },
         },
         {
-            id: "actions",
-            header: "Aksi",
+            id: 'actions',
+            header: 'Aksi',
             enableHiding: true,
             cell: ({ row }) => {
                 const jadwalItem = row.original;
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="cursor-pointer">
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -407,10 +398,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
                             </DropdownMenuItem>
-                            <DeleteJadwalButton
-                                jadwal={jadwalItem}
-                                onDelete={handleDeleteSingle}
-                            />
+                            <DeleteJadwalButton jadwal={jadwalItem} onDelete={handleDeleteSingle} />
                         </DropdownMenuContent>
                     </DropdownMenu>
                 );
@@ -422,35 +410,33 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Jadwal Tes" />
             <JadwalLayout>
-                <div className="flex h-full flex-1 flex-col gap-4 rounded-xl overflow-x-auto">
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl">
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-bold">Daftar Jadwal Tes</h2>
-                    <JadwalFormModal
-                        mode="create"
-                        trigger={
-                            <Button className='cursor-pointer'>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Tambah Jadwal
-                            </Button>
-                        }
-                        allJadwal={jadwal || []}
-                        kategoriTes={kategoriTes || []}
-                        onSuccess={handleAddJadwal}
+                        <JadwalFormModal
+                            mode="create"
+                            trigger={
+                                <Button className="cursor-pointer">
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Tambah Jadwal
+                                </Button>
+                            }
+                            allJadwal={jadwal || []}
+                            kategoriTes={kategoriTes || []}
+                            onSuccess={handleAddJadwal}
+                        />
+                    </div>
+                    <DataTable
+                        columns={columns}
+                        data={jadwal}
+                        searchColumn="nama_jadwal"
+                        searchPlaceholder="Cari jadwal..."
+                        onBulkDelete={handleBulkDelete}
+                        initialColumnVisibility={{
+                            id_jadwal_sebelumnya: false,
+                        }}
+                        emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}
                     />
-                </div>
-                <DataTable
-                    columns={columns}
-                    data={jadwal}
-                    searchColumn="nama_jadwal"
-                    searchPlaceholder="Cari jadwal..."
-                    onBulkDelete={handleBulkDelete}
-                    initialColumnVisibility={{
-                        id_jadwal_sebelumnya: false
-                    }}
-                    emptyMessage={
-                        <div className="text-center w-full py-8 text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>
-                    }
-                />
                 </div>
             </JadwalLayout>
         </AppLayout>

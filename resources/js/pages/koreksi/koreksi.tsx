@@ -4,9 +4,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { ClipboardCheck, Trash2, Eye } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
+import { ClipboardCheck, Eye, Trash2 } from 'lucide-react';
 
 interface DataKoreksi {
     id_user: number;
@@ -70,12 +70,13 @@ export default function Koreksi({ data }: Props) {
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        className={data.total_skor !== null
-                                            ? "border-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 cursor-pointer"
-                                            : "border-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950 cursor-pointer"
+                                        className={
+                                            data.total_skor !== null
+                                                ? 'cursor-pointer border-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950'
+                                                : 'cursor-pointer border-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950'
                                         }
                                         onClick={() => {
-                                            window.location.href = `/koreksi/${data.id_user}/${data.id_jadwal}`;
+                                            router.visit(`/koreksi/${data.id_user}/${data.id_jadwal}`);
                                         }}
                                     >
                                         {data.total_skor !== null ? (
@@ -97,7 +98,7 @@ export default function Koreksi({ data }: Props) {
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        className="border-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                                        className="cursor-pointer border-destructive hover:bg-destructive/10 hover:text-destructive"
                                         onClick={() => {
                                             // TODO: Implementasi fungsi hapus
                                             console.log('Hapus:', data);
@@ -123,12 +124,7 @@ export default function Koreksi({ data }: Props) {
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <h2 className="text-2xl font-bold">Koreksi Peserta</h2>
                 <div className="rounded-xl border p-6">
-                    <DataTable
-                        columns={columns}
-                        data={data}
-                        searchColumn="nama_peserta"
-                        searchPlaceholder="Cari nama peserta..."
-                    />
+                    <DataTable columns={columns} data={data} searchColumn="nama_peserta" searchPlaceholder="Cari nama peserta..." />
                 </div>
             </div>
         </AppLayout>

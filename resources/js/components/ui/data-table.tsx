@@ -172,7 +172,7 @@ export function DataTable<TData, TValue>({
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
+              <Button variant="outline" className="ml-auto cursor-pointer">
                 <Settings2 className="mr-2 h-4 w-4" />
                 Kolom
                 <ChevronDown className="ml-2 h-4 w-4" />

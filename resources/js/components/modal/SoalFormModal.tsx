@@ -272,49 +272,81 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
             return (
                 <div className="space-y-2">
                     <label className="mb-1 block font-medium">Opsi Jawaban</label>
-                    {opsi.map((val, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                            <label className="w-20">Opsi {String.fromCharCode(65 + idx)}</label>
-                            <Input
-                                placeholder={`Opsi ${String.fromCharCode(65 + idx)}`}
-                                value={val}
-                                onChange={(e) => {
-                                    const newOpsi = [...opsi];
-                                    newOpsi[idx] = e.target.value;
-                                    setOpsi(newOpsi);
-                                }}
-                            />
-                            {errors[`opsi_${idx}`] && <span className="ml-2 text-xs text-red-500">{errors[`opsi_${idx}`]}</span>}
-                            {tipeJawaban.startsWith('multi_choice') ? (
-                                <label className="flex items-center gap-1">
-                                    <input
-                                        type="checkbox"
-                                        checked={jawabanBenarMulti.includes(String.fromCharCode(65 + idx))}
-                                        onChange={() => {
-                                            const key = String.fromCharCode(65 + idx);
-                                            setJawabanBenarMulti(
-                                                jawabanBenarMulti.includes(key)
-                                                    ? jawabanBenarMulti.filter((j) => j !== key)
-                                                    : [...jawabanBenarMulti, key],
-                                            );
-                                        }}
-                                    />
-                                    <span>Benar</span>
-                                </label>
-                            ) : (
-                                <label className="flex items-center gap-1">
-                                    <input
-                                        type="radio"
-                                        name="jawaban_benar"
-                                        checked={jawabanBenar === String.fromCharCode(65 + idx)}
-                                        onChange={() => setJawabanBenar(String.fromCharCode(65 + idx))}
-                                    />
-                                    <span>Benar</span>
-                                </label>
-                            )}
-                        </div>
-                    ))}
-                    {tipeJawaban.startsWith('single_choice') && errors.jawabanBenar && <span className="text-xs text-red-500">{errors.jawabanBenar}</span>}
+                    {opsi.map((val, idx) => {
+                        const id = `jawaban-${idx}`;
+                        const key = String.fromCharCode(65 + idx);
+
+                        return (
+                            <div key={idx} className="flex items-center gap-2">
+                                <label className="w-20">Opsi {key}</label>
+                                <Input
+                                    placeholder={`Opsi ${key}`}
+                                    value={val}
+                                    onChange={(e) => {
+                                        const newOpsi = [...opsi];
+                                        newOpsi[idx] = e.target.value;
+                                        setOpsi(newOpsi);
+                                    }}
+                                />
+                                {errors[`opsi_${idx}`] && <span className="ml-2 text-xs text-red-500">{errors[`opsi_${idx}`]}</span>}
+
+                                {tipeJawaban.startsWith('multi_choice') ? (
+                                    <div className="flex items-center gap-1">
+                                        <input
+                                            id={id}
+                                            className="cursor-pointer"
+                                            type="checkbox"
+                                            checked={jawabanBenarMulti.includes(key)}
+                                            onChange={() => {
+                                                setJawabanBenarMulti(
+                                                    jawabanBenarMulti.includes(key)
+                                                        ? jawabanBenarMulti.filter((j) => j !== key)
+                                                        : [...jawabanBenarMulti, key],
+                                                );
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    setJawabanBenarMulti(
+                                                        jawabanBenarMulti.includes(key)
+                                                            ? jawabanBenarMulti.filter((j) => j !== key)
+                                                            : [...jawabanBenarMulti, key],
+                                                    );
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor={id} className="cursor-pointer">
+                                            Benar
+                                        </label>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1">
+                                        <input
+                                            id={id}
+                                            type="radio"
+                                            name="jawaban_benar"
+                                            checked={jawabanBenar === key}
+                                            onChange={() => setJawabanBenar(key)}
+                                            className="cursor-pointer"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    setJawabanBenar(key);
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor={id} className="cursor-pointer">
+                                            Benar
+                                        </label>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+
+                    {tipeJawaban.startsWith('single_choice') && errors.jawabanBenar && (
+                        <span className="text-xs text-red-500">{errors.jawabanBenar}</span>
+                    )}
                     {tipeJawaban.startsWith('multi_choice') && errors.jawabanBenarMulti && (
                         <span className="text-xs text-red-500">{errors.jawabanBenarMulti}</span>
                     )}
@@ -326,27 +358,14 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
 
     // Render upload media jika ada gambar/audio
     const renderMediaInput = () => {
-        const withMedia = [
-            'essay_gambar',
-            'essay_audio',
-            'single_choice_gambar',
-            'single_choice_audio',
-            'multi_choice_gambar',
-            'multi_choice_audio'
-        ];
+        const withMedia = ['essay_gambar', 'essay_audio', 'single_choice_gambar', 'single_choice_audio', 'multi_choice_gambar', 'multi_choice_audio'];
 
         if (withMedia.includes(tipeJawaban)) {
             const isAudio = tipeJawaban.endsWith('_audio');
             return (
                 <div>
-                    <label className="mb-1 block font-medium">
-                        {isAudio ? 'Upload Audio' : 'Upload Gambar'}
-                    </label>
-                    <Input
-                        type="file"
-                        accept={isAudio ? 'audio/*' : 'image/*'}
-                        onChange={(e) => setMedia(e.target.files?.[0] || null)}
-                    />
+                    <label className="mb-1 block font-medium">{isAudio ? 'Upload Audio' : 'Upload Gambar'}</label>
+                    <Input type="file" accept={isAudio ? 'audio/*' : 'image/*'} onChange={(e) => setMedia(e.target.files?.[0] || null)} />
                 </div>
             );
         }
@@ -481,11 +500,13 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                                 <SelectValue placeholder="Pilih Tipe Soal" />
                             </SelectTrigger>
                             <SelectContent>
-                                {SOAL_TYPES.map((t) => (
-                                    <SelectItem key={t.value} value={t.value}>
-                                        {t.label}
-                                    </SelectItem>
-                                ))}
+                                <div className="max-h-60 overflow-y-auto">
+                                    {SOAL_TYPES.map((t) => (
+                                        <SelectItem key={t.value} value={t.value}>
+                                            {t.label}
+                                        </SelectItem>
+                                    ))}
+                                </div>
                             </SelectContent>
                         </Select>
                     </div>
@@ -507,11 +528,11 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                         {errors.skor && <span className="text-xs text-red-500">{errors.skor}</span>}
                     </div>
                     <DialogFooter>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} className="cursor-pointer">
                             {loading ? 'Menyimpan...' : 'Simpan'}
                         </Button>
                         <DialogClose asChild>
-                            <Button type="button" variant="outline" onClick={resetForm}>
+                            <Button type="button" variant="outline" onClick={resetForm} className="cursor-pointer">
                                 Batal
                             </Button>
                         </DialogClose>

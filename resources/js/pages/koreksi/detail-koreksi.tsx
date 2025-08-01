@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface JawabanDetail {
     id: number;
@@ -110,10 +110,7 @@ export default function DetailKoreksi({ data, peserta }: Props) {
                         max={row.original.skor_maksimal}
                         value={skorData[index].skor_didapat || ''}
                         onChange={(e) => {
-                            const newValue = Math.min(
-                                Math.max(0, parseInt(e.target.value) || 0),
-                                row.original.skor_maksimal
-                            );
+                            const newValue = Math.min(Math.max(0, parseInt(e.target.value) || 0), row.original.skor_maksimal);
                             const newData = [...skorData];
                             newData[index] = {
                                 ...newData[index],
@@ -130,14 +127,8 @@ export default function DetailKoreksi({ data, peserta }: Props) {
 
     // Hitung total nilai (0-100) berdasarkan skor yang didapat
     useEffect(() => {
-        const totalSkorMaksimal = skorData.reduce(
-            (sum, item) => sum + item.skor_maksimal,
-            0
-        );
-        const totalSkorDidapat = skorData.reduce(
-            (sum, item) => sum + (item.skor_didapat || 0),
-            0
-        );
+        const totalSkorMaksimal = skorData.reduce((sum, item) => sum + item.skor_maksimal, 0);
+        const totalSkorDidapat = skorData.reduce((sum, item) => sum + (item.skor_didapat || 0), 0);
 
         const nilaiAkhir = (totalSkorDidapat / totalSkorMaksimal) * 100;
         setTotalNilai(Math.round(nilaiAkhir * 100) / 100); // Round to 2 decimal places
@@ -148,12 +139,12 @@ export default function DetailKoreksi({ data, peserta }: Props) {
 
     const handleSave = () => {
         // Cek apakah semua soal sudah diberi skor
-        const unscored = skorData.some(item => item.skor_didapat === null);
+        const unscored = skorData.some((item) => item.skor_didapat === null);
         if (unscored) {
             toast({
-                title: "Peringatan",
-                description: "Harap isi skor untuk semua soal terlebih dahulu",
-                variant: "destructive",
+                title: 'Peringatan',
+                description: 'Harap isi skor untuk semua soal terlebih dahulu',
+                variant: 'destructive',
             });
             return;
         }
@@ -161,36 +152,40 @@ export default function DetailKoreksi({ data, peserta }: Props) {
         setIsSaving(true);
         const url = window.location.pathname;
 
-        router.post(url, {
-            skor_data: skorData.map(item => ({
-                id: item.id,
-                skor_didapat: item.skor_didapat || 0
-            })),
-            total_nilai: totalNilai
-        }, {
-            onSuccess: () => {
-                toast({
-                    title: "Berhasil",
-                    description: "Koreksi berhasil disimpan",
-                    variant: "success",
-                });
-                setIsSaving(false);
+        router.post(
+            url,
+            {
+                skor_data: skorData.map((item) => ({
+                    id: item.id,
+                    skor_didapat: item.skor_didapat || 0,
+                })),
+                total_nilai: totalNilai,
             },
-            onError: (error) => {
-                console.error('Save error:', error);
-                toast({
-                    title: "Gagal",
-                    description: error?.message || "Gagal menyimpan koreksi",
-                    variant: "destructive",
-                });
-                setIsSaving(false);
-            }
-        });
+            {
+                onSuccess: () => {
+                    toast({
+                        title: 'Berhasil',
+                        description: 'Koreksi berhasil disimpan',
+                        variant: 'success',
+                    });
+                    setIsSaving(false);
+                },
+                onError: (error) => {
+                    console.error('Save error:', error);
+                    toast({
+                        title: 'Gagal',
+                        description: error?.message || 'Gagal menyimpan koreksi',
+                        variant: 'destructive',
+                    });
+                    setIsSaving(false);
+                },
+            },
+        );
     };
 
     const renderHasilKoreksi = () => (
         <div className="flex h-full flex-1 flex-col gap-4 p-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4">
                 <h2 className="text-2xl font-bold text-green-800">Hasil Koreksi</h2>
                 <div className="text-lg text-green-700">
                     <p>
@@ -205,13 +200,12 @@ export default function DetailKoreksi({ data, peserta }: Props) {
                 </div>
             </div>
             <div className="rounded-xl border p-6">
-                <DataTable
-                    columns={columns.filter(col => col.accessorKey !== 'skor_didapat')}
-                    data={skorData}
-                />
+                <DataTable columns={columns.filter((col) => col.accessorKey !== 'skor_didapat')} data={skorData} />
             </div>
             <Button
-                onClick={() => window.location.href = '/koreksi'}
+                onClick={() => {
+                    router.visit(`/koreksi`);
+                }}
                 className="w-fit cursor-pointer"
             >
                 Kembali ke Daftar Koreksi
@@ -233,17 +227,11 @@ export default function DetailKoreksi({ data, peserta }: Props) {
             <div className="rounded-xl border p-6">
                 <DataTable columns={columns} data={skorData} />
             </div>
-            <div className="flex justify-between items-center">
-                <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="bg-primary hover:bg-primary/90"
-                >
+            <div className="flex items-center justify-between">
+                <Button onClick={handleSave} disabled={isSaving} className="bg-primary hover:bg-primary/90">
                     {isSaving ? 'Menyimpan...' : 'Simpan Koreksi'}
                 </Button>
-                <div className="text-lg font-semibold">
-                    Total Nilai: {totalNilai}/100
-                </div>
+                <div className="text-lg font-semibold">Total Nilai: {totalNilai}/100</div>
             </div>
         </div>
     );

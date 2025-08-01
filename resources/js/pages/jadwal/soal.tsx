@@ -19,6 +19,8 @@ import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 import 'katex/dist/katex.min.css';
 import { Edit, Eye, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -259,7 +261,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         {selectedSoal.media && (
                             <div className="border-white-100 rounded-lg border p-4">
                                 <h3 className="text-white-900 mb-3 flex items-center gap-2 font-medium">
-                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="h-4 w-4 text-black dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
@@ -297,7 +299,6 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                             {/* Jenis Soal */}
                             <div className="border-white-900 rounded-lg border p-4">
                                 <div className="mb-2 flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-white"></div>
                                     <span className="text-white-800 text-sm font-medium">Jenis Soal</span>
                                 </div>
                                 <span className="text-white-900 font-semibold">
@@ -327,7 +328,6 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                             {/* Skor */}
                             <div className="border-white-200 rounded-lg border p-4">
                                 <div className="mb-2 flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-white"></div>
                                     <span className="text-white-800 text-sm font-medium">Skor</span>
                                 </div>
                                 <span className="text-white-900 text-lg font-semibold">{selectedSoal.skor} poin</span>
@@ -337,7 +337,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         {/* Pertanyaan */}
                         <div className="border-white-200 rounded-lg border p-5">
                             <h3 className="text-white-900 mb-3 flex items-center gap-2 font-medium">
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="h-4 w-4 text-black dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
@@ -354,7 +354,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         {(selectedSoal.opsi_a || selectedSoal.opsi_b || selectedSoal.opsi_c || selectedSoal.opsi_d) && (
                             <div className="border-white-200 rounded-lg border p-5">
                                 <h3 className="text-white-900 mb-4 flex items-center gap-2 font-medium">
-                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="h-4 w-4 text-black dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
@@ -635,7 +635,8 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         <div>
                             <h2 className="mb-1 text-2xl font-bold">Soal untuk Jadwal: {jadwal.nama_jadwal}</h2>
                             <div className="text-sm text-muted-foreground">
-                                Tanggal: {jadwal.tanggal_mulai} s/d {jadwal.tanggal_berakhir}
+                                Tanggal: {format(new Date(jadwal.tanggal_mulai), 'dd MMMM yyyy', { locale: id })} s/d{' '}
+                                {format(new Date(jadwal.tanggal_berakhir), 'dd MMMM yyyy', { locale: id })}
                             </div>
                         </div>
                         <div className="flex gap-2">
