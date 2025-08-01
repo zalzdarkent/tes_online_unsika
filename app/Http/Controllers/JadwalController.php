@@ -361,7 +361,7 @@ class JadwalController extends Controller
             // Update jadwal
             $jadwal->update($validated);
 
-            return redirect()->route('jadwal.index')->with('success', 'Jadwal berhasil diperbarui!');
+            return redirect()->route('jadwal.index');
         } catch (\Exception $e) {
             return back()->withErrors([
                 'error' => 'Terjadi kesalahan saat memperbarui jadwal. Silakan coba lagi.'

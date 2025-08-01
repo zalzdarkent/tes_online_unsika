@@ -183,7 +183,6 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                     title: 'Berhasil!',
                     description: 'Jadwal berhasil diupdate.',
                 });
-                router.visit(route('jadwal.index'));
             },
             onError: (errors: Record<string, string>) => {
                 if (errors.conflict) {
