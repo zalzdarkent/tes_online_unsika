@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import { ClipboardCheck, Trash2 } from 'lucide-react';
+import { ClipboardCheck, Trash2, Eye } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 interface DataKoreksi {
@@ -70,16 +70,23 @@ export default function Koreksi({ data }: Props) {
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        className="border-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950 cursor-pointer"
+                                        className={data.total_skor !== null
+                                            ? "border-blue-500 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950 cursor-pointer"
+                                            : "border-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950 cursor-pointer"
+                                        }
                                         onClick={() => {
                                             window.location.href = `/koreksi/${data.id_user}/${data.id_jadwal}`;
                                         }}
                                     >
-                                        <ClipboardCheck className="h-4 w-4 text-green-500" />
+                                        {data.total_skor !== null ? (
+                                            <Eye className="h-4 w-4 text-blue-500" />
+                                        ) : (
+                                            <ClipboardCheck className="h-4 w-4 text-green-500" />
+                                        )}
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>Koreksi</p>
+                                    <p>{data.total_skor !== null ? 'Lihat Detail' : 'Koreksi'}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>

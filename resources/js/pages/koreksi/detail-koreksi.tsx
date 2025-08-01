@@ -48,6 +48,30 @@ export default function DetailKoreksi({ data, peserta }: Props) {
         {
             accessorKey: 'jenis_soal',
             header: 'Tipe Soal',
+            cell: ({ row }) => {
+                const jenisSoal = row.getValue('jenis_soal') as string;
+                const label = (() => {
+                    switch (jenisSoal) {
+                        case 'pilihan_ganda':
+                            return 'Pilihan Ganda';
+                        case 'multi_choice':
+                            return 'Pilihan Ganda (Multi Jawaban)';
+                        case 'esai':
+                            return 'Esai';
+                        case 'essay_gambar':
+                            return 'Esai + Gambar';
+                        case 'essay_audio':
+                            return 'Esai + Audio';
+                        case 'skala':
+                            return 'Skala';
+                        case 'equation':
+                            return 'Equation';
+                        default:
+                            return jenisSoal;
+                    }
+                })();
+                return <span className="text-sm font-medium">{label}</span>;
+            },
         },
         {
             accessorKey: 'pertanyaan',
@@ -188,7 +212,7 @@ export default function DetailKoreksi({ data, peserta }: Props) {
             </div>
             <Button
                 onClick={() => window.location.href = '/koreksi'}
-                className="w-fit"
+                className="w-fit cursor-pointer"
             >
                 Kembali ke Daftar Koreksi
             </Button>
