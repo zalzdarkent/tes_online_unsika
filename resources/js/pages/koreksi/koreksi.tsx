@@ -124,7 +124,13 @@ export default function Koreksi({ data }: Props) {
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <h2 className="text-2xl font-bold">Koreksi Peserta</h2>
                 <div className="rounded-xl border p-6">
-                    <DataTable columns={columns} data={data} searchColumn="nama_peserta" searchPlaceholder="Cari nama peserta..." />
+                    <DataTable
+                        columns={columns}
+                        data={data}
+                        searchColumn="nama_peserta"
+                        searchPlaceholder="Cari nama peserta..."
+                        exportFilename="data-koreksi"
+                    />
                 </div>
             </div>
         </AppLayout>
