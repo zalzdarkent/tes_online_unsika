@@ -14,6 +14,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { toast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
+import { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 
@@ -42,6 +43,13 @@ interface Props {
         note: string;
     };
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Daftar Tes',
+        href: '/daftar-tes',
+    },
+];
 
 export default function DaftarTes({ jadwal }: Props) {
     // is loading
@@ -166,7 +174,7 @@ export default function DaftarTes({ jadwal }: Props) {
     ];
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Daftar Tes" />
             <div className="space-y-6 p-6">
                 <h1 className="text-2xl font-bold">Daftar Tes Tersedia</h1>

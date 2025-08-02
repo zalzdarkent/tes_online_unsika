@@ -132,8 +132,8 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                     >
                         {opsi.map((o, i) => (
                             <div key={i} className="flex items-center space-x-2">
-                                <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} />
-                                <Label htmlFor={`soal_${s.id}_${o.label}`}>
+                                <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} className="cursor-pointer" />
+                                <Label htmlFor={`soal_${s.id}_${o.label}`} className="cursor-pointer">
                                     {o.label}. {o.text}
                                 </Label>
                             </div>
@@ -340,7 +340,7 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                             <Button
                                 key={i}
                                 variant={currentIndex === i ? 'default' : 'outline'}
-                                className="px-0 py-2"
+                                className="cursor-pointer px-0 py-2"
                                 onClick={() => setCurrentIndex(i)}
                             >
                                 {i + 1}
@@ -398,7 +398,7 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
 
                         <div>
                             <div className="flex justify-between pt-6">
-                                <Button onClick={handlePrev} disabled={currentIndex === 0} variant="outline">
+                                <Button onClick={handlePrev} disabled={currentIndex === 0} variant="outline" className="cursor-pointer">
                                     Sebelumnya
                                 </Button>
                                 {currentIndex === soal.length - 1 ? (
@@ -414,15 +414,19 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Batal</AlertDialogCancel>
+                                                <AlertDialogCancel className="cursor-pointer">Batal</AlertDialogCancel>
                                                 <AlertDialogAction asChild>
-                                                    <Button onClick={handleSubmit}>Kirim Jawaban</Button>
+                                                    <Button onClick={handleSubmit} className="cursor-pointer">
+                                                        Kirim Jawaban
+                                                    </Button>
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
                                 ) : (
-                                    <Button onClick={handleNext}>Selanjutnya</Button>
+                                    <Button className="cursor-pointer" onClick={handleNext}>
+                                        Selanjutnya
+                                    </Button>
                                 )}
                             </div>
                         </div>

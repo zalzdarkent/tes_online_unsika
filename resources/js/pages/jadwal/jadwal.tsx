@@ -269,7 +269,6 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                     checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
                     onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                     aria-label="Select all"
-                    className="cursor-pointer"
                 />
             ),
             cell: ({ row }) => (
@@ -279,7 +278,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
             enableHiding: false,
         },
         {
-            accessorKey: 'id',
+            accessorKey: 'no',
             header: 'No',
             enableHiding: true,
             cell: ({ row }) => {
@@ -411,7 +410,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
             <Head title="Jadwal Tes" />
             <JadwalLayout>
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl">
-                    <div className="flex items-center justify-between">
+                    <div className="flex w-full flex-col flex-wrap justify-between gap-2 sm:flex-row sm:space-x-2">
                         <h2 className="text-2xl font-bold">Daftar Jadwal Tes</h2>
                         <JadwalFormModal
                             mode="create"
@@ -436,6 +435,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                             id_jadwal_sebelumnya: false,
                         }}
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}
+                        showExportButton
                     />
                 </div>
             </JadwalLayout>

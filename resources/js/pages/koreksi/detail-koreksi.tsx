@@ -228,7 +228,7 @@ export default function DetailKoreksi({ data, peserta }: Props) {
                 <DataTable columns={columns} data={skorData} />
             </div>
             <div className="flex items-center justify-between">
-                <Button onClick={handleSave} disabled={isSaving} className="bg-primary hover:bg-primary/90">
+                <Button onClick={handleSave} disabled={isSaving} className="cursor-pointer bg-primary hover:bg-primary/90">
                     {isSaving ? 'Menyimpan...' : 'Simpan Koreksi'}
                 </Button>
                 <div className="text-lg font-semibold">Total Nilai: {totalNilai}/100</div>

@@ -660,6 +660,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         searchColumn="pertanyaan"
                         searchPlaceholder="Cari pertanyaan..."
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Belum ada soal untuk jadwal ini.</div>}
+                        showExportButton
                     />
                     {renderSoalDetailModal()}
                 </div>

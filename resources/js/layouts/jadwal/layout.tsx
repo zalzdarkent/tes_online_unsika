@@ -31,8 +31,9 @@ export default function JadwalLayout({ children }: PropsWithChildren) {
         <div className="px-4 py-6">
             <Heading title="Manajemen Jadwal" description="Kelola jadwal dan kategori tes" />
 
-            <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-48">
+            <div className="flex w-full flex-col space-y-4 lg:flex-row lg:space-y-0 lg:space-x-12">
+                {/* aside content */}
+                <aside className="w-full shrink-0 lg:w-32">
                     <nav className="flex flex-col space-y-1 space-x-0">
                         {sidebarNavItems.map((item, index) => (
                             <Button
@@ -53,10 +54,8 @@ export default function JadwalLayout({ children }: PropsWithChildren) {
                 </aside>
 
                 <Separator className="my-6 md:hidden" />
-
-                <div className="flex-1 md:max-w-4xl">
-                    {children}
-                </div>
+                {/* main content */}
+                <div className="min-w-0 flex-1">{children}</div>
             </div>
         </div>
     );

@@ -1,6 +1,7 @@
 import { DataTable } from '@/components/ui/data-table';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
+import { BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 
@@ -13,6 +14,13 @@ interface RiwayatTes {
     start_time: string;
     total_nilai?: number | null;
 }
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Riwayat Tes',
+        href: '/riwayat',
+    },
+];
 
 interface Props {
     riwayat: RiwayatTes[];
@@ -41,7 +49,7 @@ export default function RiwayatTes({ riwayat }: Props) {
     ];
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Riwayat Tes" />
             <div className="space-y-6 p-6">
                 <h1 className="text-2xl font-bold">Riwayat Tes</h1>

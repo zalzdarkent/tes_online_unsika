@@ -14,7 +14,6 @@ import {
   RowSelectionState,
 } from "@tanstack/react-table"
 import { useState } from "react"
-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -43,7 +42,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Trash2, ArrowUpDown, ChevronDown, Settings2, ArrowUp, ArrowDown, FileDown } from "lucide-react"
+import { Trash2, ArrowUpDown, ChevronDown, Settings2, ArrowUp, ArrowDown, FileDown, Search } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -56,6 +62,7 @@ interface DataTableProps<TData, TValue> {
   emptyMessage?: React.ReactNode
   initialColumnVisibility?: VisibilityState
   exportFilename?: string
+   showExportButton?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -69,6 +76,7 @@ export function DataTable<TData, TValue>({
   emptyMessage,
   initialColumnVisibility = {},
   exportFilename = "exported-data",
+  showExportButton = false
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -96,28 +104,34 @@ export function DataTable<TData, TValue>({
   })
 
   const handleExport = () => {
-    // Get visible columns
+    const excludedIds = ["select", "actions", "aksi", "action"]
     const visibleColumns = table.getAllColumns().filter(col =>
-      col.getIsVisible()
+      col.getIsVisible() && !excludedIds.includes(col.id)
     )
 
-    // Get filtered & sorted data
     const exportData = table.getFilteredRowModel().rows.map(row => {
       const rowData: Record<string, any> = {}
+
       visibleColumns.forEach(col => {
-        const cell = row.getAllCells().find(c => c.column.id === col.id)
-        if (cell) {
-          // Get the rendered or raw value
-          const value = cell.renderValue() || cell.getValue()
-          const header = col.columnDef.header
-          const headerText = typeof header === "string"
-            ? header
-            : typeof header === "function"
-              ? col.id
-              : col.id
-          rowData[headerText] = value
+        const columnId = col.id
+
+        if (columnId === "no") {
+          rowData["No"] = row.index + 1
+        } else {
+          const cell = row.getAllCells().find(c => c.column.id === columnId)
+          if (cell) {
+            const value = cell.renderValue() || cell.getValue()
+            const header = col.columnDef.header
+            const headerText = typeof header === "string"
+              ? header
+              : typeof header === "function"
+                ? columnId
+                : columnId
+            rowData[headerText] = value
+          }
         }
       })
+
       return rowData
     })
 
@@ -195,19 +209,25 @@ export function DataTable<TData, TValue>({
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between py-4">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-start justify-between gap-4 py-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 gap-2 w-full flex-wrap">
+          {/* search */}
           {searchColumn && (
-            <Input
-              placeholder={searchPlaceholder}
-              value={(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
-                table.getColumn(searchColumn)?.setFilterValue(event.target.value)
-              }
-              className="max-w-sm"
-            />
+            <div className="relative w-full lg:max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={searchPlaceholder}
+                value={(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""}
+                onChange={(event) =>
+                  table.getColumn(searchColumn)?.setFilterValue(event.target.value)
+                }
+                className="pl-9 w-full"
+              />
+            </div>
           )}
-          <div className="flex gap-2">
+
+          {/* export button */}
+          {showExportButton && (
             <Button
               variant="outline"
               className="cursor-pointer"
@@ -216,16 +236,19 @@ export function DataTable<TData, TValue>({
               <FileDown className="mr-2 h-4 w-4" />
               Export Excel
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="cursor-pointer">
-                  <Settings2 className="mr-2 h-4 w-4" />
-                  Kolom
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {table.getAllColumns()
+          )}
+
+          {/* visible columns */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="cursor-pointer">
+                <Settings2 className="mr-2 h-4 w-4" />
+                Kolom
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table.getAllColumns()
                 .filter((column) => column.getCanHide())
                 .map((column) => {
                   const headerText = (() => {
@@ -247,14 +270,16 @@ export function DataTable<TData, TValue>({
                     </DropdownMenuCheckboxItem>
                   )
                 })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
         {onAddNew && (
-          <Button onClick={onAddNew} className="cursor-pointer">
-            {addButtonLabel}
-          </Button>
+          <div className="w-full md:w-auto">
+            <Button onClick={onAddNew} className="w-full md:w-auto cursor-pointer">
+              {addButtonLabel}
+            </Button>
+          </div>
         )}
       </div>
       <div className="rounded-md border">
@@ -319,33 +344,41 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
-            <select
-              value={table.getState().pagination.pageSize}
-              onChange={(e) => {
-                table.setPageSize(Number(e.target.value))
-              }}
-              className="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-            >
-              {[10, 20, 30, 40, 50].map((pageSize) => (
-                <option key={pageSize} value={pageSize}>
-                  {pageSize}
-                </option>
-              ))}
-            </select>
+      {/* pagination */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4">
+        <div className="flex items-center justify-between space-x-4">
+          <div className="text-sm text-muted-foreground">
+            {table.getFilteredSelectedRowModel().rows.length} of{" "}
+            {table.getFilteredRowModel().rows.length} row(s) selected.
           </div>
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+          <div className="space-x-2 flex items-center">
+            <p className="text-sm font-medium">Rows per page</p>
+            {/* todo: coba seed >10 data terus test ini */}
+            <Select
+              value={String(table.getState().pagination.pageSize)}
+              onValueChange={(value) => table.setPageSize(Number(value))}
+            >
+              <SelectTrigger className="h-8 w-[90px] text-sm">
+                <SelectValue placeholder="Rows" />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={String(pageSize)}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* pagination */}
+        <div className="flex justify-between items-center sm:space-x-4 gap-2">
+          <div className="text-sm text-left">
             Page {table.getState().pagination.pageIndex + 1} of{" "}
             {table.getPageCount()}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
