@@ -25,7 +25,7 @@ services:
             - .:/var/www
             - ./docker/nginx/conf.d:/etc/nginx/conf.d
             - ./storage/app/public:/var/www/storage/app/public
-            - /etc/letsencrypt:/etc/letsencrypt
+            - /etc/letsencrypt:/etc/letsencrypt:ro
         depends_on:
             - app
         networks:
