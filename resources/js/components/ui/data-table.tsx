@@ -349,10 +349,10 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center justify-between space-x-4">
           <div className="text-sm text-muted-foreground">
             {table.getFilteredSelectedRowModel().rows.length} dari{" "}
-            {table.getFilteredRowModel().rows.length} baris dipilih.
+            {table.getFilteredRowModel().rows.length} data dipilih.
           </div>
           <div className="space-x-2 flex items-center">
-            <p className="text-sm font-medium">Jumlah baris per halaman</p>
+            <p className="text-sm font-medium">Jumlah data per halaman</p>
             {/* todo: coba seed >10 data terus test ini */}
             <Select
               value={String(table.getState().pagination.pageSize)}
