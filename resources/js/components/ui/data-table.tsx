@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Trash2, ArrowUpDown, ChevronDown, Settings2, ArrowUp, ArrowDown, FileDown, Search } from "lucide-react"
+import { Trash2, ArrowUpDown, ChevronDown, Settings2, ArrowUp, ArrowDown, FileDown, Search, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -348,11 +348,11 @@ export function DataTable<TData, TValue>({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4">
         <div className="flex items-center justify-between space-x-4">
           <div className="text-sm text-muted-foreground">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
+            {table.getFilteredSelectedRowModel().rows.length} dari{" "}
+            {table.getFilteredRowModel().rows.length} baris dipilih.
           </div>
           <div className="space-x-2 flex items-center">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium">Jumlah baris per halaman</p>
             {/* todo: coba seed >10 data terus test ini */}
             <Select
               value={String(table.getState().pagination.pageSize)}
@@ -375,7 +375,7 @@ export function DataTable<TData, TValue>({
         {/* pagination */}
         <div className="flex justify-between items-center sm:space-x-4 gap-2">
           <div className="text-sm text-left">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            Halaman {table.getState().pagination.pageIndex + 1} dari{" "}
             {table.getPageCount()}
           </div>
           <div className="flex gap-2">
@@ -385,7 +385,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
-              {"<<"}
+              <ChevronsLeft/>
             </Button>
             <Button
               variant="outline"
@@ -393,7 +393,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
-              {"<"}
+              <ChevronLeft/>
             </Button>
             <Button
               variant="outline"
@@ -401,7 +401,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
-              {">"}
+              <ChevronRight/>
             </Button>
             <Button
               variant="outline"
@@ -409,7 +409,7 @@ export function DataTable<TData, TValue>({
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >
-              {">>"}
+              <ChevronsRight/>
             </Button>
           </div>
         </div>
