@@ -96,7 +96,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
         return newErrors;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setErrors({});
         const newErrors = validate();

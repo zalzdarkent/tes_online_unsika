@@ -168,19 +168,6 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
 
     console.log('Jadwal component rendered with:', jadwal?.length || 0, 'items');
 
-    // Safety check untuk props
-    if (!jadwal) {
-        return (
-            <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Jadwal Tes" />
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                    <h2 className="text-2xl font-bold">Jadwal Tes</h2>
-                    <div className="py-8 text-center">Loading...</div>
-                </div>
-            </AppLayout>
-        );
-    }
-
     // Helper function untuk mencari nama jadwal berdasarkan ID
     const findJadwalNameById = (id: number | null): string => {
         if (!id) return '-';
