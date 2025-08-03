@@ -208,7 +208,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
             !dateTimeInputs.tanggal_mulai_date ||
             !dateTimeInputs.tanggal_mulai_time ||
             !dateTimeInputs.tanggal_berakhir_date ||
-            !dateTimeInputs.tanggal_berakhir_time
+            !dateTimeInputs.tanggal_berakhir_time ||
+            !data.durasi
         ) {
             toast({
                 variant: 'destructive',

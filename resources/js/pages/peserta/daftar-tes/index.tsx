@@ -15,8 +15,9 @@ import { toast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
+import { useEffect } from 'react';
 
 interface JadwalData {
     id: number;
@@ -52,6 +53,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function DaftarTes({ jadwal }: Props) {
+    const { props } = usePage<{ errors?: Record<string, string> }>();
+
+    useEffect(() => {
+        if (props.errors?.error) {
+            toast({
+                variant: 'destructive',
+                title: 'Gagal memulai tes',
+                description: props.errors.error,
+            });
+        }
+    }, [props.errors]);
+
     // is loading
     if (!jadwal) {
         return (
@@ -151,11 +164,11 @@ export default function DaftarTes({ jadwal }: Props) {
                                                 { id_jadwal: id },
                                                 {
                                                     onSuccess: () => router.visit(`/tes/${id}/soal`),
-                                                    onError: () => {
+                                                    onError: (errors) => {
                                                         toast({
                                                             variant: 'destructive',
                                                             title: 'Gagal memulai tes',
-                                                            description: 'Terjadi kesalahan saat menyimpan waktu mulai.',
+                                                            description: errors.error,
                                                         });
                                                     },
                                                 },

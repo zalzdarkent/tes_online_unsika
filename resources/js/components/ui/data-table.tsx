@@ -162,7 +162,7 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center justify-between py-2 px-4 bg-muted/50 rounded-md mb-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">
-              {selectedRows.length} item dipilih
+              {selectedRows.length} data dipilih
             </span>
           </div>
           <div className="flex items-center gap-2">

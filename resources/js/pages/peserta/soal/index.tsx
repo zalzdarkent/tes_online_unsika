@@ -290,7 +290,6 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                     router.visit(route('peserta.riwayat'));
                 },
                 onError: (errors: Record<string, string>) => {
-                    console.log(errors.error);
                     if (errors.error) {
                         toast({
                             variant: 'destructive',

@@ -28,6 +28,6 @@ class RoleMiddleware
         }
 
         // If user doesn't have permission, redirect with error
-        return redirect()->route('dashboard')->with('error', 'Anda tidak memiliki akses untuk halaman ini.');
+        return redirect()->route('dashboard')->withErrors(['error' => 'Anda tidak memiliki akses untuk halaman ini.']);
     }
 }

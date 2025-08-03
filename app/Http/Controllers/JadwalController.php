@@ -111,11 +111,10 @@ class JadwalController extends Controller
             'nama_jadwal' => 'required|string|max:255',
             'tanggal_mulai' => 'required|date',
             'tanggal_berakhir' => 'required|date|after:tanggal_mulai',
-            // 'status' dihapus, otomatis diisi
             'auto_close' => 'boolean',
             'id_jadwal_sebelumnya' => 'nullable|exists:jadwal,id',
             'kategori_tes_id' => 'nullable|exists:kategori_tes,id',
-            'durasi' => 'nullable|integer|min:1|max:1440', // maksimal 24 jam (1440 menit)
+            'durasi' => 'required|integer|min:1|max:1440', // maksimal 24 jam (1440 menit)
         ], [
             'nama_jadwal.required' => 'Nama jadwal wajib diisi.',
             'tanggal_mulai.required' => 'Tanggal mulai wajib diisi.',
@@ -123,9 +122,9 @@ class JadwalController extends Controller
             'tanggal_berakhir.required' => 'Tanggal berakhir wajib diisi.',
             'tanggal_berakhir.date' => 'Format tanggal berakhir tidak valid.',
             'tanggal_berakhir.after' => 'Tanggal berakhir harus setelah tanggal mulai.',
-            // 'status' dihapus
             'id_jadwal_sebelumnya.exists' => 'Jadwal sebelumnya tidak valid.',
             'kategori_tes_id.exists' => 'Kategori tes tidak valid.',
+            'durasi.required' => 'Durasi wajib diisi.',
             'durasi.integer' => 'Durasi harus berupa angka.',
             'durasi.min' => 'Durasi minimal 1 menit.',
             'durasi.max' => 'Durasi maksimal 1440 menit (24 jam).',
@@ -140,7 +139,7 @@ class JadwalController extends Controller
 
         if ($existingJadwal) {
             return back()->withErrors([
-                'nama_jadwal' => 'Nama jadwal sudah digunakan.'
+                'error' => 'Nama jadwal sudah digunakan.'
             ])->withInput();
         }
 
@@ -179,7 +178,7 @@ class JadwalController extends Controller
 
             if (!$jadwalSebelumnya) {
                 return back()->withErrors([
-                    'id_jadwal_sebelumnya' => 'Jadwal sebelumnya tidak valid atau bukan milik Anda.'
+                    'error' => 'Jadwal sebelumnya tidak valid atau bukan milik Anda.'
                 ])->withInput();
             }
         }
@@ -254,11 +253,10 @@ class JadwalController extends Controller
             'nama_jadwal' => 'required|string|max:255',
             'tanggal_mulai' => 'required|date',
             'tanggal_berakhir' => 'required|date|after:tanggal_mulai',
-            // 'status' dihapus, otomatis diisi
             'auto_close' => 'boolean',
             'id_jadwal_sebelumnya' => 'nullable|exists:jadwal,id',
             'kategori_tes_id' => 'nullable|exists:kategori_tes,id',
-            'durasi' => 'nullable|integer|min:1|max:1440', // maksimal 24 jam (1440 menit)
+            'durasi' => 'nullable|integer|min:1|max:1440',
         ], [
             'nama_jadwal.required' => 'Nama jadwal wajib diisi.',
             'tanggal_mulai.required' => 'Tanggal mulai wajib diisi.',
@@ -266,7 +264,6 @@ class JadwalController extends Controller
             'tanggal_berakhir.required' => 'Tanggal berakhir wajib diisi.',
             'tanggal_berakhir.date' => 'Format tanggal berakhir tidak valid.',
             'tanggal_berakhir.after' => 'Tanggal berakhir harus setelah tanggal mulai.',
-            // 'status' dihapus
             'id_jadwal_sebelumnya.exists' => 'Jadwal sebelumnya tidak valid.',
             'kategori_tes_id.exists' => 'Kategori tes tidak valid.',
             'durasi.integer' => 'Durasi harus berupa angka.',
@@ -282,7 +279,7 @@ class JadwalController extends Controller
 
         if ($existingJadwal) {
             return back()->withErrors([
-                'nama_jadwal' => 'Nama jadwal sudah digunakan.'
+                'error' => 'Nama jadwal sudah digunakan.'
             ])->withInput();
         }
 
@@ -300,7 +297,7 @@ class JadwalController extends Controller
             // Jika jadwal sedang berjalan, cek apakah ada perubahan tanggal
             if (!$newStart->equalTo($currentStart) || !$newEnd->equalTo($currentEnd)) {
                 return back()->withErrors([
-                    'tanggal' => 'Tidak dapat mengubah tanggal jadwal yang sedang berlangsung.'
+                    'error' => 'Tidak dapat mengubah tanggal jadwal yang sedang berlangsung.'
                 ])->withInput();
             }
         }
@@ -331,7 +328,7 @@ class JadwalController extends Controller
 
             if (!$jadwalSebelumnya) {
                 return back()->withErrors([
-                    'id_jadwal_sebelumnya' => 'Jadwal sebelumnya tidak valid atau bukan milik Anda.'
+                    'error' => 'Jadwal sebelumnya tidak valid atau bukan milik Anda.'
                 ])->withInput();
             }
         }

@@ -142,39 +142,94 @@ class PesertaTesController extends Controller
             'id_jadwal' => 'required|exists:jadwal,id',
         ]);
 
-        $userId = Auth::id();
-        $jadwalId = $request->id_jadwal;
+        try {
+            $userId = Auth::id();
+            $jadwalId = $request->id_jadwal;
 
-        HasilTestPeserta::firstOrCreate(
-            [
-                'id_user' => $userId,
-                'id_jadwal' => $jadwalId,
+            // Ambil jadwal dan soal
+            $jadwal = Jadwal::with('soal')->findOrFail($jadwalId);
 
-            ],
-            [
-                'start_time' => now(),
-                'total_skor' => null,
-                'total_nilai' => null,
-            ]
-        );
+            // Cek apakah belum ada soal
+            if ($jadwal->soal->isEmpty()) {
+                return back()->withErrors([
+                    'error' => 'Tes ini belum memiliki soal. Silakan hubungi penyelenggara.',
+                ])->withInput();
+            }
 
-        return back();
+            // Buat entri hasil jika belum ada
+            HasilTestPeserta::firstOrCreate(
+                [
+                    'id_user' => $userId,
+                    'id_jadwal' => $jadwalId,
+                ],
+                [
+                    'start_time' => now(),
+                    'total_skor' => null,
+                    'total_nilai' => null,
+                ]
+            );
+
+            return back();
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'error' => 'Terjadi kesalahan saat memulai tes. Silakan coba lagi.'
+            ])->withInput();
+        }
     }
 
     // get soal ujian
     public function soal($id)
     {
-        $jadwal = Jadwal::with('soal')->findOrFail($id);
+        try {
+            $user = Auth::user();
 
-        $hasil = HasilTestPeserta::where('id_user', Auth::id())
-            ->where('id_jadwal', $jadwal->id)
-            ->first();
+            $schedule = Jadwal::with('soal')->findOrFail($id);
 
-        return Inertia::render('peserta/soal/index', [
-            'jadwal' => $jadwal,
-            'soal' => $jadwal->soal,
-            'start_time' => $hasil->start_time,
-        ]);
+            // Cek apakah user sudah pernah mengerjakan
+            $hasSubmitted = \App\Models\Jawaban::where('id_user', $user->id)
+                ->where('id_jadwal', $schedule->id)
+                ->exists();
+
+            if ($hasSubmitted) {
+                return redirect()->route('peserta.daftar-tes')->withErrors([
+                    'error' => 'Anda tidak dapat mengerjakan tes lebih dari satu kali.'
+                ]);
+            }
+
+            // Cek apakah tes sudah ditutup
+            if (now()->gt(\Carbon\Carbon::parse($schedule->tanggal_berakhir))) {
+                return redirect()->route('peserta.daftar-tes')->withErrors([
+                    'error' => 'Tes ini sudah ditutup.'
+                ]);
+            }
+
+            // Cek apakah tes belum dimulai
+            if (now()->lt(\Carbon\Carbon::parse($schedule->tanggal_mulai))) {
+                return redirect()->route('peserta.daftar-tes')->withErrors([
+                    'error' => 'Tes ini belum dimulai.'
+                ]);
+            }
+
+            $result = HasilTestPeserta::where('id_user', $user->id)
+                ->where('id_jadwal', $schedule->id)
+                ->first();
+
+            if (!$result) {
+                return redirect()->route('peserta.daftar-tes')->withErrors([
+                    'error' => 'Tes ini belum dimulai atau belum dijadwalkan untuk Anda.'
+                ]);
+            }
+
+            return Inertia::render('peserta/soal/index', [
+                'jadwal' => $schedule,
+                'soal' => $schedule->soal,
+                'start_time' => $result->start_time,
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->route('peserta.daftar-tes')->withErrors([
+                'error' => 'Terjadi kesalahan saat membuka halaman tes. Silakan coba lagi nanti.'
+            ]);
+        }
     }
 
 
@@ -188,55 +243,69 @@ class PesertaTesController extends Controller
         $jadwalId = $request->jadwal_id;
         $jawabanPeserta = $request->jawaban;
 
-        // Cek apakah sudah ada jawaban untuk jadwal ini
-        if (
-            \App\Models\Jawaban::where('id_user', $user->id)
-            ->where('id_jadwal', $jadwalId)
-            ->exists()
-        ) {
-            return response()->json([
-                'error' => 'Tes sudah pernah dikerjakan.'
-            ], 422);
-        }
 
-        DB::transaction(function () use ($jawabanPeserta, $jadwalId, $user) {
-            foreach ($jawabanPeserta as $idSoal => $jawaban) {
-                // Normalize jawaban jika array
-                $userAnswer = is_array($jawaban) ? implode(',', $jawaban) : $jawaban;
+        try {
+            $jadwal = \App\Models\Jadwal::findOrFail($jadwalId);
+            $now = now();
 
-                \App\Models\Jawaban::create([
-                    'id_jadwal' => $jadwalId,
-                    'id_user'   => $user->id,
-                    'id_soal'   => $idSoal,
-                    'jawaban'   => $userAnswer,
+            // Cek apakah tes sudah ditutup
+            if ($now->gt(\Carbon\Carbon::parse($jadwal->tanggal_berakhir))) {
+                return back()->withErrors([
+                    'error' => 'Tes ini sudah ditutup dan tidak dapat lagi dijawab.'
+                ])->withInput();
+            }
+
+            // Cek apakah sudah ada jawaban untuk jadwal ini
+            if (
+                \App\Models\Jawaban::where('id_user', $user->id)
+                ->where('id_jadwal', $jadwalId)
+                ->exists()
+            ) {
+                return back()->withErrors([
+                    'error' => 'Tidak bisa mengerjakan tes lebih dari sekali.'
                 ]);
             }
-        });
 
-        return redirect()->route('peserta.riwayat')->with('success', 'Jawaban berhasil dikirim.');
-    }
+            DB::transaction(function () use ($jawabanPeserta, $jadwalId, $user) {
+                foreach ($jawabanPeserta as $idSoal => $jawaban) {
+                    $userAnswer = is_array($jawaban)
+                        ? (count($jawaban) > 0 ? implode(',', $jawaban) : null)
+                        : (trim($jawaban) !== '' ? $jawaban : null);
 
-    private function bandingkanJawaban($jawabanUser, $jawabanBenar)
-    {
-        // Normalize: hilangkan spasi, urutkan
-        $normalize = fn($jawaban) => collect(explode(',', strtoupper(str_replace(' ', '', $jawaban))))
-            ->sort()
-            ->implode(',');
+                    \App\Models\Jawaban::create([
+                        'id_jadwal' => $jadwalId,
+                        'id_user'   => $user->id,
+                        'id_soal'   => $idSoal,
+                        'jawaban'   => $userAnswer,
+                    ]);
+                }
+            });
 
-        return $normalize($jawabanUser) === $normalize($jawabanBenar);
+            return redirect()->route('peserta.riwayat')->with('success', 'Jawaban berhasil dikirim.');
+        } catch (\Throwable $th) {
+            return back()->withErrors([
+                'error' => 'Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.'
+            ])->withInput();
+        }
     }
 
     public function riwayat()
     {
-        $userId = Auth::id();
+        try {
+            $userId = Auth::id();
 
-        $riwayat = \App\Models\HasilTestPeserta::where('id_user', $userId)
-            ->with('jadwal')
-            ->orderBy('created_at', 'desc')
-            ->get();
+            $riwayat = \App\Models\HasilTestPeserta::where('id_user', $userId)
+                ->with('jadwal')
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-        return Inertia::render('peserta/riwayat/index', [
-            'riwayat' => $riwayat,
-        ]);
+            return Inertia::render('peserta/riwayat/index', [
+                'riwayat' => $riwayat,
+            ]);
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'error' => 'Gagal memuat riwayat. Silakan coba lagi nanti.'
+            ]);
+        }
     }
 }
