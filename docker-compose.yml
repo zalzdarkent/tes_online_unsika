@@ -7,7 +7,6 @@ services:
         restart: unless-stopped
         working_dir: /var/www
         volumes:
-            - .:/var/www
             - ./storage/app/public:/var/www/storage/app/public
         depends_on:
             - mysql
