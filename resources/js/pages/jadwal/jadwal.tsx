@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
+import { FilterConfig } from '@/components/ui/data-table-filter';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
@@ -21,7 +22,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Edit, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 // Helper function untuk format tanggal tanpa timezone conversion
 const formatDateTime = (dateTimeString: string): string => {
@@ -135,13 +136,13 @@ function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
                 <DropdownMenuItem
-                    className="cursor-pointer text-red-600"
+                    className="cursor-pointer text-destructive hover:text-destructive/90 dark:text-red-400 dark:hover:text-red-300"
                     onSelect={(e) => {
                         e.preventDefault();
                         setIsDeleteDialogOpen(true);
                     }}
                 >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="mr-2 h-4 w-4 text-destructive hover:text-destructive/90 dark:text-red-400 dark:hover:text-red-300" />
                     Hapus
                 </DropdownMenuItem>
             </AlertDialogTrigger>
@@ -165,8 +166,64 @@ function DeleteJadwalButton({ jadwal, onDelete }: { jadwal: JadwalData; onDelete
 
 export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
     const { toast } = useToast();
+    const [activeFilters, setActiveFilters] = useState<Record<string, (string | number | boolean)[]>>({});
 
     console.log('Jadwal component rendered with:', jadwal?.length || 0, 'items');
+
+    // Define filter configurations
+    const filterConfigs: FilterConfig[] = useMemo(() => [
+        {
+            id: 'status',
+            label: 'Status',
+            type: 'checkbox',
+            options: [
+                { id: 'buka', label: 'Buka', value: 'Buka' },
+                { id: 'tutup', label: 'Tutup', value: 'Tutup' }
+            ]
+        },
+        {
+            id: 'kategori',
+            label: 'Kategori',
+            type: 'checkbox',
+            options: kategoriTes.map(kat => ({
+                id: kat.id.toString(),
+                label: kat.nama,
+                value: kat.nama
+            }))
+        }
+    ], [kategoriTes]);
+
+    // Filter data based on active filters
+    const filteredJadwal = useMemo(() => {
+        if (Object.keys(activeFilters).length === 0) {
+            return jadwal;
+        }
+
+        return jadwal.filter(item => {
+            // Check status filter
+            if (activeFilters.status && activeFilters.status.length > 0) {
+                if (!activeFilters.status.includes(item.status)) {
+                    return false;
+                }
+            }
+
+            // Check kategori filter
+            if (activeFilters.kategori && activeFilters.kategori.length > 0) {
+                if (!item.kategori || !activeFilters.kategori.includes(item.kategori)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }, [jadwal, activeFilters]);
+
+    const handleFilterChange = (filterId: string, selectedValues: (string | number | boolean)[]) => {
+        setActiveFilters(prev => ({
+            ...prev,
+            [filterId]: selectedValues
+        }));
+    };
 
     // Helper function untuk mencari nama jadwal berdasarkan ID
     const findJadwalNameById = (id: number | null): string => {
@@ -414,7 +471,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                     </div>
                     <DataTable
                         columns={columns}
-                        data={jadwal}
+                        data={filteredJadwal}
                         searchColumn="nama_jadwal"
                         searchPlaceholder="Cari jadwal..."
                         onBulkDelete={handleBulkDelete}
@@ -423,6 +480,9 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                         }}
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}
                         showExportButton
+                        filters={filterConfigs}
+                        onFilterChange={handleFilterChange}
+                        activeFilters={activeFilters}
                     />
                 </div>
             </JadwalLayout>

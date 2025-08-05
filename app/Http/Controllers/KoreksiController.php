@@ -6,7 +6,6 @@ use App\Models\Jawaban;
 use App\Models\HasilTestPeserta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class KoreksiController extends Controller
@@ -20,7 +19,8 @@ class KoreksiController extends Controller
             'id_user',
             'id_jadwal',
             DB::raw('COUNT(DISTINCT id_soal) as total_soal'),
-            DB::raw('MIN(created_at) as waktu_ujian')
+            DB::raw('MIN(created_at) as waktu_ujian'),
+            DB::raw('SUM(skor_didapat) as total_skor')
         )
             ->with(['user:id,nama', 'jadwal:id,nama_jadwal'])
             ->groupBy('id_user', 'id_jadwal')
@@ -33,10 +33,8 @@ class KoreksiController extends Controller
                     'nama_jadwal' => $item->jadwal->nama_jadwal,
                     'total_soal' => $item->total_soal,
                     'waktu_ujian' => $item->waktu_ujian,
-                    // Ambil total skor dari hasil_test_peserta jika ada
-                    'total_skor' => HasilTestPeserta::where('id_user', $item->id_user)
-                        ->where('id_jadwal', $item->id_jadwal)
-                        ->value('total_skor')
+                    // Total skor langsung dari SUM(skor_didapat) di tabel jawaban
+                    'total_skor' => $item->total_skor
                 ];
             });
 
@@ -66,57 +64,50 @@ class KoreksiController extends Controller
      */
     public function show(string $userId, string $jadwalId)
     {
-        $query = Jawaban::where('id_user', $userId)
-            ->where('id_jadwal', $jadwalId)
-            ->with(['soal', 'user', 'jadwal']);
-
-        // Get first record for user and jadwal info
-        $firstRecord = $query->first();
+        // Ambil semua jawaban dari tabel jawaban dengan join ke soal, user, dan jadwal
+        $jawabanData = Jawaban::where('jawaban.id_user', $userId)
+            ->where('jawaban.id_jadwal', $jadwalId)
+            ->join('soal', 'jawaban.id_soal', '=', 'soal.id')
+            ->join('users', 'jawaban.id_user', '=', 'users.id')
+            ->join('jadwal', 'jawaban.id_jadwal', '=', 'jadwal.id')
+            ->select(
+                'jawaban.id',
+                'jawaban.jawaban as jawaban_peserta',
+                'jawaban.skor_didapat',
+                'soal.jenis_soal',
+                'soal.pertanyaan',
+                'soal.jawaban_benar',
+                'soal.skor as skor_maksimal',
+                'users.nama as nama_peserta',
+                'jadwal.nama_jadwal'
+            )
+            ->get();
 
         // Jika tidak ada data jawaban, redirect ke halaman sebelumnya dengan pesan error
-        if (!$firstRecord) {
+        if ($jawabanData->isEmpty()) {
             return back()->with('error', 'Data jawaban tidak ditemukan');
         }
 
-        // Pastikan relasi user dan jadwal ada
-        if (!$firstRecord->user || !$firstRecord->jadwal) {
-            return back()->with('error', 'Data peserta atau jadwal tidak lengkap');
-        }
+        // Ambil info peserta dan jadwal dari record pertama
+        $firstRecord = $jawabanData->first();
 
-        $peserta = $firstRecord->user;
-        $jadwal = $firstRecord->jadwal;
-
-        // Get all jawaban and map them
-        // Cek apakah sudah ada hasil koreksi
-        $hasilKoreksi = HasilTestPeserta::where('id_user', $userId)
-            ->where('id_jadwal', $jadwalId)
-            ->first();
-
-        $jawaban = $query->get()
-            ->map(function ($item) use ($hasilKoreksi) {
-                // Pastikan relasi soal ada
-                if (!$item->soal) {
-                    return null;
-                }
-
-                return [
-                    'id' => $item->id,
-                    'jenis_soal' => $item->soal->jenis_soal,
-                    'pertanyaan' => $item->soal->pertanyaan,
-                    'jawaban_benar' => $item->soal->jawaban_benar,
-                    'jawaban_peserta' => $item->jawaban,
-                    'skor_maksimal' => $item->soal->skor,
-                    'skor_didapat' => $hasilKoreksi ? $hasilKoreksi->total_skor : null
-                ];
-            })
-            ->filter() // Hapus item yang null
-            ->values(); // Reset array keys
+        $data = $jawabanData->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'jenis_soal' => $item->jenis_soal,
+                'pertanyaan' => $item->pertanyaan,
+                'jawaban_benar' => $item->jawaban_benar,
+                'jawaban_peserta' => $item->jawaban_peserta,
+                'skor_maksimal' => $item->skor_maksimal,
+                'skor_didapat' => $item->skor_didapat
+            ];
+        });
 
         return Inertia::render('koreksi/detail-koreksi', [
-            'data' => $jawaban,
+            'data' => $data,
             'peserta' => [
-                'nama' => $peserta->nama,
-                'jadwal' => $jadwal->nama_jadwal
+                'nama' => $firstRecord->nama_peserta,
+                'jadwal' => $firstRecord->nama_jadwal
             ]
         ]);
     }
@@ -134,58 +125,36 @@ class KoreksiController extends Controller
      */
     public function update(Request $request, string $userId, string $jadwalId)
     {
-        // Debug semua request yang masuk
-        // dd([
-        //     'request_all' => $request->all(),
-        //     'skor_data' => $request->skor_data,
-        //     'total_nilai' => $request->total_nilai,
-        //     'userId' => $userId,
-        //     'jadwalId' => $jadwalId,
-        //     'data_yang_akan_disimpan' => collect($request->skor_data)->map(function($data) use ($userId, $request, $jadwalId) {
-        //         return [
-        //             'id_jawaban' => $data['id'],
-        //             'id_user' => $userId,
-        //             'total_skor' => $data['skor_didapat'],
-        //             'total_nilai' => $request->total_nilai,
-        //             // waktu_ujian akan diambil dari jawaban
-        //         ];
-        //     })->toArray()
-        // ]);
-
         try {
             DB::beginTransaction();
-
-            // Hapus hasil tes yang mungkin sudah ada sebelumnya
-            // HasilTestPeserta::where('id_user', $userId)
-            //     ->where('id_jadwal', $jadwalId)
-            //     ->delete();
-
-            // Simpan hasil tes baru
-            $jawaban = Jawaban::where('id_user', $userId)
-                ->where('id_jadwal', $jadwalId)
-                ->get();
-
-            \Log::info('Jawaban found:', $jawaban->toArray());
 
             $totalSkor = collect($request->skor_data)->sum('skor_didapat');
             $totalNilai = $request->total_nilai;
 
-            // Simpan hasil untuk setiap jawaban
-            // foreach ($request->skor_data as $data) {
-            //     $hasil = HasilTestPeserta::create([
-            //         'id_jadwal' => $jadwalId,
-            //         'id_user' => $userId,
-            //         'total_skor' => $data['skor_didapat'], // Menggunakan skor individual
-            //         'total_nilai' => $totalNilai,
-            //     ]);
-            //     \Log::info('Created HasilTestPeserta:', $hasil->toArray());
-            // }
+            // Update skor individual untuk setiap jawaban
+            foreach ($request->skor_data as $data) {
+                Jawaban::where('id', $data['id'])
+                    ->where('id_user', $userId)
+                    ->where('id_jadwal', $jadwalId)
+                    ->update([
+                        'skor_didapat' => $data['skor_didapat']
+                    ]);
+            }
+
+            // Update atau create hasil test peserta dengan total skor
             $hasil = HasilTestPeserta::where('id_user', $userId)
                 ->where('id_jadwal', $jadwalId)
                 ->first();
 
             if ($hasil) {
                 $hasil->update([
+                    'total_skor' => $totalSkor,
+                    'total_nilai' => $totalNilai,
+                ]);
+            } else {
+                HasilTestPeserta::create([
+                    'id_user' => $userId,
+                    'id_jadwal' => $jadwalId,
                     'total_skor' => $totalSkor,
                     'total_nilai' => $totalNilai,
                 ]);
@@ -199,7 +168,7 @@ class KoreksiController extends Controller
             ])->with('success', 'Koreksi berhasil disimpan');
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->with('error', 'Gagal menyimpan koreksi');
+            return back()->with('error', 'Gagal menyimpan koreksi: ' . $e->getMessage());
         }
     }
 

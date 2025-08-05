@@ -13,6 +13,7 @@ class Jawaban extends Model
         'id_jadwal',
         'id_soal',
         'jawaban',
+        'skor_didapat',
     ];
 
     public function user()

@@ -50,6 +50,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { DataTableFilter, FilterConfig } from "@/components/ui/data-table-filter"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -62,7 +63,10 @@ interface DataTableProps<TData, TValue> {
   emptyMessage?: React.ReactNode
   initialColumnVisibility?: VisibilityState
   exportFilename?: string
-   showExportButton?: boolean
+  showExportButton?: boolean
+  filters?: FilterConfig[]
+  onFilterChange?: (filterId: string, selectedValues: (string | number | boolean)[]) => void
+  activeFilters?: Record<string, (string | number | boolean)[]>
 }
 
 export function DataTable<TData, TValue>({
@@ -76,7 +80,10 @@ export function DataTable<TData, TValue>({
   emptyMessage,
   initialColumnVisibility = {},
   exportFilename = "exported-data",
-  showExportButton = false
+  showExportButton = false,
+  filters = [],
+  onFilterChange,
+  activeFilters = {}
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -110,7 +117,7 @@ export function DataTable<TData, TValue>({
     )
 
     const exportData = table.getFilteredRowModel().rows.map(row => {
-      const rowData: Record<string, any> = {}
+      const rowData: Record<string, unknown> = {}
 
       visibleColumns.forEach(col => {
         const columnId = col.id
@@ -236,6 +243,15 @@ export function DataTable<TData, TValue>({
               <FileDown className="mr-2 h-4 w-4" />
               Export Excel
             </Button>
+          )}
+
+          {/* filter component */}
+          {filters.length > 0 && onFilterChange && (
+            <DataTableFilter
+              filters={filters}
+              onFilterChange={onFilterChange}
+              activeFilters={activeFilters}
+            />
           )}
 
           {/* visible columns */}
