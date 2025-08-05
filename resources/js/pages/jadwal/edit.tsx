@@ -175,6 +175,19 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
             return;
         }
 
+        const diffInMilliseconds = endDate.getTime() - startDate.getTime();
+        const diffInMinutes = diffInMilliseconds / (1000 * 60);
+
+        // Validasi durasi tidak melebihi selisih waktu
+        if (data.durasi! > diffInMinutes) {
+            toast({
+                variant: 'destructive',
+                title: 'Error!',
+                description: `Durasi tidak boleh melebihi selisih waktu mulai dan berakhir.`,
+            });
+            return;
+        }
+
         // Update jadwal
         put(route('jadwal.update', jadwal.id), {
             onSuccess: () => {

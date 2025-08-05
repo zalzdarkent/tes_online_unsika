@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Jadwal;
 use App\Models\HasilTestPeserta;
+use App\Models\Jawaban;
 use App\Models\Soal;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -134,7 +135,7 @@ class PesertaTesController extends Controller
     {
         //
     }
-
+    // todo: cek lg business logicnya ada yg ketinggalan ga
     // track start time 
     public function startTest(Request $request)
     {
@@ -143,7 +144,7 @@ class PesertaTesController extends Controller
         ]);
 
         try {
-            $userId = Auth::id();
+            $user = Auth::user();
             $jadwalId = $request->id_jadwal;
 
             // Ambil jadwal dan soal
@@ -156,10 +157,35 @@ class PesertaTesController extends Controller
                 ])->withInput();
             }
 
+            // Cek apakah tes belum dimulai
+            if (now()->lt(\Carbon\Carbon::parse($jadwal->tanggal_mulai))) {
+                return redirect()->route('peserta.daftar-tes')->withErrors([
+                    'error' => 'Tes ini belum dimulai.'
+                ]);
+            }
+
+            // Cek apakah tes sudah ditutup
+            if (now()->gt(\Carbon\Carbon::parse($jadwal->tanggal_berakhir))) {
+                return back()->withErrors([
+                    'error' => 'Tes ini sudah ditutup dan tidak dapat lagi dijawab.'
+                ])->withInput();
+            }
+
+            // Cek apakah user sudah pernah mengerjakan
+            $hasil = \App\Models\HasilTestPeserta::where('id_user', $user->id)
+                ->where('id_jadwal', $jadwalId)
+                ->first();
+
+            if ($hasil && $hasil->is_submitted) {
+                return back()->withErrors([
+                    'error' => 'Anda tidak bisa mengerjakan tes dua kali.'
+                ])->withInput();
+            }
+
             // Buat entri hasil jika belum ada
             HasilTestPeserta::firstOrCreate(
                 [
-                    'id_user' => $userId,
+                    'id_user' => $user->id,
                     'id_jadwal' => $jadwalId,
                 ],
                 [
@@ -185,31 +211,6 @@ class PesertaTesController extends Controller
 
             $schedule = Jadwal::with('soal')->findOrFail($id);
 
-            // Cek apakah user sudah pernah mengerjakan
-            $hasSubmitted = \App\Models\Jawaban::where('id_user', $user->id)
-                ->where('id_jadwal', $schedule->id)
-                ->exists();
-
-            if ($hasSubmitted) {
-                return redirect()->route('peserta.daftar-tes')->withErrors([
-                    'error' => 'Anda tidak dapat mengerjakan tes lebih dari satu kali.'
-                ]);
-            }
-
-            // Cek apakah tes sudah ditutup
-            if (now()->gt(\Carbon\Carbon::parse($schedule->tanggal_berakhir))) {
-                return redirect()->route('peserta.daftar-tes')->withErrors([
-                    'error' => 'Tes ini sudah ditutup.'
-                ]);
-            }
-
-            // Cek apakah tes belum dimulai
-            if (now()->lt(\Carbon\Carbon::parse($schedule->tanggal_mulai))) {
-                return redirect()->route('peserta.daftar-tes')->withErrors([
-                    'error' => 'Tes ini belum dimulai.'
-                ]);
-            }
-
             $result = HasilTestPeserta::where('id_user', $user->id)
                 ->where('id_jadwal', $schedule->id)
                 ->first();
@@ -220,9 +221,35 @@ class PesertaTesController extends Controller
                 ]);
             }
 
+            // $savedAnswers = Jawaban::where('jadwal_id', $schedule->id)
+            //     ->where('id_user', $user->id)
+            //     ->pluck('jawaban', 'id_soal')
+            //     ->toArray();
+
+
             return Inertia::render('peserta/soal/index', [
                 'jadwal' => $schedule,
-                'soal' => $schedule->soal,
+                // 'saved_answers' => $savedAnswers,
+                'soal' => $schedule->soal->map(function ($s) {
+                    return [
+                        // jangan kirim kunci jawaban
+                        'id' => $s->id,
+                        'id_jadwal' => $s->id_jadwal,
+                        'jenis_soal' => $s->jenis_soal,
+                        'tipe_jawaban' => $s->tipe_jawaban,
+                        'pertanyaan' => $s->pertanyaan,
+                        'opsi_a' => $s->opsi_a,
+                        'opsi_b' => $s->opsi_b,
+                        'opsi_c' => $s->opsi_c,
+                        'opsi_d' => $s->opsi_d,
+                        'media' => $s->media,
+                        'skala_min' => $s->skala_min,
+                        'skala_maks' => $s->skala_maks,
+                        'skala_label_min' => $s->skala_label_min,
+                        'skala_label_maks' => $s->skala_label_maks,
+                        'equation' => $s->equation,
+                    ];
+                }),
                 'start_time' => $result->start_time,
             ]);
         } catch (\Exception $e) {
@@ -232,6 +259,47 @@ class PesertaTesController extends Controller
         }
     }
 
+    public function saveAnswer(Request $request)
+    {
+        $request->validate([
+            'jadwal_id' => 'required|exists:jadwal,id',
+            'id_soal' => 'required|exists:soal,id',
+            'jawaban' => 'nullable|string',
+        ]);
+
+        try {
+            $user = Auth::user();
+
+            $existing = Jawaban::where([
+                'id_user' => $user->id,
+                'id_jadwal' => $request->jadwal_id,
+                'id_soal' => $request->id_soal,
+            ])->first();
+
+            $jawabanBaru = is_array($request->jawaban)
+                ? implode(',', $request->jawaban)
+                : $request->jawaban;
+
+            if ($existing && $existing->jawaban === $jawabanBaru) return;
+
+            \App\Models\Jawaban::updateOrCreate(
+                [
+                    'id_user' => $user->id,
+                    'id_jadwal' => $request->jadwal_id,
+                    'id_soal' => $request->id_soal,
+                ],
+                [
+                    'jawaban' => $request->jawaban ?? null,
+                ]
+            );
+
+            return back();
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'error' => 'Gagal menyimpan jawaban.'
+            ])->withInput();
+        }
+    }
 
     public function submit(Request $request)
     {
@@ -241,8 +309,6 @@ class PesertaTesController extends Controller
 
         $user = Auth::user();
         $jadwalId = $request->jadwal_id;
-        $jawabanPeserta = $request->jawaban;
-
 
         try {
             $jadwal = \App\Models\Jadwal::findOrFail($jadwalId);
@@ -255,34 +321,28 @@ class PesertaTesController extends Controller
                 ])->withInput();
             }
 
-            // Cek apakah sudah ada jawaban untuk jadwal ini
-            if (
-                \App\Models\Jawaban::where('id_user', $user->id)
+            $hasil = \App\Models\HasilTestPeserta::where('id_user', $user->id)
                 ->where('id_jadwal', $jadwalId)
-                ->exists()
-            ) {
+                ->first();
+
+            if (!$hasil) {
                 return back()->withErrors([
-                    'error' => 'Tidak bisa mengerjakan tes lebih dari sekali.'
-                ]);
+                    'error' => 'Tes belum dimulai atau tidak ditemukan.'
+                ])->withInput();
             }
 
-            DB::transaction(function () use ($jawabanPeserta, $jadwalId, $user) {
-                foreach ($jawabanPeserta as $idSoal => $jawaban) {
-                    $userAnswer = is_array($jawaban)
-                        ? (count($jawaban) > 0 ? implode(',', $jawaban) : null)
-                        : (trim($jawaban) !== '' ? $jawaban : null);
+            if ($hasil->is_submitted) {
+                return back()->withErrors([
+                    'error' => 'Anda tidak bisa mengerjakan tes lebih dari satu kali.'
+                ])->withInput();
+            }
 
-                    \App\Models\Jawaban::create([
-                        'id_jadwal' => $jadwalId,
-                        'id_user'   => $user->id,
-                        'id_soal'   => $idSoal,
-                        'jawaban'   => $userAnswer,
-                    ]);
-                }
-            });
+            $hasil->update([
+                'is_submitted' => true,
+            ]);
 
-            return redirect()->route('peserta.riwayat')->with('success', 'Jawaban berhasil dikirim.');
-        } catch (\Throwable $th) {
+            return redirect()->route('peserta.riwayat');
+        } catch (\Exception $e) {
             return back()->withErrors([
                 'error' => 'Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.'
             ])->withInput();

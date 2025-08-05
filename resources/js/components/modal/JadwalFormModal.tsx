@@ -248,6 +248,20 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
             return;
         }
 
+        // Hitung selisih tanggal mulai dan berakhir dalam menit
+        const diffInMilliseconds = endDate.getTime() - startDate.getTime();
+        const diffInMinutes = diffInMilliseconds / (1000 * 60);
+
+        // Validasi durasi tidak melebihi selisih waktu
+        if (data.durasi! > diffInMinutes) {
+            toast({
+                variant: 'destructive',
+                title: 'Error!',
+                description: `Durasi tidak boleh melebihi selisih waktu mulai dan berakhir.`,
+            });
+            return;
+        }
+
         // Buat payload data yang akan dikirim
         const submitData: Record<string, string | number | boolean | null> = {
             nama_jadwal: data.nama_jadwal,

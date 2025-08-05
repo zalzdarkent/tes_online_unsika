@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Jawaban extends Model
 {
     protected $table = "jawaban";
-    const UPDATED_AT = null; // Beritahu Laravel bahwa kita tidak menggunakan updated_at
     protected $fillable = [
         'id_user',
         'id_jadwal',
@@ -15,6 +14,8 @@ class Jawaban extends Model
         'jawaban',
         'skor_didapat',
     ];
+
+    public $timestamps = true;
 
     public function user()
     {

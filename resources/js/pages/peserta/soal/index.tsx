@@ -19,8 +19,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { Head, router } from '@inertiajs/react';
 import 'katex/dist/katex.min.css';
+import debounce from 'lodash/debounce';
 import { Menu } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BlockMath } from 'react-katex';
 
 interface Soal {
@@ -78,7 +79,9 @@ const renderMedia = (url: string) => {
 export default function SoalTes({ jadwal, soal, start_time }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [jawaban, setJawaban] = useState<Record<number, string[]>>({});
-    const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
+    const [showTabLeaveDialog, setShowTabLeaveDialog] = useState(false);
+    const [alertTitle, setAlertTitle] = useState('');
+    const [alertDescription, setAlertDescription] = useState('');
 
     const durasiMenit = jadwal.durasi || 60;
     const [timeLeft, setTimeLeft] = useState(() => {
@@ -92,11 +95,14 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
     useEffect(() => {
         if (soal.length === 0 || timeLeft <= 0) return;
 
+        // timeout
         const interval = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {
                     clearInterval(interval);
-                    setShowTimeoutDialog(true);
+                    setAlertTitle('Waktu Habis');
+                    setAlertDescription('Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim otomatis.');
+                    setShowTabLeaveDialog(true);
                     return 0;
                 }
                 return prev - 1;
@@ -245,7 +251,7 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
             return (
                 <div className="mt-4 space-y-4">
                     <div className="rounded-md border p-4">
-                        <BlockMath math={s.equation} errorColor="#cc0000" />
+                        {typeof s.equation === 'string' && <BlockMath math={s.equation} errorColor="#cc0000" />}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor={`soal_${s.id}_jawaban`} className="block font-medium">
@@ -265,12 +271,58 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
         return null;
     };
 
+    // todo: add prefill
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const saveAnswer = useCallback(
+        debounce((jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {
+            const finalJawaban = Array.isArray(jawaban) ? jawaban.join(',') : '';
+
+            router.post(
+                route('peserta.save'),
+                {
+                    jadwal_id: jadwalId,
+                    id_soal: idSoal,
+                    jawaban: finalJawaban,
+                },
+
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    only: [],
+                    replace: true,
+                    onError: () => {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Terjadi kesalahan!',
+                            description: 'Gagal menyimpan jawaban',
+                        });
+                    },
+                },
+            );
+        }, 500),
+        [],
+    );
+
     const handleNext = () => {
-        if (currentIndex < soal.length - 1) setCurrentIndex(currentIndex + 1);
+        const currentSoal = soal[currentIndex];
+        const jawabanSaatIni = jawaban[currentSoal.id];
+
+        saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
+
+        if (currentIndex < soal.length - 1) {
+            setCurrentIndex(currentIndex + 1);
+        }
     };
 
     const handlePrev = () => {
-        if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
+        const currentSoal = soal[currentIndex];
+        const jawabanSaatIni = jawaban[currentSoal.id];
+
+        saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
+
+        if (currentIndex > 0) {
+            setCurrentIndex(currentIndex - 1);
+        }
     };
 
     const handleSubmit = () => {
@@ -287,7 +339,6 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                         title: 'Tes Selesai',
                         description: 'Jawaban Anda berhasil dikirim.',
                     });
-                    router.visit(route('peserta.riwayat'));
                 },
                 onError: (errors: Record<string, string>) => {
                     if (errors.error) {
@@ -308,24 +359,44 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
         );
     };
 
-    if (!soal.length) {
-        return (
-            <>
-                <Head title="Soal Tes" />
-                <div className="flex min-h-screen items-center justify-center">
-                    <div className="space-y-2 text-center">
-                        <h2 className="text-2xl font-semibold">Soal belum tersedia</h2>
-                        <p className="text-muted-foreground">Silakan kembali ke halaman sebelumnya atau hubungi pengawas.</p>
-                        <Button onClick={() => router.visit('/daftar-tes')} className="mt-4 cursor-pointer">
-                            Kembali
-                        </Button>
-                    </div>
-                </div>
-            </>
-        );
-    }
-
     const currentSoal = soal[currentIndex];
+
+    // function showAlert(title: string, desc: string) {
+    //     setAlertTitle(title);
+    //     setAlertDescription(desc);
+    //     setShowTabLeaveDialog(true);
+    // }
+
+    // useEffect(() => {
+    //     // open other tab
+    //     const handleVisibilityChange = () => {
+    //         if (document.visibilityState === 'hidden') {
+    //             showAlert('Anda terdeteksi meninggalkan tab ujian', 'awaban Anda akan dikirim otomatis.');
+    //             // handleSubmit();
+    //         }
+    //     };
+
+    //     // refresh
+    //     const handlePageHide = () => {
+    //         showAlert('refresh', 'test refresh.');
+    //         // handleSubmit();
+    //     };
+
+    //     document.addEventListener('visibilitychange', handleVisibilityChange);
+    //     window.addEventListener('pagehide', handlePageHide);
+
+    //     return () => {
+    //         document.removeEventListener('visibilitychange', handleVisibilityChange);
+    //         window.removeEventListener('pagehide', handlePageHide);
+    //     };
+    // }, []);
+
+    // cancel debounce when unmount
+    useEffect(() => {
+        return () => {
+            saveAnswer.cancel();
+        };
+    }, []);
 
     return (
         <>
@@ -433,15 +504,12 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                 </div>
             </div>
 
-            {/* timeout */}
-            {showTimeoutDialog && (
-                <AlertDialog open={showTimeoutDialog}>
+            {showTabLeaveDialog && (
+                <AlertDialog open={showTabLeaveDialog}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Waktu Habis</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim secara otomatis.
-                            </AlertDialogDescription>
+                            <AlertDialogTitle>{alertTitle}</AlertDialogTitle>
+                            <AlertDialogDescription>{alertDescription}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogAction className="cursor-pointer" onClick={() => router.visit('/daftar-tes')}>
