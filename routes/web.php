@@ -5,6 +5,7 @@ use App\Http\Controllers\KategoriTesController;
 use App\Http\Controllers\KoreksiController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\PesertaTesController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -18,13 +19,9 @@ Route::middleware(['auth', 'role:peserta'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/', function () {
-        return Inertia::render('dashboard');
-    })->name('home');
+    Route::get('/', [DashboardController::class, 'index'])->name('home');
 
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Routes yang hanya bisa diakses admin dan teacher
     Route::middleware(['role:admin,teacher'])->group(function () {

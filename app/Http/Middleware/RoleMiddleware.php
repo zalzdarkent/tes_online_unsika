@@ -27,7 +27,12 @@ class RoleMiddleware
             return $next($request);
         }
 
-        // If user doesn't have permission, redirect with error
-        return redirect()->route('dashboard')->withErrors(['error' => 'Anda tidak memiliki akses untuk halaman ini.']);
+        // If user doesn't have permission, redirect to appropriate page based on user role
+        if ($user->role === 'peserta') {
+            return redirect()->route('peserta.daftar-tes')->withErrors(['error' => 'Anda tidak memiliki akses untuk halaman ini.']);
+        }
+
+        // For other roles, redirect to home
+        return redirect()->route('home')->withErrors(['error' => 'Anda tidak memiliki akses untuk halaman ini.']);
     }
 }

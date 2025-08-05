@@ -16,7 +16,7 @@ export default function Dashboard() {
     const { props } = usePage<{ errors?: Record<string, string> }>();
 
     useEffect(() => {
-        if (props.errors) {
+        if (props.errors?.error) {
             toast({
                 variant: 'destructive',
                 title: 'Error!',
