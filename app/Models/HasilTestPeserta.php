@@ -13,7 +13,8 @@ class HasilTestPeserta extends Model
         'id_user',
         'total_skor',
         'total_nilai',
-        'start_time'
+        'start_time',
+        'status_koreksi'
     ];
 
     public function jadwal()

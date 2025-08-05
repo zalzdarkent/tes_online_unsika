@@ -7,6 +7,17 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface JawabanDetail {
     id: number;
@@ -24,6 +35,7 @@ interface Props {
         nama: string;
         jadwal: string;
     };
+    status_koreksi?: 'draft' | 'submitted' | null; // Status koreksi
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -37,12 +49,34 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function DetailKoreksi({ data, peserta }: Props) {
-    const [skorData, setSkorData] = useState<JawabanDetail[]>(data);
+export default function DetailKoreksi({ data, peserta, status_koreksi = null }: Props) {
+    const [skorData, setSkorData] = useState<JawabanDetail[]>([]);
     const [totalNilai, setTotalNilai] = useState<number>(0);
+    const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
-    // Cek apakah sudah dikoreksi dengan memeriksa skor_didapat pada data pertama
-    const isKoreksi = data.length > 0 && data[0].skor_didapat !== null;
+    // Auto koreksi untuk pilihan ganda saat komponen dimount
+    useEffect(() => {
+        const autoKoreksiData = data.map(item => {
+            // Auto fill skor untuk pilihan ganda dan multi choice
+            if (['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal)) {
+                // Jika skor_didapat masih null (belum dikoreksi), auto fill berdasarkan jawaban
+                if (item.skor_didapat === null) {
+                    const isCorrect = item.jawaban_peserta === item.jawaban_benar;
+                    return {
+                        ...item,
+                        skor_didapat: isCorrect ? item.skor_maksimal : 0
+                    };
+                }
+            }
+            // Untuk jenis lain atau yang sudah ada skornya, gunakan apa adanya
+            return item;
+        });
+        setSkorData(autoKoreksiData);
+    }, [data]);
+
+    // Cek status koreksi
+    const isSubmitted = status_koreksi === 'submitted';
+    const isDraft = status_koreksi === 'draft';
 
     const columns: ColumnDef<JawabanDetail>[] = [
         {
@@ -103,23 +137,37 @@ export default function DetailKoreksi({ data, peserta }: Props) {
             header: 'Skor Didapat',
             cell: ({ row }) => {
                 const index = row.index;
+                const jenisSoal = row.original.jenis_soal;
+                const isAutoFilled = ['pilihan_ganda', 'multi_choice'].includes(jenisSoal);
+                const isReadonly = isSubmitted; // Hanya readonly jika sudah submitted
+
                 return (
-                    <Input
-                        type="number"
-                        min={0}
-                        max={row.original.skor_maksimal}
-                        value={skorData[index].skor_didapat || ''}
-                        onChange={(e) => {
-                            const newValue = Math.min(Math.max(0, parseInt(e.target.value) || 0), row.original.skor_maksimal);
-                            const newData = [...skorData];
-                            newData[index] = {
-                                ...newData[index],
-                                skor_didapat: newValue,
-                            };
-                            setSkorData(newData);
-                        }}
-                        className="w-20"
-                    />
+                    <div className="flex items-center gap-2">
+                        <Input
+                            type="number"
+                            min={0}
+                            max={row.original.skor_maksimal}
+                            value={skorData[index]?.skor_didapat ?? ''}
+                            onChange={(e) => {
+                                if (isReadonly) return;
+                                const newValue = Math.min(Math.max(0, parseInt(e.target.value) || 0), row.original.skor_maksimal);
+                                const newData = [...skorData];
+                                newData[index] = {
+                                    ...newData[index],
+                                    skor_didapat: newValue,
+                                };
+                                setSkorData(newData);
+                            }}
+                            className="w-20"
+                            disabled={isReadonly}
+                            readOnly={isReadonly}
+                        />
+                        {isAutoFilled && !isSubmitted && (
+                            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                Auto-fill
+                            </span>
+                        )}
+                    </div>
                 );
             },
         },
@@ -137,7 +185,7 @@ export default function DetailKoreksi({ data, peserta }: Props) {
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
 
-    const handleSave = () => {
+    const handleSave = (isSubmit = false) => {
         // Cek apakah semua soal sudah diberi skor
         const unscored = skorData.some((item) => item.skor_didapat === null);
         if (unscored) {
@@ -160,15 +208,19 @@ export default function DetailKoreksi({ data, peserta }: Props) {
                     skor_didapat: item.skor_didapat || 0,
                 })),
                 total_nilai: totalNilai,
+                action: isSubmit ? 'submit' : 'save', // Tambahkan action
             },
             {
                 onSuccess: () => {
                     toast({
                         title: 'Berhasil',
-                        description: 'Koreksi berhasil disimpan',
+                        description: isSubmit ? 'Koreksi berhasil disubmit (final)' : 'Koreksi berhasil disimpan (draft)',
                         variant: 'success',
                     });
                     setIsSaving(false);
+                    if (isSubmit) {
+                        setIsSubmitDialogOpen(false);
+                    }
                 },
                 onError: (error) => {
                     console.error('Save error:', error);
@@ -183,10 +235,14 @@ export default function DetailKoreksi({ data, peserta }: Props) {
         );
     };
 
+    const handleSubmit = () => {
+        handleSave(true);
+    };
+
     const renderHasilKoreksi = () => (
         <div className="flex h-full flex-1 flex-col gap-4 p-4">
             <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4">
-                <h2 className="text-2xl font-bold text-green-800">Hasil Koreksi</h2>
+                <h2 className="text-2xl font-bold text-green-800">Hasil Koreksi - {isSubmitted ? 'FINAL' : 'DRAFT'}</h2>
                 <div className="text-lg text-green-700">
                     <p>
                         <strong>Nama Peserta:</strong> {peserta.nama}
@@ -197,10 +253,23 @@ export default function DetailKoreksi({ data, peserta }: Props) {
                     <p className="mt-2">
                         <strong>Total Nilai:</strong> {totalNilai}/100
                     </p>
+                    <p className="mt-1">
+                        <strong>Status:</strong>
+                        <span className={`ml-2 px-2 py-1 rounded text-sm ${
+                            isSubmitted
+                                ? 'bg-green-600 text-white'
+                                : 'bg-yellow-600 text-white'
+                        }`}>
+                            {isSubmitted ? 'SUBMITTED' : 'DRAFT'}
+                        </span>
+                    </p>
                 </div>
             </div>
             <div className="rounded-xl border p-6">
-                <DataTable columns={columns.filter((col) => col.accessorKey !== 'skor_didapat')} data={skorData} />
+                <DataTable
+                    columns={columns.filter((col) => col.id !== 'skor_didapat')}
+                    data={skorData}
+                />
             </div>
             <Button
                 onClick={() => {
@@ -223,14 +292,63 @@ export default function DetailKoreksi({ data, peserta }: Props) {
                 <p>
                     <strong>Jadwal Tes:</strong> {peserta.jadwal}
                 </p>
+                {isDraft && (
+                    <p className="mt-2">
+                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
+                            ⚠️ Status: DRAFT - Belum final
+                        </span>
+                    </p>
+                )}
             </div>
             <div className="rounded-xl border p-6">
                 <DataTable columns={columns} data={skorData} />
             </div>
             <div className="flex items-center justify-between">
-                <Button onClick={handleSave} disabled={isSaving} className="cursor-pointer bg-primary hover:bg-primary/90">
-                    {isSaving ? 'Menyimpan...' : 'Simpan Koreksi'}
-                </Button>
+                <div className="flex gap-3">
+                    <Button
+                        onClick={() => handleSave(false)}
+                        disabled={isSaving || isSubmitted}
+                        variant="outline"
+                        className="cursor-pointer"
+                    >
+                        {isSaving ? 'Menyimpan...' : 'Simpan (Draft)'}
+                    </Button>
+
+                    <AlertDialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                disabled={isSaving || isSubmitted}
+                                className="cursor-pointer bg-green-600 hover:bg-green-700"
+                            >
+                                Submit Final
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Konfirmasi Submit Final</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Apakah Anda yakin ingin mensubmit koreksi ini sebagai hasil final?
+                                    <br /><br />
+                                    <strong>Tindakan ini tidak dapat dibatalkan!</strong>
+                                    <br />
+                                    Setelah disubmit, Anda tidak dapat mengubah skor lagi.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel disabled={isSaving}>
+                                    Batal
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={handleSubmit}
+                                    disabled={isSaving}
+                                    className="bg-green-600 hover:bg-green-700"
+                                >
+                                    {isSaving ? 'Memproses...' : 'Ya, Submit Final'}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
                 <div className="text-lg font-semibold">Total Nilai: {totalNilai}/100</div>
             </div>
         </div>
@@ -239,7 +357,7 @@ export default function DetailKoreksi({ data, peserta }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Detail Koreksi Peserta" />
-            {isKoreksi ? renderHasilKoreksi() : renderFormKoreksi()}
+            {isSubmitted ? renderHasilKoreksi() : renderFormKoreksi()}
         </AppLayout>
     );
 }

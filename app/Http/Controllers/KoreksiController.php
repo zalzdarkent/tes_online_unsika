@@ -26,6 +26,16 @@ class KoreksiController extends Controller
             ->groupBy('id_user', 'id_jadwal')
             ->get()
             ->map(function ($item) {
+                // Cek status koreksi dari tabel hasil_test_peserta
+                $hasilTest = HasilTestPeserta::where('id_user', $item->id_user)
+                    ->where('id_jadwal', $item->id_jadwal)
+                    ->first();
+
+                $statusKoreksi = null;
+                if ($hasilTest) {
+                    $statusKoreksi = $hasilTest->status_koreksi;
+                }
+
                 return [
                     'id_user' => $item->id_user,
                     'id_jadwal' => $item->id_jadwal,
@@ -34,7 +44,8 @@ class KoreksiController extends Controller
                     'total_soal' => $item->total_soal,
                     'waktu_ujian' => $item->waktu_ujian,
                     // Total skor langsung dari SUM(skor_didapat) di tabel jawaban
-                    'total_skor' => $item->total_skor
+                    'total_skor' => $item->total_skor,
+                    'status_koreksi' => $statusKoreksi
                 ];
             });
 
@@ -88,6 +99,16 @@ class KoreksiController extends Controller
             return back()->with('error', 'Data jawaban tidak ditemukan');
         }
 
+        // Cek status koreksi dari tabel hasil_test_peserta
+        $hasilTest = HasilTestPeserta::where('id_user', $userId)
+            ->where('id_jadwal', $jadwalId)
+            ->first();
+
+        $statusKoreksi = null;
+        if ($hasilTest) {
+            $statusKoreksi = $hasilTest->status_koreksi ?? 'draft';
+        }
+
         // Ambil info peserta dan jadwal dari record pertama
         $firstRecord = $jawabanData->first();
 
@@ -108,7 +129,8 @@ class KoreksiController extends Controller
             'peserta' => [
                 'nama' => $firstRecord->nama_peserta,
                 'jadwal' => $firstRecord->nama_jadwal
-            ]
+            ],
+            'status_koreksi' => $statusKoreksi
         ]);
     }
 
@@ -130,6 +152,16 @@ class KoreksiController extends Controller
 
             $totalSkor = collect($request->skor_data)->sum('skor_didapat');
             $totalNilai = $request->total_nilai;
+            $action = $request->action ?? 'save'; // 'save' untuk draft, 'submit' untuk final
+
+            // Cek apakah sudah submitted (tidak bisa diubah lagi)
+            $existingResult = HasilTestPeserta::where('id_user', $userId)
+                ->where('id_jadwal', $jadwalId)
+                ->first();
+
+            if ($existingResult && $existingResult->status_koreksi === 'submitted') {
+                return back()->with('error', 'Koreksi sudah final dan tidak dapat diubah lagi.');
+            }
 
             // Update skor individual untuk setiap jawaban
             foreach ($request->skor_data as $data) {
@@ -141,15 +173,15 @@ class KoreksiController extends Controller
                     ]);
             }
 
-            // Update atau create hasil test peserta dengan total skor
-            $hasil = HasilTestPeserta::where('id_user', $userId)
-                ->where('id_jadwal', $jadwalId)
-                ->first();
+            // Tentukan status koreksi berdasarkan action
+            $statusKoreksi = $action === 'submit' ? 'submitted' : 'draft';
 
-            if ($hasil) {
-                $hasil->update([
+            // Update atau create hasil test peserta dengan total skor
+            if ($existingResult) {
+                $existingResult->update([
                     'total_skor' => $totalSkor,
                     'total_nilai' => $totalNilai,
+                    'status_koreksi' => $statusKoreksi,
                 ]);
             } else {
                 HasilTestPeserta::create([
@@ -157,15 +189,20 @@ class KoreksiController extends Controller
                     'id_jadwal' => $jadwalId,
                     'total_skor' => $totalSkor,
                     'total_nilai' => $totalNilai,
+                    'status_koreksi' => $statusKoreksi,
                 ]);
             }
 
             DB::commit();
 
+            $message = $action === 'submit'
+                ? 'Koreksi berhasil disubmit sebagai hasil final!'
+                : 'Koreksi berhasil disimpan sebagai draft.';
+
             return to_route('koreksi.detail', [
                 'userId' => $userId,
                 'jadwalId' => $jadwalId
-            ])->with('success', 'Koreksi berhasil disimpan');
+            ])->with('success', $message);
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Gagal menyimpan koreksi: ' . $e->getMessage());
