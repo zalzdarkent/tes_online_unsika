@@ -153,22 +153,7 @@ class JadwalController extends Controller
             ])->withInput();
         }
 
-        // Validasi tambahan: cek konflik jadwal untuk user yang sama
-        $conflictingSchedule = Jadwal::where('user_id', $userId)
-            ->where(function ($query) use ($validated) {
-                $query->whereBetween('tanggal_mulai', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
-                    ->orWhereBetween('tanggal_berakhir', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
-                    ->orWhere(function ($q) use ($validated) {
-                        $q->where('tanggal_mulai', '<=', $validated['tanggal_mulai'])
-                            ->where('tanggal_berakhir', '>=', $validated['tanggal_berakhir']);
-                    });
-            })->first();
-
-        if ($conflictingSchedule) {
-            return back()->withErrors([
-                'conflict' => "Jadwal bertabrakan dengan '{$conflictingSchedule->getAttribute('nama_jadwal')}'. Silakan pilih waktu yang berbeda."
-            ])->withInput();
-        }
+        // Validasi konflik jadwal dihapus - memungkinkan jadwal bersamaan
 
         // Validasi id_jadwal_sebelumnya harus milik user yang sama
         if ($validated['id_jadwal_sebelumnya']) {
@@ -302,23 +287,7 @@ class JadwalController extends Controller
             }
         }
 
-        // Validasi tambahan: cek konflik jadwal untuk user yang sama (kecuali jadwal yang sedang diedit)
-        $conflictingSchedule = Jadwal::where('user_id', $userId)
-            ->where('id', '!=', $jadwal->getAttribute('id'))
-            ->where(function ($query) use ($validated) {
-                $query->whereBetween('tanggal_mulai', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
-                    ->orWhereBetween('tanggal_berakhir', [$validated['tanggal_mulai'], $validated['tanggal_berakhir']])
-                    ->orWhere(function ($q) use ($validated) {
-                        $q->where('tanggal_mulai', '<=', $validated['tanggal_mulai'])
-                            ->where('tanggal_berakhir', '>=', $validated['tanggal_berakhir']);
-                    });
-            })->first();
-
-        if ($conflictingSchedule) {
-            return back()->withErrors([
-                'conflict' => "Jadwal bertabrakan dengan '{$conflictingSchedule->getAttribute('nama_jadwal')}'. Silakan pilih waktu yang berbeda."
-            ])->withInput();
-        }
+        // Validasi konflik jadwal dihapus - memungkinkan jadwal bersamaan
 
         // Validasi id_jadwal_sebelumnya harus milik user yang sama
         if ($validated['id_jadwal_sebelumnya']) {
