@@ -6,6 +6,7 @@ use App\Http\Controllers\KoreksiController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\PesertaTesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -53,8 +54,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Routes yang hanya bisa diakses admin
     Route::middleware(['role:admin'])->group(function () {
         Route::get('admin', function () {
-            return Inertia::render('admin-panel');
+            return redirect()->route('users.index');
         })->name('admin');
+
+        // User management routes
+        Route::resource('users', UserController::class)->except(['show', 'create', 'edit']);
+        Route::post('users/bulk-destroy', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy');
     });
 });
 

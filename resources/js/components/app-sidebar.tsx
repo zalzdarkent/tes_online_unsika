@@ -45,8 +45,8 @@ const mainNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
     {
-        title: 'Admin Panel',
-        href: '/admin',
+        title: 'Kelola User',
+        href: '/users',
         icon: Settings,
         roles: ['admin'],
     },
@@ -90,7 +90,7 @@ export function AppSidebar() {
             <SidebarContent>
                 {filteredPlatformItems.length > 0 && <NavMain items={filteredPlatformItems} label="Platform" />}
                 {filteredMainItems.length > 0 && <NavMain items={filteredMainItems} label="Main" />}
-                {filteredAdminItems.length > 0 && <NavMain items={filteredAdminItems} label="Administration" />}
+                {filteredAdminItems.length > 0 && <NavMain items={filteredAdminItems} label="Manajemen User" />}
             </SidebarContent>
 
             <SidebarFooter>
