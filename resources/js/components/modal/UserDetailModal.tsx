@@ -127,29 +127,29 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
                                 </div>
                             </div>
 
-                            {user.no_hp && (
-                                <div className="flex items-center gap-3">
-                                    <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                        <Phone className="w-4 h-4 text-green-600" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-foreground">No. HP</p>
-                                        <p className="text-sm text-muted-foreground">{user.no_hp}</p>
-                                    </div>
+                            <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <Phone className="w-4 h-4 text-green-600" />
                                 </div>
-                            )}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-foreground">No. HP</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {user.no_hp || <span className="italic text-muted-foreground/60">Belum diisi</span>}
+                                    </p>
+                                </div>
+                            </div>
 
-                            {user.alamat && (
-                                <div className="flex items-start gap-3">
-                                    <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                        <MapPin className="w-4 h-4 text-orange-600" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-foreground">Alamat</p>
-                                        <p className="text-sm text-muted-foreground leading-relaxed">{user.alamat}</p>
-                                    </div>
+                            <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <MapPin className="w-4 h-4 text-orange-600" />
                                 </div>
-                            )}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-foreground">Alamat</p>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        {user.alamat || <span className="italic text-muted-foreground/60">Belum diisi</span>}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
