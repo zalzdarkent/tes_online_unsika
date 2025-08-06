@@ -104,7 +104,7 @@ export function DataTableFilter({
                 variant="ghost"
                 size="sm"
                 onClick={clearAllFilters}
-                className="h-auto p-1 text-xs hover:bg-destructive hover:text-destructive-foreground"
+                className="h-auto p-1 text-xs hover:text-destructive-foreground"
               >
                 <X className="h-3 w-3 mr-1" />
                 Clear All
@@ -130,7 +130,7 @@ export function DataTableFilter({
                         variant="ghost"
                         size="sm"
                         onClick={() => clearSpecificFilter(filter.id)}
-                        className="h-auto p-0.5 hover:bg-destructive hover:text-destructive-foreground"
+                        className="h-auto p-0.5 hover:text-destructive-foreground"
                       >
                         <X className="h-3 w-3" />
                       </Button>
@@ -172,7 +172,7 @@ export function DataTableFilter({
                 <Badge
                   key={`${filterId}-${index}`}
                   variant="secondary"
-                  className="text-xs cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                  className="text-xs cursor-pointer hover:text-destructive-foreground"
                   onClick={() => handleFilterToggle(filterId, value)}
                 >
                   {option.label}

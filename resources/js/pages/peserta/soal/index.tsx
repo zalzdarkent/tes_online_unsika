@@ -14,13 +14,14 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { Head, router } from '@inertiajs/react';
 import 'katex/dist/katex.min.css';
 import debounce from 'lodash/debounce';
-import { Menu } from 'lucide-react';
+import { Check, ChevronLeft, Flag, Menu } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { BlockMath } from 'react-katex';
 
@@ -50,6 +51,26 @@ interface Props {
     start_time: string;
 }
 
+const numberNavigations = [
+    {
+        label: 'Sedang Dijawab',
+        className: 'border-black bg-white text-black dark:border-white dark:bg-black dark:text-white text-sm',
+    },
+    {
+        label: 'Sudah Dijawab',
+        className:
+            'border-green-500 bg-green-50 text-green-500 hover:bg-green-100 hover:text-green-500 dark:border-green-300 dark:bg-green-900 dark:text-green-300',
+    },
+    {
+        label: 'Belum Dijawab',
+        className: 'border',
+    },
+    {
+        label: 'Ditandai',
+        className: 'border-yellow-500 bg-yellow-100 text-yellow-700 dark:border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300',
+    },
+];
+
 const renderMedia = (url: string) => {
     const ext = url.split('.').pop()?.toLowerCase();
 
@@ -78,6 +99,7 @@ const renderMedia = (url: string) => {
 
 export default function SoalTes({ jadwal, soal, start_time }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [tandaiSoal, setTandaiSoal] = useState<Record<number, boolean>>({});
     const [jawaban, setJawaban] = useState<Record<number, string[]>>({});
     const [showTabLeaveDialog, setShowTabLeaveDialog] = useState(false);
     const [alertTitle, setAlertTitle] = useState('');
@@ -136,14 +158,23 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                         value={jawaban[s.id]?.[0] || ''}
                         onValueChange={(val) => setJawaban({ ...jawaban, [s.id]: [val] })}
                     >
-                        {opsi.map((o, i) => (
-                            <div key={i} className="flex items-center space-x-2">
-                                <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} className="cursor-pointer" />
-                                <Label htmlFor={`soal_${s.id}_${o.label}`} className="cursor-pointer">
-                                    {o.label}. {o.text}
-                                </Label>
-                            </div>
-                        ))}
+                        {opsi.map((o, i) => {
+                            const isSelected = jawaban[s.id]?.[0] === o.label;
+                            return (
+                                <div
+                                    key={i}
+                                    onClick={() => setJawaban({ ...jawaban, [s.id]: [o.label] })}
+                                    className={`flex cursor-pointer items-center space-x-2 rounded-md border p-3 transition-all hover:bg-muted/70 ${
+                                        isSelected ? 'border-primary' : 'border-muted'
+                                    }`}
+                                >
+                                    <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} className="pointer-events-none" />
+                                    <Label htmlFor={`soal_${s.id}_${o.label}`} className="cursor-pointer select-none">
+                                        {o.label}. {o.text}
+                                    </Label>
+                                </div>
+                            );
+                        })}
                     </RadioGroup>
                 </div>
             );
@@ -290,6 +321,9 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                     preserveScroll: true,
                     only: [],
                     replace: true,
+                    // onSuccess: () => {
+                    //     console.log('success');
+                    // },
                     onError: () => {
                         toast({
                             variant: 'destructive',
@@ -326,6 +360,13 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
     };
 
     const handleSubmit = () => {
+        // save last answer
+        const currentSoal = soal[currentIndex];
+        const jawabanSaatIni = jawaban[currentSoal.id];
+        saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
+
+        saveAnswer.flush?.();
+
         router.post(
             route('peserta.submit'),
             {
@@ -398,24 +439,70 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
         };
     }, []);
 
+    function renderNavigation() {
+        return (
+            <>
+                <div className="grid grid-cols-5 gap-2 pb-4">
+                    {soal.map((s, i) => {
+                        const isActive = currentIndex === i;
+                        const isAnswered = (jawaban[s.id]?.[0] ?? '').trim() !== '';
+
+                        let baseClass = 'px-0 py-2 text-sm';
+
+                        if (isActive) {
+                            baseClass += ' bg-white text-black border-2 border-black dark:bg-black dark:text-white dark:border-white';
+                        } else if (tandaiSoal[s.id]) {
+                            baseClass +=
+                                ' border border-yellow-500 bg-yellow-50 text-yellow-500 hover:bg-yellow-100 hover:text-yellow-500 dark:text-yellow-300 dark:bg-yellow-900 dark:border-yellow-300';
+                        } else if (isAnswered) {
+                            baseClass +=
+                                ' border border-green-500 bg-green-50 text-green-500 hover:bg-green-100 hover:text-green-500 dark:text-green-300 dark:bg-green-900 dark:border-green-300';
+                        } else {
+                            baseClass += ' border ';
+                        }
+
+                        return (
+                            <Button key={i} variant="ghost" onClick={() => setCurrentIndex(i)} className={baseClass}>
+                                {i + 1}
+                            </Button>
+                        );
+                    })}
+                </div>
+
+                {numberNavigations.map((nav, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                        <div className={`size-5 rounded-sm border px-0 py-2 ${nav.className}`} />
+                        <div className="text-sm">{nav.label}</div>
+                    </div>
+                ))}
+                <Separator className="mt-4" />
+                <div>
+                    <p className="mb-1 font-semibold">Informasi Tes</p>
+                    <div className="grid grid-cols-2 space-y-1 text-sm text-muted-foreground">
+                        <div>Total Soal:</div>
+                        <div className="text-right">{soal.length}</div>
+
+                        <div>Terjawab:</div>
+                        <div className="text-right">{Object.values(jawaban).filter((j) => (j?.[0] ?? '').trim() !== '').length}</div>
+
+                        <div>Durasi:</div>
+                        <div className="text-right">{jadwal?.durasi} menit</div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
             <Head title="Soal Tes" />
             <div className="flex min-h-screen">
                 {/* Desktop Sidebar */}
                 <div className="hidden w-64 border-r p-4 md:block">
-                    <p className="mb-2 text-xl font-semibold">{jadwal.nama_jadwal}</p>
-                    <div className="grid grid-cols-5 gap-2">
-                        {soal.map((_, i) => (
-                            <Button
-                                key={i}
-                                variant={currentIndex === i ? 'default' : 'outline'}
-                                className="cursor-pointer px-0 py-2"
-                                onClick={() => setCurrentIndex(i)}
-                            >
-                                {i + 1}
-                            </Button>
-                        ))}
+                    <h2 className="mb-2 text-xl font-semibold">{jadwal.nama_jadwal}</h2>
+                    <div className="space-y-2">
+                        <p className="font-semibold">Navigasi Soal</p>
+                        {renderNavigation()}
                     </div>
                 </div>
 
@@ -432,18 +519,7 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                         <SheetHeader>
                             <SheetTitle className="text-2xl">{jadwal.nama_jadwal}</SheetTitle>
                         </SheetHeader>
-                        <div className="grid grid-cols-5 gap-2 px-4">
-                            {soal.map((_, i) => (
-                                <Button
-                                    key={i}
-                                    variant={currentIndex === i ? 'default' : 'outline'}
-                                    className="px-0 py-2"
-                                    onClick={() => setCurrentIndex(i)}
-                                >
-                                    {i + 1}
-                                </Button>
-                            ))}
-                        </div>
+                        {renderNavigation()}
                     </SheetContent>
                 </Sheet>
 
@@ -469,12 +545,30 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                         <div>
                             <div className="flex justify-between pt-6">
                                 <Button onClick={handlePrev} disabled={currentIndex === 0} variant="outline" className="cursor-pointer">
+                                    <ChevronLeft />
                                     Sebelumnya
                                 </Button>
+
+                                <Button
+                                    variant={tandaiSoal[currentSoal.id] ? 'default' : 'outline'}
+                                    onClick={() =>
+                                        setTandaiSoal((prev) => ({
+                                            ...prev,
+                                            [currentSoal.id]: !prev[currentSoal.id],
+                                        }))
+                                    }
+                                >
+                                    <Flag />
+                                    {tandaiSoal[currentSoal.id] ? 'Hapus Tanda' : 'Tandai Soal'}
+                                </Button>
+
                                 {currentIndex === soal.length - 1 ? (
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button>Selesaikan</Button>
+                                            <Button>
+                                                <Check />
+                                                Selesaikan
+                                            </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
@@ -494,7 +588,7 @@ export default function SoalTes({ jadwal, soal, start_time }: Props) {
                                         </AlertDialogContent>
                                     </AlertDialog>
                                 ) : (
-                                    <Button className="cursor-pointer" onClick={handleNext}>
+                                    <Button variant="outline" onClick={handleNext}>
                                         Selanjutnya
                                     </Button>
                                 )}

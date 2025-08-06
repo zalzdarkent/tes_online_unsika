@@ -148,7 +148,8 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
             !dateTimeInputs.tanggal_mulai_date ||
             !dateTimeInputs.tanggal_mulai_time ||
             !dateTimeInputs.tanggal_berakhir_date ||
-            !dateTimeInputs.tanggal_berakhir_time
+            !dateTimeInputs.tanggal_berakhir_time ||
+            !data.durasi
         ) {
             toast({
                 variant: 'destructive',

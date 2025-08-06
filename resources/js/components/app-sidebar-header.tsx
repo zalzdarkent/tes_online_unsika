@@ -10,7 +10,8 @@ export function AppSidebarHeader({ breadcrumbs = [] }: { breadcrumbs?: Breadcrum
                 <SidebarTrigger className="-ml-1 cursor-pointer" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
-            <div>
+            <div className="flex items-center gap-2 text-sm">
+                Tema:
                 <AppearanceToggleDropdown />
             </div>
         </header>

@@ -139,11 +139,16 @@ export default function DaftarTes({ jadwal }: Props) {
             id: 'actions',
             header: 'Aksi',
             cell: ({ row }) => {
-                const { id, sudah_kerjakan_jadwal_sebelumnya } = row.original;
+                const { id, sudah_kerjakan_jadwal_sebelumnya, tanggal_mulai } = row.original;
 
                 if (!sudah_kerjakan_jadwal_sebelumnya) {
                     return <span className="text-sm text-muted-foreground italic">Anda belum mengerjakan tes sebelumnya</span>;
                 }
+
+                if (new Date(tanggal_mulai) <= new Date()) {
+                    return <span className="text-sm text-muted-foreground italic">Belum dimulai</span>;
+                }
+
                 return (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
