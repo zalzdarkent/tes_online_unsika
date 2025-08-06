@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -108,9 +108,10 @@ interface SoalPageProps {
 
 export default function SoalPage({ jadwal, soal }: SoalPageProps) {
     const { toast } = useToast();
-    const { delete: deleteSoal } = useForm();
     const [selectedSoal, setSelectedSoal] = useState<SoalData | null>(null);
     const [showDetail, setShowDetail] = useState(false);
+    const [editSoal, setEditSoal] = useState<SoalData | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     // Handler untuk menghapus satu soal
     const handleDeleteSingle = (soal: SoalData) => {
@@ -226,7 +227,15 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button className="cursor-pointer" variant="ghost" size="sm">
+                                <Button
+                                    className="cursor-pointer"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setEditSoal(row.original);
+                                        setShowEditModal(true);
+                                    }}
+                                >
                                     <Edit className="h-4 w-4" />
                                 </Button>
                             </TooltipTrigger>
@@ -578,7 +587,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                             </div>
                         )}
 
-                        {selectedSoal.jenis_soal === 'equation' && (
+                        {selectedSoal.jenis_soal === 'equation' && selectedSoal.equation && (
                             <div className="border-white-200 rounded-lg border p-5">
                                 <h3 className="text-white-800 mb-3 flex items-center gap-2 font-medium">Equation</h3>
                                 <BlockMath math={selectedSoal.equation} />
@@ -663,6 +672,24 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         showExportButton
                     />
                     {renderSoalDetailModal()}
+
+                    {/* Edit Modal */}
+                    {editSoal && (
+                        <SoalFormModal
+                            trigger={<div style={{ display: 'none' }} />}
+                            open={showEditModal}
+                            onOpenChange={setShowEditModal}
+                            idJadwal={jadwal.id}
+                            mode="edit"
+                            soal={editSoal}
+                            onSuccess={() => {
+                                setShowEditModal(false);
+                                setEditSoal(null);
+                                // Reload page to show updated data
+                                window.location.reload();
+                            }}
+                        />
+                    )}
                 </div>
             </JadwalLayout>
         </AppLayout>

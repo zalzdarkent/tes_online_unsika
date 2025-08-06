@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import RichTextEditor from '@/components/rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,8 +9,37 @@ import { useToast } from '@/hooks/use-toast';
 import { router } from '@inertiajs/react';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import 'katex/dist/katex.min.css';
-import { useState } from 'react';
 import { BlockMath } from 'react-katex';
+
+// Tipe data soal
+interface SoalData {
+    id?: number;
+    id_jadwal: number;
+    jenis_soal: string;
+    pertanyaan: string;
+    opsi_a?: string;
+    opsi_b?: string;
+    opsi_c?: string;
+    opsi_d?: string;
+    jawaban_benar: string;
+    skor: number;
+    media?: string;
+    skala_min?: number;
+    skala_maks?: number;
+    skala_label_min?: string;
+    skala_label_maks?: string;
+    equation?: string;
+}
+
+interface SoalFormModalProps {
+    trigger: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    onSuccess?: () => void;
+    idJadwal: number;
+    mode?: 'create' | 'edit';
+    soal?: SoalData; // Data soal untuk edit mode
+}
 
 // Tipe soal yang didukung
 const SOAL_TYPES = [
@@ -26,9 +56,21 @@ const SOAL_TYPES = [
     { value: 'equation', label: 'Equation' },
 ];
 
-export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigger: React.ReactNode; onSuccess?: () => void; idJadwal: number }) {
+export default function SoalFormModal({
+    trigger,
+    open: externalOpen,
+    onOpenChange: externalOnOpenChange,
+    onSuccess,
+    idJadwal,
+    mode = 'create',
+    soal
+}: SoalFormModalProps) {
     const { toast } = useToast();
-    const [open, setOpen] = useState(false);
+    const [internalOpen, setInternalOpen] = useState(false);
+
+    // Use external open state if provided, otherwise use internal
+    const open = externalOpen !== undefined ? externalOpen : internalOpen;
+    const setOpen = externalOnOpenChange || setInternalOpen;
     const [loading, setLoading] = useState(false);
     const [tipeJawaban, setTipeJawaban] = useState('single_choice');
     const [pertanyaan, setPertanyaan] = useState('');
@@ -53,13 +95,64 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
         setJawabanBenarMulti([]);
         setSkor(1);
         setMedia(null);
-        setSkalaMin();
-        setSkalaMaks();
+        setSkalaMin(undefined);
+        setSkalaMaks(undefined);
         setSkalaLabelMin('');
         setSkalaLabelMaks('');
         setEquation('');
         setErrors({});
     };
+
+    // Load data saat modal dibuka untuk edit
+    React.useEffect(() => {
+        if (open && mode === 'edit' && soal) {
+            // Konversi jenis_soal database ke tipe UI
+            let uiType = soal.jenis_soal;
+            if (soal.jenis_soal === 'pilihan_ganda') {
+                uiType = soal.media ? 'single_choice_gambar' : 'single_choice';
+            } else if (soal.jenis_soal === 'pilihan_ganda_multi') {
+                uiType = soal.media ? 'multi_choice_gambar' : 'multi_choice';
+            } else if (soal.jenis_soal === 'esai') {
+                uiType = soal.media ? 'essay_gambar' : 'essay';
+            }
+
+            setTipeJawaban(uiType);
+            setPertanyaan(soal.pertanyaan);
+            setSkor(soal.skor);
+
+            // Load opsi jika ada
+            if (soal.opsi_a || soal.opsi_b || soal.opsi_c || soal.opsi_d) {
+                setOpsi([
+                    soal.opsi_a || '',
+                    soal.opsi_b || '',
+                    soal.opsi_c || '',
+                    soal.opsi_d || ''
+                ]);
+            }
+
+            // Load jawaban benar
+            if (soal.jenis_soal === 'pilihan_ganda_multi') {
+                setJawabanBenarMulti(soal.jawaban_benar.split(','));
+            } else {
+                setJawabanBenar(soal.jawaban_benar);
+            }
+
+            // Load data skala
+            if (soal.jenis_soal === 'skala') {
+                setSkalaMin(soal.skala_min);
+                setSkalaMaks(soal.skala_maks);
+                setSkalaLabelMin(soal.skala_label_min || '');
+                setSkalaLabelMaks(soal.skala_label_maks || '');
+            }
+
+            // Load equation
+            if (soal.jenis_soal === 'equation') {
+                setEquation(soal.equation || '');
+            }
+        } else if (open && mode === 'create') {
+            resetForm();
+        }
+    }, [open, mode, soal]);
 
     // Handler submit
     const validate = () => {
@@ -80,12 +173,15 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
         }
         // Validasi untuk skala
         if (tipeJawaban === 'skala') {
-            if (skalaMin >= skalaMaks) newErrors.skala = 'Nilai minimum harus lebih kecil dari maksimum.';
+            if (skalaMin !== undefined && skalaMaks !== undefined && skalaMin >= skalaMaks) {
+                newErrors.skala = 'Nilai minimum harus lebih kecil dari maksimum.';
+            }
             if (!skalaLabelMin.trim()) newErrors.skalaLabelMin = 'Label minimum wajib diisi.';
             if (!skalaLabelMaks.trim()) newErrors.skalaLabelMaks = 'Label maksimum wajib diisi.';
             if (!jawabanBenar.trim()) newErrors.jawabanBenar = 'Jawaban benar (nilai target) wajib diisi.';
             const jawabanBenarNum = Number(jawabanBenar);
-            if (isNaN(jawabanBenarNum) || jawabanBenarNum < skalaMin || jawabanBenarNum > skalaMaks) {
+            if (skalaMin !== undefined && skalaMaks !== undefined &&
+                (isNaN(jawabanBenarNum) || jawabanBenarNum < skalaMin || jawabanBenarNum > skalaMaks)) {
                 newErrors.jawabanBenar = `Jawaban benar harus berupa angka antara ${skalaMin} dan ${skalaMaks}.`;
             }
         }
@@ -166,15 +262,24 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                 formData.append('jawaban_benar', jawabanBenar);
             }
             formData.append('media', media);
+
+            // Determine route based on mode
+            const route = mode === 'edit' && soal ? `/soal/${soal.id}` : `/jadwal/soal`;
+
+            // Add _method field for Laravel to handle PUT request via POST
+            if (mode === 'edit') {
+                formData.append('_method', 'PUT');
+            }
+
             // Tambahkan field lain sesuai kebutuhan
-            router.post(`/jadwal/soal`, formData, {
+            router.post(route, formData, {
                 onSuccess: () => {
                     setLoading(false);
                     setOpen(false);
                     resetForm();
                     toast({
                         title: 'Berhasil',
-                        description: 'Soal berhasil ditambahkan!',
+                        description: mode === 'edit' ? 'Soal berhasil diperbarui!' : 'Soal berhasil ditambahkan!',
                     });
                     if (onSuccess) onSuccess();
                 },
@@ -192,7 +297,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                 forceFormData: true,
             });
         } else {
-            const payload: any = {
+            const payload = {
                 id_jadwal: idJadwal,
                 jenis_soal: tipeJawaban.startsWith('single_choice')
                     ? 'pilihan_ganda'
@@ -203,7 +308,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                         : tipeJawaban,
                 pertanyaan,
                 skor,
-            };
+            } as Record<string, string | number>;
             if (tipeJawaban === 'single_choice') {
                 payload.opsi_a = opsi[0];
                 payload.opsi_b = opsi[1];
@@ -230,8 +335,8 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                 payload.jawaban_benar = jawabanBenar;
             }
             if (tipeJawaban === 'skala') {
-                payload.skala_min = skalaMin;
-                payload.skala_maks = skalaMaks;
+                if (skalaMin !== undefined) payload.skala_min = skalaMin;
+                if (skalaMaks !== undefined) payload.skala_maks = skalaMaks;
                 payload.skala_label_min = skalaLabelMin;
                 payload.skala_label_maks = skalaLabelMaks;
                 payload.jawaban_benar = jawabanBenar;
@@ -241,14 +346,19 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                 payload.jawaban_benar = jawabanBenar;
             }
             // Tambahkan field lain sesuai kebutuhan
-            router.post(`/jadwal/soal`, payload, {
+
+            // Determine route based on mode
+            const route = mode === 'edit' && soal ? `/soal/${soal.id}` : `/jadwal/soal`;
+            const method = mode === 'edit' ? 'put' : 'post';
+
+            router[method](route, payload, {
                 onSuccess: () => {
                     setLoading(false);
                     setOpen(false);
                     resetForm();
                     toast({
                         title: 'Berhasil',
-                        description: 'Soal berhasil ditambahkan!',
+                        description: mode === 'edit' ? 'Soal berhasil diperbarui!' : 'Soal berhasil ditambahkan!',
                     });
                     if (onSuccess) onSuccess();
                 },
@@ -490,7 +600,9 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-background text-foreground shadow-xl sm:max-w-[700px]">
                 <DialogHeader>
-                    <DialogTitle>Tambah Soal</DialogTitle>
+                    <DialogTitle>
+                        {mode === 'edit' ? 'Edit Soal' : 'Tambah Soal'}
+                    </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -529,7 +641,7 @@ export default function SoalFormModal({ trigger, onSuccess, idJadwal }: { trigge
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={loading} className="cursor-pointer">
-                            {loading ? 'Menyimpan...' : 'Simpan'}
+                            {loading ? 'Menyimpan...' : mode === 'edit' ? 'Update' : 'Simpan'}
                         </Button>
                         <DialogClose asChild>
                             <Button type="button" variant="outline" onClick={resetForm} className="cursor-pointer">
