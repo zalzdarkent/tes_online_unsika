@@ -145,7 +145,7 @@ export default function DaftarTes({ jadwal }: Props) {
                     return <span className="text-sm text-muted-foreground italic">Anda belum mengerjakan tes sebelumnya</span>;
                 }
 
-                if (new Date(tanggal_mulai) <= new Date()) {
+                if (new Date(tanggal_mulai) > new Date()) {
                     return <span className="text-sm text-muted-foreground italic">Belum dimulai</span>;
                 }
 
