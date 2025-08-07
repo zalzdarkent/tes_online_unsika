@@ -14,27 +14,19 @@ import { cn } from '@/lib/utils';
 
 type RegisterForm = {
     username: string;
-    nama: string;
     email: string;
     password: string;
     password_confirmation: string;
-    foto?: File | null;
-    alamat: string | null;
-    no_hp?: string | null;
 };
 
 type ValidationState = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
 export default function Register() {
-    const { data, setData, post, processing, errors, reset } = useForm<Required<Omit<RegisterForm, 'foto'>> & Pick<RegisterForm, 'foto'>>({
+    const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
         username: '',
-        nama: '',
         email: '',
         password: '',
         password_confirmation: '',
-        foto: null,
-        alamat: null,
-        no_hp: null,
     });
 
     const [usernameValidation, setUsernameValidation] = useState<{
@@ -288,7 +280,6 @@ export default function Register() {
         }
 
         post(route('register'), {
-            forceFormData: true, // Untuk file upload
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };
@@ -297,7 +288,7 @@ export default function Register() {
         <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
             <Head title="Register" />
 
-            <Card className="mx-auto w-full max-w-2xl">
+            <Card className="mx-auto w-full max-w-md">
                 <CardHeader className="space-y-4">
                     <div className="flex justify-center">
                         <Link href={route('home')} className="flex flex-col items-center gap-2 font-medium">
@@ -306,12 +297,12 @@ export default function Register() {
                             </div>
                         </Link>
                     </div>
-                    <CardTitle className="text-center text-2xl">Create an account</CardTitle>
-                    <CardDescription className="text-center">Enter your details below to create your account</CardDescription>
+                    <CardTitle className="text-center text-2xl">Buat akun</CardTitle>
+                    <CardDescription className="text-center">Masukkan detail Anda di bawah ini untuk membuat akun</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form className="flex flex-col gap-6" onSubmit={submit}>
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid gap-6">
                             <div className="grid gap-2">
                                 <Label htmlFor="username">Username</Label>
                                 <div className="relative">
@@ -325,7 +316,7 @@ export default function Register() {
                                         value={data.username}
                                         onChange={(e) => setData('username', e.target.value)}
                                         disabled={processing}
-                                        placeholder="Username"
+                                        placeholder="Masukkan username Anda"
                                         className={cn(
                                             'pr-10 transition-all duration-200',
                                             usernameValidation.state === 'available' && 'border-green-500 focus:border-green-500',
@@ -360,34 +351,18 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="nama">Nama Lengkap</Label>
-                                <Input
-                                    id="nama"
-                                    type="text"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="name"
-                                    value={data.nama}
-                                    onChange={(e) => setData('nama', e.target.value)}
-                                    disabled={processing}
-                                    placeholder="Nama lengkap"
-                                />
-                                <InputError message={errors.nama} className="mt-2" />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">Email</Label>
                                 <div className="relative">
                                     <Input
                                         id="email"
                                         type="email"
                                         required
-                                        tabIndex={3}
+                                        tabIndex={2}
                                         autoComplete="email"
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
                                         disabled={processing}
-                                        placeholder="email@example.com"
+                                        placeholder="Masukkan email Anda"
                                         className={cn(
                                             'pr-10 transition-all duration-200',
                                             emailValidation.state === 'available' && 'border-green-500 focus:border-green-500',
@@ -422,63 +397,18 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="foto">Foto (Optional)</Label>
-                                <Input
-                                    id="foto"
-                                    type="file"
-                                    accept="image/*"
-                                    tabIndex={7}
-                                    onChange={(e) => setData('foto', e.target.files?.[0] || null)}
-                                    disabled={processing}
-                                />
-                                <InputError message={errors.foto} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="alamat">Alamat (Optional)</Label>
-                                <div className="relative">
-                                    <textarea
-                                        id="alamat"
-                                        className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                        tabIndex={5}
-                                        value={data.alamat || ''}
-                                        onChange={(e) => setData('alamat', e.target.value)}
-                                        disabled={processing}
-                                        placeholder="Alamat lengkap (opsional)"
-                                    />
-                                </div>
-                                <InputError message={errors.alamat} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="no_hp">No. HP (Optional)</Label>
-                                <div className="relative">
-                                    <Input
-                                        id="no_hp"
-                                        type="tel"
-                                        tabIndex={6}
-                                        value={data.no_hp || ''}
-                                        onChange={(e) => setData('no_hp', e.target.value)}
-                                        disabled={processing}
-                                        placeholder="Nomor HP (opsional)"
-                                    />
-                                </div>
-                                <InputError message={errors.no_hp} />
-                            </div>
-
-                            <div className="grid gap-2">
                                 <Label htmlFor="password">Password</Label>
                                 <div className="relative">
                                     <Input
                                         id="password"
                                         type={showPassword ? 'text' : 'password'}
                                         required
-                                        tabIndex={4}
+                                        tabIndex={3}
                                         autoComplete="new-password"
                                         value={data.password}
                                         onChange={(e) => setData('password', e.target.value)}
                                         disabled={processing}
-                                        placeholder="Password"
+                                        placeholder="Masukkan password Anda"
                                         className="pr-10"
                                     />
                                     <button
@@ -494,18 +424,18 @@ export default function Register() {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">Confirm password</Label>
+                                <Label htmlFor="password_confirmation">Konfirmasi password</Label>
                                 <div className="relative">
                                     <Input
                                         id="password_confirmation"
                                         type={showPasswordConfirmation ? 'text' : 'password'}
                                         required
-                                        tabIndex={5}
+                                        tabIndex={4}
                                         autoComplete="new-password"
                                         value={data.password_confirmation}
                                         onChange={(e) => setData('password_confirmation', e.target.value)}
                                         disabled={processing}
-                                        placeholder="Confirm password"
+                                        placeholder="Konfirmasi password Anda"
                                         className={cn(
                                             'pr-20 transition-all duration-200',
                                             passwordMatchValidation.state === 'match' && 'border-green-500 focus:border-green-500',
@@ -550,7 +480,7 @@ export default function Register() {
                         <Button
                             type="submit"
                             className="mt-4 w-full"
-                            tabIndex={8}
+                            tabIndex={5}
                             disabled={
                                 processing ||
                                 usernameValidation.state === 'checking' ||
@@ -563,13 +493,13 @@ export default function Register() {
                             }
                         >
                             {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                            Create account
+                            Buat akun
                         </Button>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
-                            <TextLink href={route('login')} tabIndex={9}>
-                                Log in
+                            Sudah memiliki akun?{' '}
+                            <TextLink href={route('login')} tabIndex={6}>
+                                Masuk
                             </TextLink>
                         </div>
                     </form>

@@ -4,11 +4,129 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\User;
+use App\Models\Jadwal;
+use App\Models\Soal;
+use App\Models\Jawaban;
+use App\Models\HasilTestPeserta;
+use App\Models\KategoriTes;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        return Inertia::render('dashboard');
+        // Auto-update expired jadwal status
+        Jadwal::updateExpiredJadwalStatus();
+
+        $today = Carbon::today();
+        $now = Carbon::now();
+        $user = Auth::user();
+
+        // Stats Cards
+        $totalPeserta = User::where('role', 'peserta')->count();
+        $totalSoal = Soal::count();
+
+        // Peserta online (yang login dalam 30 menit terakhir)
+        // Untuk demo, kita simulasikan dengan peserta yang update_at dalam 30 menit terakhir
+        $pesertaOnline = User::where('role', 'peserta')
+            ->where('updated_at', '>=', $now->subMinutes(30))
+            ->count();
+
+        // Tes aktif (status Buka)
+        $tesAktif = Jadwal::where('status', 'Buka')->count();
+
+        // Aktivitas terbaru - ambil 3 jadwal terbaru dengan informasi peserta
+        $aktivitasTerbaru = Jadwal::with('kategori')
+            ->select('id', 'nama_jadwal', 'tanggal_mulai', 'tanggal_berakhir', 'status', 'kategori_tes_id')
+            ->orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get()
+            ->map(function ($jadwal) use ($now) {
+                // Hitung jumlah peserta yang sudah mengerjakan
+                $pesertaSelesai = HasilTestPeserta::where('id_jadwal', $jadwal->id)->count();
+
+                // Hitung peserta yang sedang mengerjakan
+                $pesertaSedangMengerjakan = Jawaban::where('id_jadwal', $jadwal->id)
+                    ->whereDoesntHave('hasilTestPeserta')
+                    ->distinct('id_user')
+                    ->count();
+
+                // Hitung total peserta terdaftar (yang pernah memulai tes)
+                $totalPesertaTerdaftar = Jawaban::where('id_jadwal', $jadwal->id)
+                    ->distinct('id_user')
+                    ->count();
+
+                // Tentukan status berdasarkan waktu
+                $tanggalMulai = Carbon::parse($jadwal->tanggal_mulai);
+                $tanggalBerakhir = Carbon::parse($jadwal->tanggal_berakhir);
+
+                $statusAktivitas = 'Akan Datang';
+                $deskripsi = "{$totalPesertaTerdaftar} peserta terdaftar";
+
+                if ($now->between($tanggalMulai, $tanggalBerakhir)) {
+                    $statusAktivitas = 'Sedang Berlangsung';
+                    $deskripsi = "{$pesertaSedangMengerjakan} peserta sedang mengerjakan";
+                } elseif ($now->gt($tanggalBerakhir)) {
+                    $statusAktivitas = 'Selesai';
+                    $deskripsi = "{$pesertaSelesai} peserta selesai";
+                }
+
+                return [
+                    'nama_jadwal' => $jadwal->nama_jadwal,
+                    'deskripsi' => $deskripsi,
+                    'status' => $statusAktivitas,
+                    'kategori' => $jadwal->kategori ? $jadwal->kategori->nama : 'Umum'
+                ];
+            });
+
+        // Ringkasan hari ini
+        $tesDimulaiHariIni = Jadwal::whereDate('tanggal_mulai', $today)->count();
+        $tesSelesaiHariIni = Jadwal::whereDate('tanggal_berakhir', $today)->count();
+        $pesertaBaruHariIni = User::where('role', 'peserta')
+            ->whereDate('created_at', $today)
+            ->count();
+
+        // Total login hari ini (simulasi berdasarkan updated_at)
+        $totalLoginHariIni = User::whereDate('updated_at', $today)->count();
+
+        // Tingkat keberhasilan (rata-rata completion rate)
+        $totalTesSelesai = HasilTestPeserta::count();
+        $totalTesStarted = Jawaban::distinct('id_user', 'id_jadwal')->count();
+        $tingkatKeberhasilan = $totalTesStarted > 0 ?
+            round(($totalTesSelesai / $totalTesStarted) * 100, 1) : 0;
+
+        // Growth calculation (bulan ini vs bulan lalu)
+        $pesertaBulanIni = User::where('role', 'peserta')
+            ->whereMonth('created_at', $now->month)
+            ->whereYear('created_at', $now->year)
+            ->count();
+
+        $pesertaBulanLalu = User::where('role', 'peserta')
+            ->whereMonth('created_at', $now->subMonth()->month)
+            ->whereYear('created_at', $now->subMonth()->year)
+            ->count();
+
+        $growthPercentage = $pesertaBulanLalu > 0 ?
+            round((($pesertaBulanIni - $pesertaBulanLalu) / $pesertaBulanLalu) * 100, 1) : 0;
+
+        return Inertia::render('dashboard', [
+            'stats' => [
+                'total_peserta' => $totalPeserta,
+                'peserta_online' => $pesertaOnline,
+                'tes_aktif' => $tesAktif,
+                'growth_percentage' => $growthPercentage
+            ],
+            'aktivitas_terbaru' => $aktivitasTerbaru,
+            'ringkasan_hari_ini' => [
+                'tes_dimulai' => $tesDimulaiHariIni,
+                'tes_selesai' => $tesSelesaiHariIni,
+                'peserta_baru' => $pesertaBaruHariIni,
+                'total_login' => $totalLoginHariIni,
+                'tingkat_keberhasilan' => $tingkatKeberhasilan
+            ]
+        ]);
     }
 }
