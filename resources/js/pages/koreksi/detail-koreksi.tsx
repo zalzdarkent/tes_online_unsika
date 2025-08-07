@@ -275,45 +275,12 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Detail Koreksi Peserta" />
             <div className="flex flex-col gap-4 p-4">
-                {/* button */}
-                <div className="flex items-center justify-between">
+                {/* button kembali */}
+                <div>
                     <Button variant="ghost" onClick={() => router.visit(`/koreksi`)} className="w-fit">
                         <ArrowLeft />
                         Kembali
                     </Button>
-
-                    {!isSubmitted && (
-                        <div className="flex items-center justify-between">
-                            <div className="flex gap-3">
-                                <Button onClick={() => handleSave(false)} disabled={isSaving} variant="outline">
-                                    {isSaving ? 'Menyimpan...' : 'Simpan (Draft)'}
-                                </Button>
-
-                                <AlertDialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
-                                    <AlertDialogTrigger asChild>
-                                        <Button disabled={isSaving}>Submit Final</Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Konfirmasi Submit Final</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                Apakah Anda yakin ingin submit hasil koreksi ini sebagai final?
-                                                <br />
-                                                <br />
-                                                <strong>Tindakan ini tidak dapat dibatalkan!</strong>
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel disabled={isSaving}>Batal</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleSubmit} disabled={isSaving}>
-                                                {isSaving ? 'Memproses...' : 'Ya, Submit Final'}
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* Info peserta */}
@@ -358,6 +325,40 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 {renderStatistik()}
 
                 <DataTable columns={columns} data={skorData} />
+
+                {/* button simpan dan submit */}
+                {!isSubmitted && (
+                    <div className="mt-4">
+                        <div className="flex gap-3">
+                            <Button onClick={() => handleSave(false)} disabled={isSaving} variant="outline">
+                                {isSaving ? 'Menyimpan...' : 'Simpan (Draft)'}
+                            </Button>
+
+                            <AlertDialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+                                <AlertDialogTrigger asChild>
+                                    <Button disabled={isSaving}>Submit Final</Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Konfirmasi Submit Final</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Apakah Anda yakin ingin submit hasil koreksi ini sebagai final?
+                                            <br />
+                                            <br />
+                                            <strong>Tindakan ini tidak dapat dibatalkan!</strong>
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel disabled={isSaving}>Batal</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleSubmit} disabled={isSaving}>
+                                            {isSaving ? 'Memproses...' : 'Ya, Submit Final'}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

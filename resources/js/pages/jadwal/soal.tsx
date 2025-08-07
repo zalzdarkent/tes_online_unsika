@@ -1,4 +1,6 @@
 import SoalFormModal from '@/components/modal/SoalFormModal';
+import SoalImportModal from '@/components/modal/SoalImportModal';
+import { FileSpreadsheet } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -112,6 +114,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
     const [showDetail, setShowDetail] = useState(false);
     const [editSoal, setEditSoal] = useState<SoalData | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
 
     // Handler untuk menghapus satu soal
     const handleDeleteSingle = (soal: SoalData) => {
@@ -658,7 +661,22 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                 }
                                 idJadwal={jadwal.id}
                                 onSuccess={() => {
-                                    // TODO: reload data jika perlu
+                                    window.location.reload();
+                                }}
+                            />
+                            <SoalImportModal
+                                trigger={
+                                    <Button variant="outline" className="cursor-pointer">
+                                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                        Import dari Excel
+                                    </Button>
+                                }
+                                open={showImportModal}
+                                onOpenChange={(value) => setShowImportModal(value)}
+                                idJadwal={jadwal.id}
+                                onSuccess={() => {
+                                    setShowImportModal(false);
+                                    window.location.reload();
                                 }}
                             />
                         </div>
