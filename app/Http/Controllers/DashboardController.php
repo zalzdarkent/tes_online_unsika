@@ -29,10 +29,15 @@ class DashboardController extends Controller
         $totalPeserta = User::where('role', 'peserta')->count();
         $totalSoal = Soal::count();
 
-        // Peserta online (yang login dalam 30 menit terakhir)
-        // Untuk demo, kita simulasikan dengan peserta yang update_at dalam 30 menit terakhir
-        $pesertaOnline = User::where('role', 'peserta')
-            ->where('updated_at', '>=', $now->subMinutes(30))
+        // Peserta online (tracking dari tabel sessions, last_activity dalam 5 menit terakhir)
+        $fiveMinutesAgo = now()->subMinutes(5)->timestamp;
+        $pesertaOnline = DB::table('sessions')
+            ->join('users', 'sessions.user_id', '=', 'users.id')
+            ->where('last_activity', '>=', $fiveMinutesAgo)
+            ->whereNotNull('sessions.user_id')
+            ->where('users.role', 'peserta')
+            ->select('sessions.user_id')
+            ->distinct()
             ->count();
 
         // Tes aktif (status Buka)
