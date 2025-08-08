@@ -40,6 +40,7 @@ class RegisteredUserController extends Controller
                 'unique:users,username',
                 'regex:/^[a-zA-Z0-9_]+$/' // Only allow alphanumeric and underscore
             ],
+            'nama' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:100|unique:users,email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
@@ -52,7 +53,7 @@ class RegisteredUserController extends Controller
 
         $user = User::create([
             'username' => $request->input('username'),
-            'nama' => $request->input('username'), // Nama diambil dari username
+            'nama' => $request->input('nama'),
             'email' => $request->input('email'),
             'password' => Hash::make($request->input('password')),
             'role' => 'peserta', // default role untuk user baru

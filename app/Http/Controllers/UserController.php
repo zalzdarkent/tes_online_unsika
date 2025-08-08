@@ -17,7 +17,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::select('id', 'username', 'nama', 'email', 'role', 'alamat', 'no_hp', 'foto', 'created_at', 'updated_at')
+        $users = User::select('id', 'username', 'nama', 'email', 'role', 'alamat', 'no_hp', 'foto', 'created_at', 'updated_at', 'prodi', 'fakultas', 'universitas', 'npm')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -40,6 +40,10 @@ class UserController extends Controller
             'alamat' => 'nullable|string|max:500',
             'no_hp' => 'nullable|string|max:20',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'prodi' => 'nullable|string|max:100',
+            'fakultas' => 'nullable|string|max:100',
+            'universitas' => 'nullable|string|max:100',
+            'npm' => 'nullable|string|max:100',
         ]);
 
         $userData = [
@@ -50,6 +54,10 @@ class UserController extends Controller
             'role' => $request->role,
             'alamat' => $request->alamat,
             'no_hp' => $request->no_hp,
+            'prodi' => $request->prodi,
+            'fakultas' => $request->fakultas,
+            'universitas' => $request->universitas,
+            'npm' => $request->npm,
         ];
 
         // Handle foto upload
@@ -74,6 +82,7 @@ class UserController extends Controller
 
         $request->validate([
             'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+
             'nama' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:8',
@@ -81,15 +90,24 @@ class UserController extends Controller
             'alamat' => 'nullable|string|max:500',
             'no_hp' => 'nullable|string|max:20',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'prodi' => 'nullable|string|max:100',
+            'fakultas' => 'nullable|string|max:100',
+            'universitas' => 'nullable|string|max:100',
+            'npm' => 'nullable|string|max:100',
         ]);
 
         $updateData = [
             'username' => $request->username,
+
             'nama' => $request->nama,
             'email' => $request->email,
             'role' => $request->role,
             'alamat' => $request->alamat,
             'no_hp' => $request->no_hp,
+            'prodi' => $request->prodi,
+            'fakultas' => $request->fakultas,
+            'universitas' => $request->universitas,
+            'npm' => $request->npm,
         ];
 
         // Only update password if provided
@@ -150,7 +168,7 @@ class UserController extends Controller
         $currentUserId = Auth::id();
 
         // Filter out current user ID to prevent self-deletion
-        $idsToDelete = array_filter($request->ids, function($id) use ($currentUserId) {
+        $idsToDelete = array_filter($request->ids, function ($id) use ($currentUserId) {
             return $id != $currentUserId;
         });
 

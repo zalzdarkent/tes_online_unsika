@@ -26,6 +26,10 @@ class User extends Authenticatable
         'foto',
         'alamat',
         'no_hp',
+        'prodi',
+        'fakultas',
+        'universitas',
+        'npm'
     ];
 
     /**

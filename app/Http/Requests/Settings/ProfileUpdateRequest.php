@@ -28,9 +28,13 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore(Auth::user()->id),
             ],
-            'alamat' => ['nullable', 'string', 'max:500'],
             'no_hp' => ['nullable', 'string', 'max:20'],
+            'alamat' => ['nullable', 'string', 'max:500'],
             'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'prodi' => ['nullable', 'string', 'max:100'],
+            'fakultas' => ['nullable', 'string', 'max:100'],
+            'universitas' => ['nullable', 'string', 'max:100'],
+            'npm' => ['nullable', 'string', 'max:100'],
         ];
     }
 }
