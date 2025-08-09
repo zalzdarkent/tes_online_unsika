@@ -13,6 +13,8 @@ Route::middleware('auth')->group(function () {
     Route::post('settings/profile', [ProfileController::class, 'update'])->name('profile.update.post');
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('settings/academic', [ProfileController::class, 'academic'])->name('academic.edit');
+
     Route::get('settings/password', [PasswordController::class, 'edit'])->name('password.edit');
     Route::put('settings/password', [PasswordController::class, 'update'])->name('password.update');
 

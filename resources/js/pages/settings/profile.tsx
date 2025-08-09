@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { Camera, GraduationCap, User } from 'lucide-react';
+import { Camera, User } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -28,10 +28,6 @@ type ProfileForm = {
     alamat: string;
     no_hp: string;
     foto: File | null;
-    prodi: string;
-    fakultas: string;
-    universitas: string;
-    npm: string;
     _method?: string;
 };
 
@@ -44,10 +40,6 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
         alamat?: string;
         no_hp?: string;
         foto?: string;
-        prodi?: string;
-        fakultas?: string;
-        universitas?: string;
-        npm?: string;
     };
 
     const { data, setData, post, errors, processing, recentlySuccessful } = useForm<ProfileForm>({
@@ -57,10 +49,6 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
         alamat: user.alamat || '',
         no_hp: user.no_hp || '',
         foto: null,
-        prodi: user.prodi || '',
-        fakultas: user.fakultas || '',
-        universitas: user.universitas || '',
-        npm: user.npm || '',
         _method: 'patch',
     });
 
@@ -168,7 +156,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                         id="username"
                                         value={data.username}
                                         onChange={(e) => setData('username', e.target.value)}
-                                        required
+                                        
                                         autoComplete="username"
                                         placeholder="Masukkan username Anda"
                                     />
@@ -182,7 +170,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                         id="nama"
                                         value={data.nama}
                                         onChange={(e) => setData('nama', e.target.value)}
-                                        required
+                                        
                                         autoComplete="name"
                                         placeholder="Masukkan nama lengkap Anda"
                                     />
@@ -197,7 +185,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                         type="email"
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
-                                        required
+                                        
                                         autoComplete="email"
                                         placeholder="Masukkan alamat email Anda"
                                     />
@@ -238,78 +226,6 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                             </CardContent>
                         </Card>
 
-                        {/* academic information */}
-                        <Card className="w-full">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <GraduationCap className="h-5 w-5" />
-                                    Informasi Akademik
-                                </CardTitle>
-                                <CardDescription>Perbarui informasi akademik Anda</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {/* NPM/NIM */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="npm">NPM/NIM</Label>
-                                    <Input
-                                        id="npm"
-                                        value={data.npm}
-                                        onChange={(e) => setData('npm', e.target.value)}
-                                        required
-                                        autoComplete="nama"
-                                        placeholder="Masukkan NPM/NIM Anda"
-                                    />
-                                    <InputError message={errors.prodi} />
-                                </div>
-
-                                {/* program studi */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="prodi">Program Studi</Label>
-                                    <Input
-                                        id="prodi"
-                                        value={data.prodi}
-                                        onChange={(e) => setData('prodi', e.target.value)}
-                                        required
-                                        autoComplete="nama"
-                                        placeholder="Masukkan program studi Anda"
-                                    />
-                                    <InputError message={errors.prodi} />
-                                </div>
-
-                                {/* fakultas */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="fakultas">Fakultas</Label>
-                                    <Input
-                                        id="fakultas"
-                                        value={data.fakultas}
-                                        onChange={(e) => setData('fakultas', e.target.value)}
-                                        required
-                                        autoComplete="fakultas"
-                                        placeholder="Masukkan fakultas Anda"
-                                    />
-                                    <p className="text-xs text-muted-foreground">Tidak perlu disingkat. Contoh: Fakultas Ilmu Komputer</p>
-                                    <InputError message={errors.fakultas} />
-                                </div>
-
-                                {/* universitas */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="universitas">Universitas</Label>
-                                    <Input
-                                        id="universitas"
-                                        value={data.universitas}
-                                        onChange={(e) => setData('universitas', e.target.value)}
-                                        required
-                                        autoComplete="universitas"
-                                        placeholder="Masukkan asal universitas Anda"
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Tidak perlu disingkat. Contoh: Universitas Singaperbangsa Karawang
-                                    </p>
-                                    <InputError message={errors.fakultas} />
-                                </div>
-                            </CardContent>
-                        </Card>
-
                         {/* Email Verification Notice */}
                         {mustVerifyEmail && user.email === null && (
                             <Card className="border-amber-200 bg-amber-50">
@@ -338,7 +254,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                         {/* Submit Button */}
                         <div className="flex items-center gap-4">
                             <Button disabled={processing} size="lg">
-                                {processing ? 'Memperbarui...' : 'Perbarui'}
+                                {processing ? 'Memperbarui...' : 'Perbarui Profil'}
                             </Button>
 
                             <Transition

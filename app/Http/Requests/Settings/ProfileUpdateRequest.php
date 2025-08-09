@@ -30,7 +30,7 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'no_hp' => ['nullable', 'string', 'max:20'],
             'alamat' => ['nullable', 'string', 'max:500'],
-            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:4590'],
             'prodi' => ['nullable', 'string', 'max:100'],
             'fakultas' => ['nullable', 'string', 'max:100'],
             'universitas' => ['nullable', 'string', 'max:100'],

@@ -13,6 +13,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
+        title: 'Info Akademik',
+        href: '/settings/academic',
+        icon: null,
+    },
+    {
         title: 'Password',
         href: '/settings/password',
         icon: null,

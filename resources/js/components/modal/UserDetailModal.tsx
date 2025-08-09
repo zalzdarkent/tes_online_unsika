@@ -58,7 +58,7 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <div onClick={() => setIsOpen(true)}>{children}</div>
 
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-4xl w-[90vw]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <User className="h-5 w-5" />
@@ -67,7 +67,7 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
                     <DialogDescription>Informasi lengkap tentang pengguna sistem</DialogDescription>
                 </DialogHeader>
 
-                <div className="max-h-[70vh] space-y-6 overflow-y-auto pr-2">
+                <div className="max-h-[75vh] space-y-6 overflow-y-auto pr-2">
                     {/* Header Profile */}
                     <div className="flex items-start gap-4 rounded-lg bg-muted/50 p-4">
                         <div className="flex-shrink-0">
@@ -99,101 +99,100 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
                         </div>
                     </div>
 
-                    <Separator />
+                    {/* Grid Layout for Contact & Academic Information */}
+                    <div className="grid gap-6 md:grid-cols-2">
+                        {/* Contact Information */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Informasi Kontak</h4>
 
-                    {/* Contact Information */}
-                    <div className="space-y-4">
-                        <h4 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Informasi Kontak</h4>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100">
+                                        <Mail className="h-4 w-4 text-blue-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-foreground">Email</p>
+                                        <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+                                    </div>
+                                </div>
 
-                        <div className="grid gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100">
-                                    <Mail className="h-4 w-4 text-blue-600" />
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-green-100">
+                                        <Phone className="h-4 w-4 text-green-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-foreground">No. HP</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {user.no_hp || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-foreground">Email</p>
-                                    <p className="truncate text-sm text-muted-foreground">{user.email}</p>
-                                </div>
-                            </div>
 
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-green-100">
-                                    <Phone className="h-4 w-4 text-green-600" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-foreground">No. HP</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {user.no_hp || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-3">
-                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-orange-100">
-                                    <MapPin className="h-4 w-4 text-orange-600" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-foreground">Alamat</p>
-                                    <p className="text-sm leading-relaxed text-muted-foreground">
-                                        {user.alamat || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
-                                    </p>
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-orange-100">
+                                        <MapPin className="h-4 w-4 text-orange-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-foreground">Alamat</p>
+                                        <p className="text-sm leading-relaxed text-muted-foreground">
+                                            {user.alamat || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <Separator />
+                        {/* Academic Information */}
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Informasi Akademik</h4>
 
-                    {/* Academic Information */}
-                    <div className="space-y-4">
-                        <h4 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Informasi Akademik</h4>
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100">
+                                        <IdCard className="h-4 w-4 text-blue-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-foreground">NPM</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {user.npm || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
+                                        </p>
+                                    </div>
+                                </div>
 
-                        <div className="grid gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100">
-                                    <IdCard className="h-4 w-4 text-blue-600" />
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-green-100">
+                                        <BookOpen className="h-4 w-4 text-green-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-foreground">Program Studi</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {user.prodi || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-foreground">NPM</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {user.npm || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-green-100">
-                                    <BookOpen className="h-4 w-4 text-green-600" />
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-orange-100">
+                                        <Library className="h-4 w-4 text-orange-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-foreground">Fakultas</p>
+                                        <p className="text-sm leading-relaxed text-muted-foreground">
+                                            {user.fakultas || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-foreground">Program Studi</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {user.prodi || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
-                                    </p>
-                                </div>
-                            </div>
 
-                            <div className="flex items-start gap-3">
-                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-orange-100">
-                                    <Library className="h-4 w-4 text-orange-600" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-foreground">Fakultas</p>
-                                    <p className="text-sm leading-relaxed text-muted-foreground">
-                                        {user.fakultas || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start gap-3">
-                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-yellow-100">
-                                    <University className="h-4 w-4 text-yellow-600" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-foreground">Universitas</p>
-                                    <p className="text-sm leading-relaxed text-muted-foreground">
-                                        {user.universitas || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
-                                    </p>
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-yellow-100">
+                                        <University className="h-4 w-4 text-yellow-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-foreground">Universitas</p>
+                                        <p className="text-sm leading-relaxed text-muted-foreground">
+                                            {user.universitas || <span className="text-muted-foreground/60 italic">Belum diisi</span>}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -205,37 +204,39 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
                     <div className="space-y-4">
                         <h4 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Informasi Akun</h4>
 
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
-                                <User className="h-4 w-4 text-gray-600" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-foreground">User ID</p>
-                                <p className="font-mono text-sm text-muted-foreground">#{user.id.toString().padStart(4, '0')}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100">
-                                <Calendar className="h-4 w-4 text-purple-600" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-foreground">Tanggal Bergabung</p>
-                                <p className="text-sm text-muted-foreground">{formatDate(user.created_at)}</p>
-                            </div>
-                        </div>
-
-                        {user.updated_at && user.updated_at !== user.created_at && (
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-yellow-100">
-                                    <Calendar className="h-4 w-4 text-yellow-600" />
+                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                                    <User className="h-4 w-4 text-gray-600" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-foreground">Terakhir Diperbarui</p>
-                                    <p className="text-sm text-muted-foreground">{formatDate(user.updated_at)}</p>
+                                    <p className="text-sm font-medium text-foreground">User ID</p>
+                                    <p className="font-mono text-sm text-muted-foreground">#{user.id.toString().padStart(4, '0')}</p>
                                 </div>
                             </div>
-                        )}
+
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100">
+                                    <Calendar className="h-4 w-4 text-purple-600" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-foreground">Tanggal Bergabung</p>
+                                    <p className="text-sm text-muted-foreground">{formatDate(user.created_at)}</p>
+                                </div>
+                            </div>
+
+                            {user.updated_at && user.updated_at !== user.created_at && (
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-yellow-100">
+                                        <Calendar className="h-4 w-4 text-yellow-600" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-foreground">Terakhir Diperbarui</p>
+                                        <p className="text-sm text-muted-foreground">{formatDate(user.updated_at)}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Footer */}
