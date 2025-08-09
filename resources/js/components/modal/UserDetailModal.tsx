@@ -39,6 +39,7 @@ const roleColors = {
 
 export default function UserDetailModal({ children, user }: UserDetailModalProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -71,7 +72,11 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
                     {/* Header Profile */}
                     <div className="flex items-start gap-4 rounded-lg bg-muted/50 p-4">
                         <div className="flex-shrink-0">
-                            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary/10">
+                            <div 
+                                className={`flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary/10 ${user.foto ? 'cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all' : ''}`}
+                                onClick={() => user.foto && setIsPhotoModalOpen(true)}
+                                title={user.foto ? 'Klik untuk memperbesar foto' : ''}
+                            >
                                 {user.foto ? (
                                     <img
                                         src={`/storage/${user.foto}`}
@@ -247,6 +252,39 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
                     </div>
                 </div>
             </DialogContent>
+
+            {/* Photo Preview Modal */}
+            {user.foto && (
+                <Dialog open={isPhotoModalOpen} onOpenChange={setIsPhotoModalOpen}>
+                    <DialogContent className="max-w-2xl p-0 overflow-hidden">
+                        <div className="relative">
+                            <img
+                                src={`/storage/${user.foto}`}
+                                alt={`Foto ${user.nama}`}
+                                className="w-full h-auto max-h-[80vh] object-contain"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/path/to/placeholder.jpg'; // fallback image
+                                }}
+                            />
+                            <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+                                <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2">
+                                    <p className="text-white text-sm font-medium">{user.nama}</p>
+                                    <p className="text-white/80 text-xs">@{user.username}</p>
+                                </div>
+                                <Button 
+                                    variant="secondary" 
+                                    size="sm"
+                                    onClick={() => setIsPhotoModalOpen(false)}
+                                    className="bg-black/70 backdrop-blur-sm text-white hover:bg-black/80"
+                                >
+                                    Tutup
+                                </Button>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
         </Dialog>
     );
 }

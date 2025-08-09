@@ -10,6 +10,11 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// Developer info page - accessible without authentication
+Route::get('/dev', function () {
+    return Inertia::render('dev');
+})->name('dev');
+
 // peserta routes
 Route::middleware(['auth', 'role:peserta'])->group(function () {
     Route::get('/daftar-tes', [PesertaTesController::class, 'index'])->name('peserta.daftar-tes');
