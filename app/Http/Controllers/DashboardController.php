@@ -72,11 +72,11 @@ class DashboardController extends Controller
                     $statusAktivitas = 'Sedang Berlangsung';
                     $waktuMulai = $tanggalMulai->format('d M Y, H:i');
                     $waktuSelesai = $tanggalBerakhir->format('d M Y, H:i');
-                    $deskripsi = "{$pesertaSedangMengerjakan} peserta sedang mengerjakan • {$waktuMulai} - {$waktuSelesai}";
+                    $deskripsi = "{$waktuMulai} - {$waktuSelesai}";
                 } elseif ($now->gt($tanggalBerakhir)) {
                     $statusAktivitas = 'Selesai';
                     $waktuBerakhir = $tanggalBerakhir->format('d M Y, H:i');
-                    $deskripsi = "Tes berakhir pada {$waktuBerakhir}";
+                    $deskripsi = "Berakhir {$waktuBerakhir}";
                 } else {
                     // Akan datang
                     $waktuMulai = $tanggalMulai->format('d M Y, H:i');

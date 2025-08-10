@@ -298,13 +298,14 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                         Kategori Tes
                                     </label>
                                     <Select
-                                        value={data.kategori_tes_id?.toString() || ''}
-                                        onValueChange={(value) => setData('kategori_tes_id', value ? Number(value) : null)}
+                                        value={data.kategori_tes_id?.toString() || 'none'}
+                                        onValueChange={(value) => setData('kategori_tes_id', value === 'none' ? null : Number(value))}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Pilih Kategori" />
                                         </SelectTrigger>
                                         <SelectContent>
+                                            <SelectItem value="none">Tidak Ada</SelectItem>
                                             {kategoriTes.map((kategori) => (
                                                 <SelectItem key={kategori.id} value={kategori.id.toString()}>
                                                     {kategori.nama}
@@ -335,13 +336,14 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                     Jadwal Sebelumnya
                                 </label>
                                 <Select
-                                    value={data.id_jadwal_sebelumnya?.toString() || ''}
-                                    onValueChange={(value) => setData('id_jadwal_sebelumnya', value ? Number(value) : null)}
+                                    value={data.id_jadwal_sebelumnya?.toString() || 'none'}
+                                    onValueChange={(value) => setData('id_jadwal_sebelumnya', value === 'none' ? null : Number(value))}
                                 >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih Jadwal Sebelumnya" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="none">Tidak Ada</SelectItem>
                                         {allJadwal
                                             .filter((j) => j.id !== jadwal.id)
                                             .map((j) => (
