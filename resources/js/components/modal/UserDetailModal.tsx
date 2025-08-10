@@ -1,5 +1,4 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { BookOpen, Calendar, IdCard, Library, Mail, MapPin, Phone, University, User, UserCheck } from 'lucide-react';
@@ -72,7 +71,7 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
                     {/* Header Profile */}
                     <div className="flex items-start gap-4 rounded-lg bg-muted/50 p-4">
                         <div className="flex-shrink-0">
-                            <div 
+                            <div
                                 className={`flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary/10 ${user.foto ? 'cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all' : ''}`}
                                 onClick={() => user.foto && setIsPhotoModalOpen(true)}
                                 title={user.foto ? 'Klik untuk memperbesar foto' : ''}
@@ -245,23 +244,23 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
                     </div>
 
                     {/* Footer */}
-                    <div className="flex justify-end border-t pt-4">
+                    {/* <div className="flex justify-end border-t pt-4">
                         <Button variant="outline" onClick={() => setIsOpen(false)}>
                             Tutup
                         </Button>
-                    </div>
+                    </div> */}
                 </div>
             </DialogContent>
 
             {/* Photo Preview Modal */}
             {user.foto && (
                 <Dialog open={isPhotoModalOpen} onOpenChange={setIsPhotoModalOpen}>
-                    <DialogContent className="max-w-2xl p-0 overflow-hidden">
+                    <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-3xl border-0">
                         <div className="relative">
                             <img
                                 src={`/storage/${user.foto}`}
                                 alt={`Foto ${user.nama}`}
-                                className="w-full h-auto max-h-[80vh] object-contain"
+                                className="w-full h-auto max-h-[80vh] object-cover"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     target.src = '/path/to/placeholder.jpg'; // fallback image
@@ -272,14 +271,14 @@ export default function UserDetailModal({ children, user }: UserDetailModalProps
                                     <p className="text-white text-sm font-medium">{user.nama}</p>
                                     <p className="text-white/80 text-xs">@{user.username}</p>
                                 </div>
-                                <Button 
-                                    variant="secondary" 
+                                {/* <Button
+                                    variant="secondary"
                                     size="sm"
                                     onClick={() => setIsPhotoModalOpen(false)}
                                     className="bg-black/70 backdrop-blur-sm text-white hover:bg-black/80"
                                 >
                                     Tutup
-                                </Button>
+                                </Button> */}
                             </div>
                         </div>
                     </DialogContent>

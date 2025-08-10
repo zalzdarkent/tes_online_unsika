@@ -102,10 +102,32 @@ export default function Academic() {
                                     <Input
                                         id="npm"
                                         value={data.npm}
-                                        onChange={(e) => setData('npm', e.target.value)}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            // Only allow numbers and limit to exactly 13 characters
+                                            if (/^\d*$/.test(value) && value.length <= 13) {
+                                                setData('npm', value);
+                                            }
+                                        }}
                                         autoComplete="npm"
-                                        placeholder="Masukkan NPM/NIM Anda"
+                                        placeholder="Masukkan NPM/NIM Anda (tepat 13 digit angka)"
+                                        maxLength={13}
+                                        inputMode="numeric"
+                                        pattern="[0-9]{13}"
+                                        className={data.npm && data.npm.length !== 13 && data.npm.length > 0 ? 'border-orange-300 focus:border-orange-500' : ''}
                                     />
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs text-muted-foreground">NPM/NIM harus tepat 13 digit angka</p>
+                                        <span className={`text-xs font-mono ${
+                                            data.npm.length === 13 ? 'text-green-600' :
+                                            data.npm.length > 0 ? 'text-orange-600' : 'text-muted-foreground'
+                                        }`}>
+                                            {data.npm.length}/13
+                                        </span>
+                                    </div>
+                                    {data.npm && data.npm.length > 0 && data.npm.length !== 13 && (
+                                        <p className="text-xs text-orange-600">NPM/NIM harus tepat 13 digit</p>
+                                    )}
                                     <InputError message={errors.npm} />
                                 </div>
 

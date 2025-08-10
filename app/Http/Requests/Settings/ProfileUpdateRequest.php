@@ -34,7 +34,20 @@ class ProfileUpdateRequest extends FormRequest
             'prodi' => ['nullable', 'string', 'max:100'],
             'fakultas' => ['nullable', 'string', 'max:100'],
             'universitas' => ['nullable', 'string', 'max:100'],
-            'npm' => ['nullable', 'string', 'max:100'],
+            'npm' => ['nullable', 'string', 'regex:/^[0-9]{13}$/', 'size:13'],
+        ];
+    }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'npm.regex' => 'NPM/NIM hanya boleh berisi angka dan harus tepat 13 digit.',
+            'npm.size' => 'NPM/NIM harus tepat 13 digit.',
         ];
     }
 }
