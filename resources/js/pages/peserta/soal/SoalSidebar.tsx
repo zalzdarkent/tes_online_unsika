@@ -14,10 +14,19 @@ interface SoalSidebarProps {
     jawaban: Record<number, string[]>;
     tandaiSoal: Record<number, boolean>;
     durasi: number;
-    handleAnswer: () => void;
+    // handleAnswer: () => void;
 }
 
-const SoalSidebar: FC<SoalSidebarProps> = ({ jadwalNama, currentIndex, setCurrentIndex, soal, jawaban, tandaiSoal, durasi, handleAnswer }) => {
+const SoalSidebar: FC<SoalSidebarProps> = ({
+    jadwalNama,
+    currentIndex,
+    setCurrentIndex,
+    soal,
+    jawaban,
+    tandaiSoal,
+    durasi,
+    // handleAnswer
+}) => {
     return (
         <>
             {/* Desktop Sidebar */}
@@ -28,7 +37,7 @@ const SoalSidebar: FC<SoalSidebarProps> = ({ jadwalNama, currentIndex, setCurren
                     <SoalNavigation
                         currentIndex={currentIndex}
                         setCurrentIndex={(i) => {
-                            handleAnswer();
+                            // handleAnswer();
                             setCurrentIndex(i);
                         }}
                         soal={soal}

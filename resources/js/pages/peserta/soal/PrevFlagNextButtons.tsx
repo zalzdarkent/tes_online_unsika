@@ -18,13 +18,13 @@ const PrevFlagNextButtons: FC<PrevFlagNextButtonsProps> = ({ currentIndex, soal,
     const currentSoal = soal[currentIndex];
 
     return (
-        <div className="flex justify-between pt-6">
-            <Button onClick={onPrev} disabled={currentIndex === 0} variant="outline" className="cursor-pointer">
+        <div className="flex flex-col gap-2 pt-6 sm:flex-row sm:justify-between">
+            <Button onClick={onPrev} disabled={currentIndex === 0} variant="outline" className="w-full sm:w-auto">
                 <ChevronLeft />
                 Sebelumnya
             </Button>
 
-            <Button variant={tandaiSoal[currentSoal.id] ? 'default' : 'outline'} onClick={onToggleFlag}>
+            <Button variant={tandaiSoal[currentSoal.id] ? 'default' : 'outline'} onClick={onToggleFlag} className="w-full sm:w-auto">
                 <Flag />
                 {tandaiSoal[currentSoal.id] ? 'Hapus Tanda' : 'Tandai Soal'}
             </Button>
@@ -37,14 +37,14 @@ const PrevFlagNextButtons: FC<PrevFlagNextButtonsProps> = ({ currentIndex, soal,
                     cancelLabel="Batal"
                     onConfirm={onSubmit}
                     trigger={
-                        <Button>
+                        <Button className="w-full sm:w-auto">
                             <Check className="mr-2 h-4 w-4" />
                             Selesaikan
                         </Button>
                     }
                 />
             ) : (
-                <Button variant="outline" onClick={onNext}>
+                <Button variant="outline" onClick={onNext} className="w-full sm:w-auto">
                     Selanjutnya
                     <ChevronRight />
                 </Button>

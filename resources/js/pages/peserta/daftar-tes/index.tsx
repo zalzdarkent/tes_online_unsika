@@ -106,6 +106,11 @@ export default function DaftarTes({ jadwal }: Props) {
             },
         },
         {
+            accessorKey: 'durasi',
+            header: 'Durasi',
+            enableSorting: false,
+        },
+        {
             accessorKey: 'status',
             header: 'Status',
             enableSorting: true,
@@ -128,8 +133,7 @@ export default function DaftarTes({ jadwal }: Props) {
         {
             accessorKey: 'id_jadwal_sebelumnya',
             header: 'Jadwal Sebelumnya',
-            enableSorting: true,
-            enableHiding: true,
+            enableSorting: false,
             cell: ({ row }) => {
                 const jadwalSebelumnya = row.original.jadwal_sebelumnya;
                 return <div className="text-muted-foreground">{jadwalSebelumnya?.nama_jadwal ?? '-'}</div>;

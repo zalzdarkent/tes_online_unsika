@@ -11,10 +11,17 @@ import SoalHeader from './SoalHeader';
 import SoalOpsi from './SoalOpsi';
 import SoalSidebar from './SoalSidebar';
 
-export default function SoalTes({ jadwal, soal, start_time }: PesertaTesPageProps) {
+export default function SoalTes({ jadwal, soal, start_time, jawaban_tersimpan }: PesertaTesPageProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [tandaiSoal, setTandaiSoal] = useState<Record<number, boolean>>({});
-    const [jawaban, setJawaban] = useState<Record<number, string[]>>({});
+    const [jawaban, setJawaban] = useState<Record<number, string[]>>(() => {
+        const prefill: Record<number, string[]> = {};
+        Object.entries(jawaban_tersimpan || {}).forEach(([soalId, ans]) => {
+            prefill[Number(soalId)] = ans ? String(ans).split(',') : [];
+        });
+        return prefill;
+    });
+
     const [showTabLeaveDialog, setShowTabLeaveDialog] = useState(false);
     const [alertTitle, setAlertTitle] = useState('');
     const [alertDescription, setAlertDescription] = useState('');
@@ -48,72 +55,81 @@ export default function SoalTes({ jadwal, soal, start_time }: PesertaTesPageProp
         return () => clearInterval(interval);
     }, [soal, timeLeft]);
 
-    // todo: add prefill
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const saveAnswer = useCallback(
-        debounce((jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {
+    const saveAnswerFetch = useCallback(
+        debounce(async (jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
             const finalJawaban = Array.isArray(jawaban) ? jawaban.join(',') : '';
 
-            router.post(
-                route('peserta.save'),
-                {
-                    jadwal_id: jadwalId,
-                    id_soal: idSoal,
-                    jawaban: finalJawaban,
-                },
-
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    only: [],
-                    replace: true,
-                    onSuccess: () => {
-                        console.log('jawaban berhasil terkirim');
+            try {
+                await fetch(route('peserta.save'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
                     },
-                    onError: () => {
-                        toast({
-                            variant: 'destructive',
-                            title: 'Terjadi kesalahan!',
-                            description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
-                        });
-                    },
-                },
-            );
-        }, 500),
+                    body: JSON.stringify({
+                        jadwal_id: jadwalId,
+                        id_soal: idSoal,
+                        jawaban: finalJawaban || null,
+                    }),
+                    credentials: 'same-origin',
+                });
+                console.log('Jawaban berhasil terkirim');
+            } catch {
+                toast({
+                    variant: 'destructive',
+                    title: 'Terjadi kesalahan!',
+                    description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
+                });
+            }
+        }, 800),
         [],
     );
 
-    const handleAnswer = () => {
+    useEffect(() => {
         const currentSoal = soal[currentIndex];
+        if (!currentSoal) return;
+
         const jawabanSaatIni = jawaban[currentSoal.id];
 
-        saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
-    };
+        saveAnswerFetch(jadwal.id, currentSoal.id, jawabanSaatIni);
+        // saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
+    }, [jawaban, currentIndex]);
+
+    // const handleAnswer = () => {
+    //     const currentSoal = soal[currentIndex];
+    //     if (!currentSoal) return;
+
+    //     const jawabanSaatIni = jawaban[currentSoal.id];
+
+    //     saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
+    // };
 
     const handleNext = () => {
-        handleAnswer();
+        // handleAnswer();
         if (currentIndex < soal.length - 1) {
             setCurrentIndex(currentIndex + 1);
         }
     };
 
     const handlePrev = () => {
-        handleAnswer();
-
+        // handleAnswer();
         if (currentIndex > 0) {
             setCurrentIndex(currentIndex - 1);
         }
     };
 
     const handleSubmit = () => {
-        handleAnswer();
+        // handleAnswer();
 
-        saveAnswer.flush?.();
+        saveAnswerFetch.flush();
+        // saveAnswer.flush?.();
 
         router.post(
             route('peserta.submit'),
             {
-                jawaban,
+                // jawaban,
                 jadwal_id: jadwal.id,
             },
             {
@@ -145,40 +161,11 @@ export default function SoalTes({ jadwal, soal, start_time }: PesertaTesPageProp
 
     const currentSoal = soal[currentIndex];
 
-    // function showAlert(title: string, desc: string) {
-    //     setAlertTitle(title);
-    //     setAlertDescription(desc);
-    //     setShowTabLeaveDialog(true);
-    // }
-
-    // useEffect(() => {
-    //     // open other tab
-    //     const handleVisibilityChange = () => {
-    //         if (document.visibilityState === 'hidden') {
-    //             showAlert('Anda terdeteksi meninggalkan tab ujian', 'awaban Anda akan dikirim otomatis.');
-    //             // handleSubmit();
-    //         }
-    //     };
-
-    //     // refresh
-    //     const handlePageHide = () => {
-    //         showAlert('refresh', 'test refresh.');
-    //         // handleSubmit();
-    //     };
-
-    //     document.addEventListener('visibilitychange', handleVisibilityChange);
-    //     window.addEventListener('pagehide', handlePageHide);
-
-    //     return () => {
-    //         document.removeEventListener('visibilitychange', handleVisibilityChange);
-    //         window.removeEventListener('pagehide', handlePageHide);
-    //     };
-    // }, []);
-
     // cancel debounce when unmount
     useEffect(() => {
         return () => {
-            saveAnswer.cancel();
+            saveAnswerFetch.cancel();
+            // saveAnswer.cancel();
         };
     }, []);
 
@@ -194,11 +181,11 @@ export default function SoalTes({ jadwal, soal, start_time }: PesertaTesPageProp
                     jawaban={jawaban}
                     tandaiSoal={tandaiSoal}
                     durasi={jadwal.durasi || 60}
-                    handleAnswer={handleAnswer}
+                    // handleAnswer={handleAnswer}
                 />
 
                 {/* Main Content */}
-                <div className="relative mx-auto mt-4 flex-1 space-y-4 p-8 md:mt-0 md:max-w-4xl">
+                <div className="relative mx-auto mt-4 flex-1 space-y-4 overflow-x-auto p-8 md:mt-0 md:max-w-4xl">
                     <SoalHeader currentIndex={currentIndex} totalSoal={soal.length} timeLeft={timeLeft} />
 
                     {/* <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p> */}
@@ -242,3 +229,67 @@ export default function SoalTes({ jadwal, soal, start_time }: PesertaTesPageProp
         </>
     );
 }
+
+// eslint-disable-next-line react-hooks/exhaustive-deps
+// const saveAnswer = useCallback(
+//     debounce((jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {
+//         const finalJawaban = Array.isArray(jawaban) ? jawaban.join(',') : '';
+
+//         router.post(
+//             route('peserta.save'),
+//             {
+//                 jadwal_id: jadwalId,
+//                 id_soal: idSoal,
+//                 jawaban: finalJawaban,
+//             },
+
+//             {
+//                 preserveState: true,
+//                 preserveScroll: true,
+//                 only: [],
+//                 replace: true,
+//                 onSuccess: () => {
+//                     console.log('jawaban berhasil terkirim');
+//                 },
+//                 onError: () => {
+//                     toast({
+//                         variant: 'destructive',
+//                         title: 'Terjadi kesalahan!',
+//                         description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
+//                     });
+//                 },
+//             },
+//         );
+//     }, 1000),
+//     [],
+// );
+
+// function showAlert(title: string, desc: string) {
+//     setAlertTitle(title);
+//     setAlertDescription(desc);
+//     setShowTabLeaveDialog(true);
+// }
+
+// useEffect(() => {
+//     // open other tab
+//     const handleVisibilityChange = () => {
+//         if (document.visibilityState === 'hidden') {
+//             showAlert('Anda terdeteksi meninggalkan tab ujian', 'awaban Anda akan dikirim otomatis.');
+//             // handleSubmit();
+//         }
+//     };
+
+//     // refresh
+//     const handlePageHide = () => {
+//         showAlert('refresh', 'test refresh.');
+//         // handleSubmit();
+//     };
+
+//     document.addEventListener('visibilitychange', handleVisibilityChange);
+//     window.addEventListener('pagehide', handlePageHide);
+
+//     return () => {
+//         document.removeEventListener('visibilitychange', handleVisibilityChange);
+//         window.removeEventListener('pagehide', handlePageHide);
+//     };
+// }, []);

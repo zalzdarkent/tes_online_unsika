@@ -152,7 +152,7 @@ class PesertaTesController extends Controller
 
             // Cek apakah belum ada soal
             if ($jadwal->soal->isEmpty()) {
-                return back()->withErrors([
+                return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Tes ini belum memiliki soal. Silakan hubungi penyelenggara.',
                 ])->withInput();
             }
@@ -166,7 +166,7 @@ class PesertaTesController extends Controller
 
             // Cek apakah tes sudah ditutup
             if (now()->gt(\Carbon\Carbon::parse($jadwal->tanggal_berakhir))) {
-                return back()->withErrors([
+                return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Tes ini sudah ditutup dan tidak dapat lagi dijawab.'
                 ])->withInput();
             }
@@ -177,7 +177,7 @@ class PesertaTesController extends Controller
                 ->first();
 
             if ($hasil && $hasil->is_submitted) {
-                return back()->withErrors([
+                return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Anda tidak bisa mengerjakan tes dua kali.'
                 ])->withInput();
             }
@@ -197,7 +197,7 @@ class PesertaTesController extends Controller
 
             return back();
         } catch (\Exception $e) {
-            return back()->withErrors([
+            return redirect()->route('peserta.daftar-tes')->withErrors([
                 'error' => 'Terjadi kesalahan saat memulai tes. Silakan coba lagi.'
             ])->withInput();
         }
@@ -211,6 +211,7 @@ class PesertaTesController extends Controller
 
             $schedule = Jadwal::with('soal')->findOrFail($id);
 
+            // cek apakah user ini akses tes selain lewat button
             $result = HasilTestPeserta::where('id_user', $user->id)
                 ->where('id_jadwal', $schedule->id)
                 ->first();
@@ -219,17 +220,15 @@ class PesertaTesController extends Controller
                 return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Tes ini belum dimulai atau belum dijadwalkan untuk Anda.'
                 ]);
-            }
+            };
 
-            // $savedAnswers = Jawaban::where('jadwal_id', $schedule->id)
-            //     ->where('id_user', $user->id)
-            //     ->pluck('jawaban', 'id_soal')
-            //     ->toArray();
-
+            // prefill
+            $jawaban = \App\Models\Jawaban::where('id_user', $user->id)
+                ->where('id_jadwal', $schedule->id)
+                ->pluck('jawaban', 'id_soal');
 
             return Inertia::render('peserta/soal/index', [
                 'jadwal' => $schedule,
-                // 'saved_answers' => $savedAnswers,
                 'soal' => $schedule->soal->map(function ($s) {
                     return [
                         // jangan kirim kunci jawaban
@@ -251,6 +250,7 @@ class PesertaTesController extends Controller
                     ];
                 }),
                 'start_time' => $result->start_time,
+                'jawaban_tersimpan' => $jawaban,
             ]);
         } catch (\Exception $e) {
             return redirect()->route('peserta.daftar-tes')->withErrors([
@@ -315,28 +315,31 @@ class PesertaTesController extends Controller
             $now = now();
 
             // Cek apakah tes sudah ditutup
-            if ($now->gt(\Carbon\Carbon::parse($jadwal->tanggal_berakhir))) {
-                return back()->withErrors([
-                    'error' => 'Tes ini sudah ditutup dan tidak dapat lagi dijawab.'
-                ])->withInput();
-            }
+            // if ($now->gt(\Carbon\Carbon::parse($jadwal->tanggal_berakhir))) {
+            //     return redirect()->route('peserta.daftar-tes')->withErrors([
+            //         'error' => 'Tes ini sudah ditutup dan tidak dapat lagi dijawab.'
+            //     ])->withInput();
+            // }
 
+            // cek apakah user start selain from button
             $hasil = \App\Models\HasilTestPeserta::where('id_user', $user->id)
                 ->where('id_jadwal', $jadwalId)
                 ->first();
 
             if (!$hasil) {
-                return back()->withErrors([
+                return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Tes belum dimulai atau tidak ditemukan.'
                 ])->withInput();
             }
 
+            //cek apakah sudah pernah mengerjakan tes
             if ($hasil->is_submitted) {
-                return back()->withErrors([
+                return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Anda tidak bisa mengerjakan tes lebih dari satu kali.'
                 ])->withInput();
             }
 
+            // update status
             $hasil->update([
                 'is_submitted' => true,
             ]);

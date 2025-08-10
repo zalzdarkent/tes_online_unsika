@@ -83,7 +83,7 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban }) => {
 
     if (['esai', 'essay_gambar', 'essay_audio'].includes(s.jenis_soal)) {
         return (
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 max-w-full space-y-3">
                 {s.media && <Media url={s.media} />}
 
                 <div>
@@ -95,7 +95,7 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban }) => {
                         placeholder="Tulis jawaban Anda di sini..."
                         value={jawaban[s.id]?.[0] || ''}
                         onChange={(e) => setJawaban({ ...jawaban, [s.id]: [e.target.value] })}
-                        className="min-h-[120px] resize-y"
+                        className="min-h-[120px] w-full max-w-full resize-y"
                     />
                 </div>
             </div>
