@@ -38,7 +38,6 @@ type DashboardData = {
         tes_selesai: number;
         peserta_baru: number;
         total_login: number;
-        tingkat_keberhasilan: number;
         // Data khusus untuk peserta
         tes_dikerjakan?: number;
         skor_tertinggi?: number;
@@ -262,19 +261,6 @@ export default function Dashboard() {
                                         <span className="font-bold text-orange-600">{ringkasan_hari_ini.waktu_rata_rata || '0'} menit</span>
                                     </div>
                                 </div>
-
-                                <div className="pt-4 border-t">
-                                    <div className="text-center">
-                                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{ringkasan_hari_ini.tingkat_keberhasilan || 0}%</div>
-                                        <div className="text-sm text-muted-foreground">Tingkat Keberhasilan</div>
-                                        <div className="mt-2 w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                                            <div
-                                                className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                                                style={{ width: `${Math.min(ringkasan_hari_ini.tingkat_keberhasilan || 0, 100)}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                </div>
                             </CardContent>
                         </Card>
                     </div>
@@ -449,19 +435,6 @@ export default function Dashboard() {
                                         <span className="text-sm font-medium">Total Login</span>
                                     </div>
                                     <span className="font-bold text-purple-600">{ringkasan_hari_ini.total_login}</span>
-                                </div>
-                            </div>
-
-                            <div className="pt-4 border-t">
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{ringkasan_hari_ini.tingkat_keberhasilan}%</div>
-                                    <div className="text-sm text-muted-foreground">Tingkat Keberhasilan</div>
-                                    <div className="mt-2 w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-                                        <div
-                                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                                            style={{ width: `${Math.min(ringkasan_hari_ini.tingkat_keberhasilan, 100)}%` }}
-                                        ></div>
-                                    </div>
                                 </div>
                             </div>
                         </CardContent>

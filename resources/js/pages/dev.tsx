@@ -2,19 +2,15 @@ import { Head } from '@inertiajs/react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { 
-    Code, 
-    Coffee, 
-    Github, 
-    Globe, 
-    Heart, 
-    Laptop, 
-    Mail, 
-    MapPin, 
-    Palette, 
+import {
+    Code,
+    Github,
+    Globe,
+    Heart,
+    Laptop,
+    Mail,
+    Palette,
     Rocket,
-    User,
     Zap
 } from 'lucide-react';
 
@@ -31,18 +27,18 @@ export default function DevPage() {
 
     const teamMembers = [
         {
-            name: 'Zalz Darkent',
+            name: 'Alif Fadillah Ummar',
             role: 'Lead Developer',
             description: 'Full Stack Developer yang fokus pada pengembangan backend dan frontend aplikasi',
-            icon: <Code className="h-8 w-8 text-indigo-600" />,
+            photo: '/team/alif-fadillah-ummar.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-indigo-500 to-purple-600',
-            contact: 'zalzdarkent@gmail.com'
+            contact: '2210631170004@student.unsika.ac.id'
         },
         {
             name: 'Teman Developer', // Silakan ganti dengan nama asli
             role: 'Co-Developer',
             description: 'Developer yang membantu dalam pengembangan fitur dan testing aplikasi',
-            icon: <Laptop className="h-8 w-8 text-green-600" />,
+            photo: '/team/co-developer.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-green-500 to-teal-600',
             contact: 'partner@example.com' // Silakan ganti dengan email asli
         },
@@ -50,7 +46,7 @@ export default function DevPage() {
             name: 'Dosen Pembimbing', // Silakan ganti dengan nama asli
             role: 'Project Supervisor',
             description: 'Dosen pembimbing yang memberikan arahan dan supervisi dalam pengembangan sistem',
-            icon: <User className="h-8 w-8 text-orange-600" />,
+            photo: '/team/supervisor.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-orange-500 to-red-600',
             contact: 'supervisor@unsika.ac.id' // Silakan ganti dengan email asli
         }
@@ -68,7 +64,7 @@ export default function DevPage() {
     return (
         <>
             <Head title="Developer Info" />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
                 <div className="container mx-auto px-4 py-12">
                     {/* Header */}
@@ -86,33 +82,50 @@ export default function DevPage() {
 
                     {/* Team Members */}
                     <div className="grid gap-6 md:grid-cols-3 mb-12">
-                        {teamMembers.map((member, index) => (
-                            <Card key={index} className="h-full">
-                                <CardHeader className="text-center">
-                                    <div className={`mx-auto mb-4 h-20 w-20 rounded-full bg-gradient-to-br ${member.gradient} flex items-center justify-center`}>
-                                        {member.icon}
-                                    </div>
-                                    <CardTitle className="text-xl">{member.name}</CardTitle>
-                                    <CardDescription className="text-base font-medium text-indigo-600">
-                                        {member.role}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <p className="text-sm text-muted-foreground text-center">
-                                        {member.description}
-                                    </p>
-                                    <div className="flex items-center justify-center gap-2">
-                                        <Mail className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-xs">{member.contact}</span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+                        {teamMembers.map((member, index) => {
+                            const initials = member.name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+                            return (
+                                <Card key={index} className="h-full">
+                                    <CardHeader className="text-center">
+                                        <div className="mx-auto mb-4 h-20 w-20 rounded-full overflow-hidden ring-4 ring-white shadow-lg relative">
+                                            {/* Avatar default dengan initial */}
+                                            <div className={`h-full w-full bg-gradient-to-br ${member.gradient} flex items-center justify-center text-white font-bold text-xl`}>
+                                                {initials}
+                                            </div>
+                                            {/* Foto yang akan menimpa avatar jika ada */}
+                                            <img
+                                                src={member.photo}
+                                                alt={member.name}
+                                                className="absolute inset-0 h-full w-full object-cover"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
+                                        <CardTitle className="text-xl">{member.name}</CardTitle>
+                                        <CardDescription className="text-base font-medium text-indigo-600">
+                                            {member.role}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <p className="text-sm text-muted-foreground text-center">
+                                            {member.description}
+                                        </p>
+                                        <div className="flex items-center justify-center gap-2">
+                                            <Mail className="h-4 w-4 text-muted-foreground" />
+                                            <span className="text-xs">{member.contact}</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
                     </div>
 
                     {/* Main Content Grid */}
                     <div className="grid gap-8 lg:grid-cols-2">
-                        
+
                         {/* Project Overview */}
                         <Card>
                             <CardHeader>
@@ -199,7 +212,7 @@ export default function DevPage() {
                                     <Heart className="h-5 w-5 text-pink-200" />
                                 </div>
                                 <p className="text-indigo-100 mb-4">
-                                    This project was crafted with dedication by our amazing team to provide the best online testing experience 
+                                    This project was crafted with dedication by our amazing team to provide the best online testing experience
                                     for students and educators at UNSIKA. Collaboration makes everything possible!
                                 </p>
                                 <div className="flex flex-wrap justify-center gap-4">
