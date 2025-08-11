@@ -664,7 +664,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                     window.location.reload();
                                 }}
                             />
-                            <SoalImportModal
+                            {/* <SoalImportModal
                                 trigger={
                                     <Button variant="outline" className="cursor-pointer">
                                         <FileSpreadsheet className="mr-2 h-4 w-4" />
@@ -678,7 +678,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                     setShowImportModal(false);
                                     window.location.reload();
                                 }}
-                            />
+                            /> */}
                         </div>
                     </div>
                     <DataTable
