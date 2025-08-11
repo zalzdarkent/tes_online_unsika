@@ -12,15 +12,15 @@ interface UserDetailModalProps {
         nama: string;
         email: string;
         role: string;
-        alamat?: string;
-        no_hp?: string;
-        foto?: string;
+        alamat?: string | null;
+        no_hp?: string | null;
+        foto?: string | null;
         created_at: string;
         updated_at?: string;
-        prodi?: string;
-        fakultas?: string;
-        universitas?: string;
-        npm?: string;
+        prodi?: string | null;
+        fakultas?: string | null;
+        universitas?: string | null;
+        npm?: string | null;
     };
 }
 

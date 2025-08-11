@@ -17,9 +17,9 @@ interface UserFormModalProps {
         nama: string;
         email: string;
         role: string;
-        alamat?: string;
-        no_hp?: string;
-        foto?: string;
+        alamat?: string | null;
+        no_hp?: string | null;
+        foto?: string | null;
     };
     onSuccess?: () => void;
 }

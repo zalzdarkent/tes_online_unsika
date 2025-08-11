@@ -11,6 +11,41 @@ services:
       - ./storage/app/public:/var/www/storage/app/public
     depends_on:
       - mysql
+      - redis
+    networks:
+      - laravel
+
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-queue
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan queue:work --sleep=3 --tries=3 --timeout=60
+    volumes:
+      - .:/var/www
+    depends_on:
+      - app
+      - mysql
+      - redis
+    networks:
+      - laravel
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    command: /bin/sh -c "while true; do php artisan schedule:run; sleep 60; done"
+    volumes:
+      - .:/var/www
+    depends_on:
+      - app
+      - mysql
+      - redis
     networks:
       - laravel
 

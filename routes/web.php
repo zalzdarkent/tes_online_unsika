@@ -52,19 +52,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Kategori Tes Management
         Route::resource('kategori', KategoriTesController::class);
-        Route::post('kategori/bulk-destroy', [KategoriTesController::class, 'bulkDestroy'])->name('kategori.bulk-destroy');
+        Route::post('kategori/bulk-destroy', [KategoriTesController::class, 'bulkDestroy'])
+            ->name('kategori.bulk-destroy')
+            ->middleware('bulk.throttle');
 
         // Jadwal Management
         Route::resource('jadwal', JadwalController::class);
         Route::get('jadwal/{jadwal}/soal', [JadwalController::class, 'soal'])->name('jadwal.soal');
-        Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])->name('jadwal.bulk-destroy');
+        Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])
+            ->name('jadwal.bulk-destroy')
+            ->middleware('bulk.throttle');
 
         // Soal Management (nested under jadwal)
         Route::prefix('jadwal')->name('jadwal.soal.')->group(function () {
             Route::post('soal', [SoalController::class, 'store'])->name('store');
             Route::put('soal/{id}', [SoalController::class, 'update'])->name('update');
             Route::delete('soal/{id}', [SoalController::class, 'destroy'])->name('destroy');
-            Route::post('soal/bulk-delete', [SoalController::class, 'bulkDelete'])->name('bulk-delete');
+            Route::post('soal/bulk-delete', [SoalController::class, 'bulkDelete'])
+                ->name('bulk-delete')
+                ->middleware('bulk.throttle');
         });
 
         // Koreksi Management
@@ -83,7 +89,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // User Management
         Route::resource('users', UserController::class)->except(['show', 'create', 'edit']);
-        Route::post('users/bulk-destroy', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy');
+        Route::post('users/bulk-destroy', [UserController::class, 'bulkDestroy'])
+            ->name('users.bulk-destroy')
+            ->middleware('bulk.throttle');
     });
 });
 

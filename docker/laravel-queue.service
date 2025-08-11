@@ -1,0 +1,17 @@
+[Unit]
+Description=Laravel Queue Worker
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=3
+ExecStart=/usr/bin/php /path/to/your/project/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+WorkingDirectory=/path/to/your/project
+StandardOutput=append:/path/to/your/project/storage/logs/queue.log
+StandardError=append:/path/to/your/project/storage/logs/queue-error.log
+
+[Install]
+WantedBy=multi-user.target

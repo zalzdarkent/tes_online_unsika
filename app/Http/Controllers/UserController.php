@@ -17,6 +17,7 @@ class UserController extends Controller
      */
     public function index()
     {
+        // Optimalisasi: Batasi jumlah data dan gunakan pagination jika diperlukan
         $users = User::select('id', 'username', 'nama', 'email', 'role', 'alamat', 'no_hp', 'foto', 'created_at', 'updated_at', 'prodi', 'fakultas', 'universitas', 'npm')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -161,8 +162,13 @@ class UserController extends Controller
     public function bulkDestroy(Request $request)
     {
         $request->validate([
-            'ids' => 'required|array',
+            'ids' => 'required|array|max:100', // Batasi maksimal 100 item
             'ids.*' => 'exists:users,id'
+        ], [
+            'ids.required' => 'Pilih minimal satu user untuk dihapus.',
+            'ids.array' => 'Format data tidak valid.',
+            'ids.max' => 'Maksimal 100 user dapat dihapus sekaligus.',
+            'ids.*.exists' => 'Salah satu user tidak valid.',
         ]);
 
         $currentUserId = Auth::id();
@@ -176,9 +182,27 @@ class UserController extends Controller
             return redirect()->route('users.index')->with('error', 'Tidak ada user yang dapat dihapus');
         }
 
-        User::whereIn('id', $idsToDelete)->delete();
+        try {
+            // Hapus foto user yang akan dihapus
+            $usersWithFoto = User::whereIn('id', $idsToDelete)
+                ->whereNotNull('foto')
+                ->select('foto')
+                ->get();
 
-        $deletedCount = count($idsToDelete);
-        return redirect()->route('users.index')->with('success', "Berhasil menghapus {$deletedCount} user");
+            foreach ($usersWithFoto as $user) {
+                if ($user->foto && Storage::disk('public')->exists($user->foto)) {
+                    Storage::disk('public')->delete($user->foto);
+                }
+            }
+
+            // Hapus user dalam batch
+            User::whereIn('id', $idsToDelete)->delete();
+
+            $deletedCount = count($idsToDelete);
+            return redirect()->route('users.index')->with('success', "Berhasil menghapus {$deletedCount} user");
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Bulk delete users error: ' . $e->getMessage());
+            return redirect()->route('users.index')->with('error', 'Terjadi kesalahan saat menghapus user');
+        }
     }
 }
