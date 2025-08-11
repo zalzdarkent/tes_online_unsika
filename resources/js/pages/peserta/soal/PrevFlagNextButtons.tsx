@@ -24,7 +24,14 @@ const PrevFlagNextButtons: FC<PrevFlagNextButtonsProps> = ({ currentIndex, soal,
                 Sebelumnya
             </Button>
 
-            <Button variant={tandaiSoal[currentSoal.id] ? 'default' : 'outline'} onClick={onToggleFlag} className="w-full sm:w-auto">
+            <Button
+                className={
+                    tandaiSoal[currentSoal.id]
+                        ? 'border-yellow-500 bg-yellow-100 text-yellow-700 dark:border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300'
+                        : ''
+                }
+                onClick={onToggleFlag}
+            >
                 <Flag />
                 {tandaiSoal[currentSoal.id] ? 'Hapus Tanda' : 'Tandai Soal'}
             </Button>

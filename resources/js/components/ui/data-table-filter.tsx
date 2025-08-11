@@ -89,7 +89,7 @@ export function DataTableFilter({
             {totalActiveFilters > 0 && (
               <Badge
                 variant="secondary"
-                className="ml-2 h-5 min-w-5 text-xs px-1.5"
+                className="ml-2 h-5 w-12 text-xs px-1.5"
               >
                 {totalActiveFilters}
               </Badge>

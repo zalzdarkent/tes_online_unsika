@@ -46,9 +46,21 @@ class PesertaTesController extends Controller
             // HAPUS filter tanggal mulai - tampilkan semua jadwal
             // ->where('tanggal_mulai', '<=', $now) // DIHAPUS
             // ->where('tanggal_berakhir', '>=', $now) // DIHAPUS - akan difilter di map()
+
+            // bisa jadi case device bermasalah yang mengharukan keluar
             ->whereDoesntHave('jawaban', function ($query) use ($userId) {
                 $query->where('id_user', $userId);
             })
+
+            // ->where(function ($query) use ($userId) {
+            //     $query->whereDoesntHave('hasil', function ($q) use ($userId) {
+            //         $q->where('id_user', $userId);
+            //     })
+            //         ->orWhereHas('hasil', function ($q) use ($userId) {
+            //             $q->where('id_user', $userId)
+            //                 ->where('is_submitted_test', false);
+            //         });
+            // })
             ->get()
             ->map(function ($item) use ($userId, $now) {
                 // Hitung status seperti di JadwalController
@@ -397,6 +409,7 @@ class PesertaTesController extends Controller
             $userId = Auth::id();
 
             $riwayat = \App\Models\HasilTestPeserta::where('id_user', $userId)
+                ->where('is_submitted_test', true)
                 ->with('jadwal')
                 ->orderBy('created_at', 'desc')
                 ->get();

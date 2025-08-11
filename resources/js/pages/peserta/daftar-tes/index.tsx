@@ -15,6 +15,7 @@ interface JadwalData {
     tanggal_mulai: string;
     tanggal_berakhir: string;
     status: string;
+    durasi: number;
     jadwal_sebelumnya?: {
         id: number;
         nama_jadwal: string;
@@ -99,11 +100,6 @@ export default function DaftarTes({ jadwal }: Props) {
             },
         },
         {
-            accessorKey: 'durasi',
-            header: 'Durasi (menit)',
-            enableSorting: false,
-        },
-        {
             accessorKey: 'status',
             header: 'Status',
             enableSorting: true,
@@ -121,6 +117,15 @@ export default function DaftarTes({ jadwal }: Props) {
                         {status}
                     </span>
                 );
+            },
+        },
+        {
+            accessorKey: 'durasi',
+            header: 'Durasi',
+            enableSorting: false,
+            cell: ({ row }) => {
+                const durasi = row.original.durasi;
+                return <div className="text-muted-foreground">{durasi} menit</div>;
             },
         },
         {
