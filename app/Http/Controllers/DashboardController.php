@@ -50,9 +50,6 @@ class DashboardController extends Controller
             ->limit(3)
             ->get()
             ->map(function ($jadwal) use ($now) {
-                // Hitung jumlah peserta yang sudah mengerjakan
-                $pesertaSelesai = HasilTestPeserta::where('id_jadwal', $jadwal->id)->count();
-
                 // Hitung peserta yang sedang mengerjakan
                 $pesertaSedangMengerjakan = Jawaban::where('id_jadwal', $jadwal->id)
                     ->whereDoesntHave('hasilTestPeserta')
@@ -69,14 +66,21 @@ class DashboardController extends Controller
                 $tanggalBerakhir = Carbon::parse($jadwal->tanggal_berakhir);
 
                 $statusAktivitas = 'Akan Datang';
-                $deskripsi = "{$totalPesertaTerdaftar} peserta terdaftar";
+                $deskripsi = "";
 
                 if ($now->between($tanggalMulai, $tanggalBerakhir)) {
                     $statusAktivitas = 'Sedang Berlangsung';
-                    $deskripsi = "{$pesertaSedangMengerjakan} peserta sedang mengerjakan";
+                    $waktuMulai = $tanggalMulai->format('d M Y, H:i');
+                    $waktuSelesai = $tanggalBerakhir->format('d M Y, H:i');
+                    $deskripsi = "{$waktuMulai} - {$waktuSelesai}";
                 } elseif ($now->gt($tanggalBerakhir)) {
                     $statusAktivitas = 'Selesai';
-                    $deskripsi = "{$pesertaSelesai} peserta selesai";
+                    $waktuBerakhir = $tanggalBerakhir->format('d M Y, H:i');
+                    $deskripsi = "Berakhir {$waktuBerakhir}";
+                } else {
+                    // Akan datang
+                    $waktuMulai = $tanggalMulai->format('d M Y, H:i');
+                    $deskripsi = "Dimulai {$waktuMulai}";
                 }
 
                 return [
@@ -96,12 +100,6 @@ class DashboardController extends Controller
 
         // Total login hari ini (simulasi berdasarkan updated_at)
         $totalLoginHariIni = User::whereDate('updated_at', $today)->count();
-
-        // Tingkat keberhasilan (rata-rata completion rate)
-        $totalTesSelesai = HasilTestPeserta::count();
-        $totalTesStarted = Jawaban::distinct('id_user', 'id_jadwal')->count();
-        $tingkatKeberhasilan = $totalTesStarted > 0 ?
-            round(($totalTesSelesai / $totalTesStarted) * 100, 1) : 0;
 
         // Growth calculation (bulan ini vs bulan lalu)
         $pesertaBulanIni = User::where('role', 'peserta')
@@ -129,8 +127,7 @@ class DashboardController extends Controller
                 'tes_dimulai' => $tesDimulaiHariIni,
                 'tes_selesai' => $tesSelesaiHariIni,
                 'peserta_baru' => $pesertaBaruHariIni,
-                'total_login' => $totalLoginHariIni,
-                'tingkat_keberhasilan' => $tingkatKeberhasilan
+                'total_login' => $totalLoginHariIni
             ]
         ]);
     }

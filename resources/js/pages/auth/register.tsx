@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 
 type RegisterForm = {
     username: string;
+    nama: string;
     email: string;
     password: string;
     password_confirmation: string;
@@ -24,11 +25,11 @@ type ValidationState = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
         username: '',
+        nama: '',
         email: '',
         password: '',
         password_confirmation: '',
     });
-
     const [usernameValidation, setUsernameValidation] = useState<{
         state: ValidationState;
         message: string;
@@ -303,6 +304,24 @@ export default function Register() {
                 <CardContent>
                     <form className="flex flex-col gap-6" onSubmit={submit}>
                         <div className="grid gap-6">
+                            <div className="grid gap-2">
+                                <Label htmlFor="nama">Nama Lengkap</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="nama"
+                                        type="text"
+                                        required
+                                        autoFocus
+                                        tabIndex={1}
+                                        autoComplete="nama"
+                                        value={data.nama}
+                                        onChange={(e) => setData('nama', e.target.value)}
+                                        disabled={processing}
+                                        placeholder="Masukkan nama lengkap Anda"
+                                    />
+                                </div>
+                            </div>
+
                             <div className="grid gap-2">
                                 <Label htmlFor="username">Username</Label>
                                 <div className="relative">

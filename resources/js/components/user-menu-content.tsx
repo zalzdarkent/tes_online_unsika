@@ -1,4 +1,3 @@
-import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -10,6 +9,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { type User } from '@/types';
@@ -44,35 +44,34 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                 <DropdownMenuItem asChild>
                     <Link className="block w-full" href={route('profile.edit')} as="button" prefetch onClick={cleanup}>
                         <Settings className="mr-2" />
-                        Settings
+                        Pengaturan
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <AlertDialog open={isLogoutDialogOpen} onOpenChange={setIsLogoutDialogOpen}>
                 <AlertDialogTrigger asChild>
-                    <DropdownMenuItem onSelect={(e) => {
-                        e.preventDefault();
-                        setIsLogoutDialogOpen(true);
-                    }}>
+                    <DropdownMenuItem
+                        onSelect={(e) => {
+                            e.preventDefault();
+                            setIsLogoutDialogOpen(true);
+                        }}
+                    >
                         <LogOut className="mr-2" />
-                        Log out
+                        Keluar
                     </DropdownMenuItem>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Konfirmasi Logout</AlertDialogTitle>
+                        <AlertDialogTitle>Konfirmasi Keluar</AlertDialogTitle>
                         <AlertDialogDescription>
                             Apakah Anda yakin ingin keluar dari aplikasi? Anda akan diarahkan ke halaman login.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Batal</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleLogout}
-                            className="bg-destructive text-white hover:bg-destructive/90"
-                        >
-                            Ya, Logout
+                        <AlertDialogAction onClick={handleLogout} className="bg-destructive text-white hover:bg-destructive/90">
+                            Ya, Keluar
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

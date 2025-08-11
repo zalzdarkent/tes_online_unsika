@@ -28,9 +28,26 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore(Auth::user()->id),
             ],
-            'alamat' => ['nullable', 'string', 'max:500'],
             'no_hp' => ['nullable', 'string', 'max:20'],
-            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'alamat' => ['nullable', 'string', 'max:500'],
+            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:4590'],
+            'prodi' => ['nullable', 'string', 'max:100'],
+            'fakultas' => ['nullable', 'string', 'max:100'],
+            'universitas' => ['nullable', 'string', 'max:100'],
+            'npm' => ['nullable', 'string', 'regex:/^[0-9]{13}$/', 'size:13'],
+        ];
+    }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'npm.regex' => 'NPM/NIM hanya boleh berisi angka dan harus tepat 13 digit.',
+            'npm.size' => 'NPM/NIM harus tepat 13 digit.',
         ];
     }
 }

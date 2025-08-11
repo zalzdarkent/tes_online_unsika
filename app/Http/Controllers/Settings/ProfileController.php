@@ -59,7 +59,21 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return to_route('profile.edit')->with('status', 'profile-updated');
+        // Determine redirect based on request source
+        $redirectRoute = $request->get('redirect_to') === 'academic' ? 'academic.edit' : 'profile.edit';
+        
+        return to_route($redirectRoute)->with('status', 'profile-updated');
+    }
+
+    /**
+     * Show the user's academic information page.
+     */
+    public function academic(Request $request): Response
+    {
+        return Inertia::render('settings/academic', [
+            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'status' => $request->session()->get('status'),
+        ]);
     }
 
     /**

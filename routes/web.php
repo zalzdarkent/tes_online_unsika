@@ -8,22 +8,24 @@ use App\Http\Controllers\PesertaTesController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+// Developer info page - accessible without authentication
+Route::get('/dev', function () {
+    return Inertia::render('dev');
+})->name('dev');
 
-// Public routes (redirect ke dashboard jika sudah login)
-Route::redirect('/', 'dashboard');
+// peserta routes
+Route::middleware(['auth', 'role:peserta'])->group(function () {
+    Route::get('/daftar-tes', [PesertaTesController::class, 'index'])->name('peserta.daftar-tes');
+    // Route::post('/tes/soal', [PesertaTesController::class, 'startTest'])->name('peserta.soal');
+    Route::post('/peserta/start', [PesertaTesController::class, 'startTest'])->name('peserta.start');
+    Route::get('/tes/{id}/soal', [PesertaTesController::class, 'soal'])->name('peserta.soal');
+    Route::post('/save', [PesertaTesController::class, 'saveAnswer'])->name('peserta.save');
+    Route::post('/submit', [PesertaTesController::class, 'submit'])->name('peserta.submit');
+    Route::get('/riwayat', [PesertaTesController::class, 'riwayat'])->name('peserta.riwayat');
+});
 
-// Protected routes - requires authentication and email verification
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard route

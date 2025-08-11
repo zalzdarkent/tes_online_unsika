@@ -37,10 +37,15 @@ export interface User {
     username: string;
     password?: string; // Optional karena hidden di model
     role: 'admin' | 'teacher' | 'peserta';
-    nama: string | null;
+    nama: string;
     email: string | null;
     foto: string | null;
     created_at: string;
+    updated_at: string;
+    prodi: string | null;
+    fakultas: string | null;
+    universitas: string | null;
+    npm: string | null;
     remember_token?: string; // Optional karena hidden di model
     [key: string]: unknown; // This allows for additional properties...
 }

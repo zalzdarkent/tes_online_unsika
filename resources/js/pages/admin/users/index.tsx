@@ -1,5 +1,5 @@
-import UserFormModal from '@/components/modal/UserFormModal';
 import UserDetailModal from '@/components/modal/UserDetailModal';
+import UserFormModal from '@/components/modal/UserFormModal';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
@@ -31,6 +31,10 @@ type UserData = {
     foto?: string;
     created_at: string;
     updated_at?: string;
+    prodi: string | null;
+    fakultas: string | null;
+    universitas: string | null;
+    npm: string | null;
 };
 
 type UserProps = {
@@ -40,13 +44,13 @@ type UserProps = {
 const roleLabels = {
     admin: 'Administrator',
     teacher: 'Guru',
-    peserta: 'Peserta'
+    peserta: 'Peserta',
 };
 
 const roleColors = {
     admin: 'bg-red-100 text-red-800',
     teacher: 'bg-blue-100 text-blue-800',
-    peserta: 'bg-green-100 text-green-800'
+    peserta: 'bg-green-100 text-green-800',
 };
 
 export default function UsersIndex({ users }: UserProps) {
@@ -118,11 +122,7 @@ export default function UsersIndex({ users }: UserProps) {
                 />
             ),
             cell: ({ row }) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
-                />
+                <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label="Select row" />
             ),
             enableSorting: false,
             enableHiding: false,
@@ -210,7 +210,12 @@ export default function UsersIndex({ users }: UserProps) {
                             </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-red-600 hover:text-red-700" onClick={() => handleDeleteSingle(user)}>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                        onClick={() => handleDeleteSingle(user)}
+                                    >
                                         <Trash2 className="h-4 w-4 text-destructive hover:text-destructive/90 dark:text-red-400 dark:hover:text-red-300" />
                                     </Button>
                                 </TooltipTrigger>
@@ -229,7 +234,7 @@ export default function UsersIndex({ users }: UserProps) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Kelola User" />
 
-            <div className="container mx-auto px-6 py-6 space-y-6">
+            <div className="container mx-auto space-y-6 px-6 py-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold">Kelola User</h1>
@@ -243,7 +248,7 @@ export default function UsersIndex({ users }: UserProps) {
                     </UserFormModal>
                 </div>
 
-                <div className="bg-background border rounded-lg p-6">
+                <div className="rounded-lg border bg-background p-6">
                     <DataTable
                         columns={columns}
                         data={users}
