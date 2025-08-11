@@ -7,28 +7,33 @@ use App\Http\Controllers\KoreksiController;
 use App\Http\Controllers\PesertaTesController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+// Root route - redirect to dashboard if authenticated, otherwise to login
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
+})->name('root');
 
 // Developer info page - accessible without authentication
 Route::get('/dev', function () {
     return Inertia::render('dev');
 })->name('dev');
 
-// peserta routes
-Route::middleware(['auth', 'role:peserta'])->group(function () {
-    Route::get('/daftar-tes', [PesertaTesController::class, 'index'])->name('peserta.daftar-tes');
-    // Route::post('/tes/soal', [PesertaTesController::class, 'startTest'])->name('peserta.soal');
-    Route::post('/peserta/start', [PesertaTesController::class, 'startTest'])->name('peserta.start');
-    Route::get('/tes/{id}/soal', [PesertaTesController::class, 'soal'])->name('peserta.soal');
-    Route::post('/save', [PesertaTesController::class, 'saveAnswer'])->name('peserta.save');
-    Route::post('/submit', [PesertaTesController::class, 'submit'])->name('peserta.submit');
-    Route::get('/riwayat', [PesertaTesController::class, 'riwayat'])->name('peserta.riwayat');
-});
-
+// Protected routes - requires authentication and email verification
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Dashboard route
+    // Dashboard routes
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('home', [DashboardController::class, 'index'])->name('home'); // alias
 
