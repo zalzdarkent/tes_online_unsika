@@ -1,14 +1,4 @@
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import ConfirmDialogWrapper from '@/components/modal/ConfirmDialogWrapper';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { toast } from '@/hooks/use-toast';
@@ -65,18 +55,21 @@ export default function DaftarTes({ jadwal }: Props) {
         }
     }, [props.errors]);
 
-    // is loading
-    if (!jadwal) {
-        return (
-            <AppLayout>
-                <Head title="Daftar Tes" />
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                    <h2 className="text-2xl font-bold">Daftar Tes</h2>
-                    <div className="py-8 text-center">Loading...</div>
-                </div>
-            </AppLayout>
+    const handleStart = (id_jadwal: number) => {
+        router.post(
+            route('peserta.start'),
+            { id_jadwal },
+            {
+                onError: (errors) => {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Gagal memulai tes',
+                        description: errors.error,
+                    });
+                },
+            },
         );
-    }
+    };
 
     const columns: ColumnDef<JadwalData>[] = [
         {
@@ -107,7 +100,7 @@ export default function DaftarTes({ jadwal }: Props) {
         },
         {
             accessorKey: 'durasi',
-            header: 'Durasi',
+            header: 'Durasi (menit)',
             enableSorting: false,
         },
         {
@@ -154,42 +147,14 @@ export default function DaftarTes({ jadwal }: Props) {
                 }
 
                 return (
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button className="cursor-pointer">Mulai Tes</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Mulai Tes?</AlertDialogTitle>
-                                <AlertDialogDescription>Apakah Anda yakin ingin memulai tes ini? Pastikan Anda sudah siap.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Batal</AlertDialogCancel>
-                                <AlertDialogAction asChild>
-                                    <Button
-                                        onClick={() => {
-                                            router.post(
-                                                route('peserta.start'),
-                                                { id_jadwal: id },
-                                                {
-                                                    onSuccess: () => router.visit(`/tes/${id}/soal`),
-                                                    onError: (errors) => {
-                                                        toast({
-                                                            variant: 'destructive',
-                                                            title: 'Gagal memulai tes',
-                                                            description: errors.error,
-                                                        });
-                                                    },
-                                                },
-                                            );
-                                        }}
-                                    >
-                                        Ya, Mulai
-                                    </Button>
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
+                    <ConfirmDialogWrapper
+                        title="Mulai Tes?"
+                        description="Apakah Anda yakin ingin memulai tes ini? Pastikan Anda sudah siap."
+                        confirmLabel="Mulai"
+                        cancelLabel="Batal"
+                        onConfirm={() => handleStart(id)}
+                        trigger={<Button>Mulai Tes</Button>}
+                    />
                 );
             },
         },

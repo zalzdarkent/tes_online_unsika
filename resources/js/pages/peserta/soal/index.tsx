@@ -5,13 +5,13 @@ import { PesertaTesPageProps } from '@/types/page-props/peserta-tes';
 import { Head, router } from '@inertiajs/react';
 import 'katex/dist/katex.min.css';
 import debounce from 'lodash/debounce';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import PrevFlagNextButtons from './PrevFlagNextButtons';
 import SoalHeader from './SoalHeader';
 import SoalOpsi from './SoalOpsi';
 import SoalSidebar from './SoalSidebar';
 
-export default function SoalTes({ jadwal, soal, start_time, jawaban_tersimpan }: PesertaTesPageProps) {
+export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_timestamp }: PesertaTesPageProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [tandaiSoal, setTandaiSoal] = useState<Record<number, boolean>>({});
     const [jawaban, setJawaban] = useState<Record<number, string[]>>(() => {
@@ -26,34 +26,76 @@ export default function SoalTes({ jadwal, soal, start_time, jawaban_tersimpan }:
     const [alertTitle, setAlertTitle] = useState('');
     const [alertDescription, setAlertDescription] = useState('');
 
-    const durasiMenit = jadwal.durasi || 60;
-    const [timeLeft, setTimeLeft] = useState(() => {
-        const start = new Date(start_time).getTime();
-        const end = start + durasiMenit * 60 * 1000;
+    // prevent debounce pas baru di-mount
+    const hasInteractedRef = useRef(false);
+
+    const calculateTimeLeft = () => {
         const now = Date.now();
-        const remaining = Math.max(0, Math.floor((end - now) / 1000));
-        return remaining;
-    });
+        const serverEndTime = end_time_timestamp * 1000;
+        const remainingMs = Math.max(0, serverEndTime - now);
+        return Math.floor(remainingMs / 1000);
+    };
 
-    // todo bug: kalo akses lewat URL, udah 00:00 ga kepental ke riwayat
+    const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft());
+
     useEffect(() => {
-        if (timeLeft <= 0) return;
+        setTimeLeft(calculateTimeLeft());
 
-        const interval = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev <= 1) {
-                    clearInterval(interval);
-                    setAlertTitle('Waktu Habis');
-                    setAlertDescription('Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim otomatis.');
-                    setShowTabLeaveDialog(true);
-                    return 0;
+        const interval = setInterval(async () => {
+            const remainingSeconds = calculateTimeLeft();
+            setTimeLeft(remainingSeconds);
+
+            if (remainingSeconds <= 0) {
+                setAlertTitle('Waktu Habis');
+                setAlertDescription('Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim otomatis.');
+
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+                saveAnswerFetch.flush();
+                await new Promise((resolve) => setTimeout(resolve, 100));
+
+                try {
+                    await fetch(route('peserta.submit'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({
+                            jadwal_id: jadwal.id,
+                            redirect: false,
+                        }),
+                        credentials: 'same-origin',
+                    });
+                    console.log('Jawaban berhasil dikumpulkan');
+                } catch {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Terjadi kesalahan!',
+                        description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
+                    });
                 }
-                return prev - 1;
-            });
+
+                setShowTabLeaveDialog(true);
+                clearInterval(interval);
+                return;
+            }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [soal, timeLeft]);
+    }, [end_time_timestamp]);
+
+    useEffect(() => {
+        if (!hasInteractedRef.current) return;
+
+        const currentSoal = soal[currentIndex];
+        if (!currentSoal) return;
+
+        const jawabanSaatIni = jawaban[currentSoal.id];
+
+        saveAnswerFetch(jadwal.id, currentSoal.id, jawabanSaatIni);
+        // saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
+    }, [jawaban, currentIndex]);
 
     const saveAnswerFetch = useCallback(
         debounce(async (jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {
@@ -75,6 +117,7 @@ export default function SoalTes({ jadwal, soal, start_time, jawaban_tersimpan }:
                     }),
                     credentials: 'same-origin',
                 });
+                // todo: hapus kalo udah kelar
                 console.log('Jawaban berhasil terkirim');
             } catch {
                 toast({
@@ -86,16 +129,6 @@ export default function SoalTes({ jadwal, soal, start_time, jawaban_tersimpan }:
         }, 800),
         [],
     );
-
-    useEffect(() => {
-        const currentSoal = soal[currentIndex];
-        if (!currentSoal) return;
-
-        const jawabanSaatIni = jawaban[currentSoal.id];
-
-        saveAnswerFetch(jadwal.id, currentSoal.id, jawabanSaatIni);
-        // saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
-    }, [jawaban, currentIndex]);
 
     // const handleAnswer = () => {
     //     const currentSoal = soal[currentIndex];
@@ -180,7 +213,7 @@ export default function SoalTes({ jadwal, soal, start_time, jawaban_tersimpan }:
                     soal={soal}
                     jawaban={jawaban}
                     tandaiSoal={tandaiSoal}
-                    durasi={jadwal.durasi || 60}
+                    durasi={jadwal.durasi}
                     // handleAnswer={handleAnswer}
                 />
 
@@ -191,7 +224,7 @@ export default function SoalTes({ jadwal, soal, start_time, jawaban_tersimpan }:
                     {/* <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p> */}
                     <RichTextViewer content={currentSoal.pertanyaan} />
 
-                    <SoalOpsi soal={currentSoal} jawaban={jawaban} setJawaban={setJawaban} />
+                    <SoalOpsi soal={currentSoal} jawaban={jawaban} setJawaban={setJawaban} hasInteractedRef={hasInteractedRef} />
 
                     {/* spacer */}
                     <div className="h-16"></div>
@@ -222,8 +255,8 @@ export default function SoalTes({ jadwal, soal, start_time, jawaban_tersimpan }:
                     open={showTabLeaveDialog}
                     title={alertTitle}
                     description={alertDescription}
-                    actionLabel="Kembali ke Daftar Tes"
-                    onAction={() => router.visit('/daftar-tes')}
+                    actionLabel="Keluar"
+                    onAction={() => router.visit('/riwayat')}
                 />
             )}
         </>
@@ -263,33 +296,3 @@ export default function SoalTes({ jadwal, soal, start_time, jawaban_tersimpan }:
 //     }, 1000),
 //     [],
 // );
-
-// function showAlert(title: string, desc: string) {
-//     setAlertTitle(title);
-//     setAlertDescription(desc);
-//     setShowTabLeaveDialog(true);
-// }
-
-// useEffect(() => {
-//     // open other tab
-//     const handleVisibilityChange = () => {
-//         if (document.visibilityState === 'hidden') {
-//             showAlert('Anda terdeteksi meninggalkan tab ujian', 'awaban Anda akan dikirim otomatis.');
-//             // handleSubmit();
-//         }
-//     };
-
-//     // refresh
-//     const handlePageHide = () => {
-//         showAlert('refresh', 'test refresh.');
-//         // handleSubmit();
-//     };
-
-//     document.addEventListener('visibilitychange', handleVisibilityChange);
-//     window.addEventListener('pagehide', handlePageHide);
-
-//     return () => {
-//         document.removeEventListener('visibilitychange', handleVisibilityChange);
-//         window.removeEventListener('pagehide', handlePageHide);
-//     };
-// }, []);

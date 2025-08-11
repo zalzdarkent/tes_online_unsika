@@ -7,6 +7,6 @@ export interface PesertaTesPageProps {
         durasi: number;
     };
     soal: Soal[];
-    start_time: string;
     jawaban_tersimpan: Record<number, string>;
+    end_time_timestamp: number;
 }

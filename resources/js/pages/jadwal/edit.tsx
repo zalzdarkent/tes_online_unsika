@@ -251,6 +251,7 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                     value={data.nama_jadwal}
                                     onChange={(e) => setData('nama_jadwal', e.target.value)}
                                     required
+                                    className="text-sm"
                                 />
                             </div>
 
@@ -263,12 +264,15 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                             value={dateTimeInputs.tanggal_mulai_date}
                                             onChange={(e) => updateTanggalMulai(e.target.value, dateTimeInputs.tanggal_mulai_time)}
                                             required
+                                            className="text-sm"
                                         />
+
                                         <Input
                                             type="time"
                                             value={dateTimeInputs.tanggal_mulai_time}
                                             onChange={(e) => updateTanggalMulai(dateTimeInputs.tanggal_mulai_date, e.target.value)}
                                             required
+                                            className="text-sm"
                                         />
                                     </div>
                                 </div>
@@ -281,12 +285,14 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                             value={dateTimeInputs.tanggal_berakhir_date}
                                             onChange={(e) => updateTanggalBerakhir(e.target.value, dateTimeInputs.tanggal_berakhir_time)}
                                             required
+                                            className="text-sm"
                                         />
                                         <Input
                                             type="time"
                                             value={dateTimeInputs.tanggal_berakhir_time}
                                             onChange={(e) => updateTanggalBerakhir(dateTimeInputs.tanggal_berakhir_date, e.target.value)}
                                             required
+                                            className="text-sm"
                                         />
                                     </div>
                                 </div>
@@ -327,6 +333,7 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                         placeholder="Durasi dalam menit"
                                         value={data.durasi || ''}
                                         onChange={(e) => setData('durasi', e.target.value ? Number(e.target.value) : null)}
+                                        className="text-sm"
                                     />
                                 </div>
                             </div>

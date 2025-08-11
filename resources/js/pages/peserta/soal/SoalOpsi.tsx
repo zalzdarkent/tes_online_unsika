@@ -12,9 +12,10 @@ interface SoalOpsiProps {
     soal: Soal;
     jawaban: Record<number, string[]>;
     setJawaban: (jawaban: Record<number, string[]>) => void;
+    hasInteractedRef: React.MutableRefObject<boolean>;
 }
 
-const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban }) => {
+const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban, hasInteractedRef }) => {
     const opsi = [
         { label: 'A', text: s.opsi_a },
         { label: 'B', text: s.opsi_b },
@@ -30,14 +31,20 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban }) => {
                 <RadioGroup
                     className="mt-4 space-y-2"
                     value={jawaban[s.id]?.[0] || ''}
-                    onValueChange={(val) => setJawaban({ ...jawaban, [s.id]: [val] })}
+                    onValueChange={(val) => {
+                        hasInteractedRef.current = true;
+                        setJawaban({ ...jawaban, [s.id]: [val] });
+                    }}
                 >
                     {opsi.map((o, i) => {
                         const isSelected = jawaban[s.id]?.[0] === o.label;
                         return (
                             <div
                                 key={i}
-                                onClick={() => setJawaban({ ...jawaban, [s.id]: [o.label] })}
+                                onClick={() => {
+                                    hasInteractedRef.current = true;
+                                    setJawaban({ ...jawaban, [s.id]: [o.label] });
+                                }}
                                 className={`flex cursor-pointer items-center space-x-2 rounded-md border p-3 transition-all hover:bg-muted/70 ${
                                     isSelected ? 'border-primary' : 'border-muted'
                                 }`}
@@ -67,6 +74,7 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban }) => {
                                 id={`soal_${s.id}_${o.label}`}
                                 checked={selected.includes(o.label)}
                                 onCheckedChange={(checked) => {
+                                    hasInteractedRef.current = true;
                                     const next = checked ? [...selected, o.label] : selected.filter((item) => item !== o.label);
                                     setJawaban({ ...jawaban, [s.id]: next });
                                 }}
@@ -94,7 +102,10 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban }) => {
                         id={`soal_${s.id}_essay`}
                         placeholder="Tulis jawaban Anda di sini..."
                         value={jawaban[s.id]?.[0] || ''}
-                        onChange={(e) => setJawaban({ ...jawaban, [s.id]: [e.target.value] })}
+                        onChange={(e) => {
+                            hasInteractedRef.current = true;
+                            setJawaban({ ...jawaban, [s.id]: [e.target.value] });
+                        }}
                         className="min-h-[120px] w-full max-w-full resize-y"
                     />
                 </div>
@@ -114,7 +125,14 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban }) => {
             <div className="mt-4">
                 {s.media && <Media url={s.media} />}
 
-                <RadioGroup value={jawaban[s.id]?.[0] || ''} onValueChange={(val) => setJawaban({ ...jawaban, [s.id]: [val] })} className="space-y-2">
+                <RadioGroup
+                    value={jawaban[s.id]?.[0] || ''}
+                    onValueChange={(val) => {
+                        hasInteractedRef.current = true;
+                        setJawaban({ ...jawaban, [s.id]: [val] });
+                    }}
+                    className="space-y-2"
+                >
                     <div
                         className="grid items-center gap-y-2"
                         style={{
@@ -155,7 +173,10 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban }) => {
                         id={`soal_${s.id}_jawaban`}
                         placeholder="Tulis jawaban Anda di sini..."
                         value={jawaban[s.id]?.[0] || ''}
-                        onChange={(e) => setJawaban({ ...jawaban, [s.id]: [e.target.value] })}
+                        onChange={(e) => {
+                            hasInteractedRef.current = true;
+                            setJawaban({ ...jawaban, [s.id]: [e.target.value] });
+                        }}
                     />
                 </div>
             </div>
