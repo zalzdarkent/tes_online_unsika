@@ -38,65 +38,6 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
 
     const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft());
 
-    useEffect(() => {
-        setTimeLeft(calculateTimeLeft());
-
-        const interval = setInterval(async () => {
-            const remainingSeconds = calculateTimeLeft();
-            setTimeLeft(remainingSeconds);
-
-            if (remainingSeconds <= 0) {
-                setAlertTitle('Waktu Habis');
-                setAlertDescription('Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim otomatis.');
-
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-
-                saveAnswerFetch.flush();
-                await new Promise((resolve) => setTimeout(resolve, 100));
-
-                try {
-                    await fetch(route('peserta.submit'), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                        },
-                        body: JSON.stringify({
-                            jadwal_id: jadwal.id,
-                            redirect: false,
-                        }),
-                        credentials: 'same-origin',
-                    });
-                    console.log('Jawaban berhasil dikumpulkan');
-                } catch {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Terjadi kesalahan!',
-                        description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
-                    });
-                }
-
-                setShowTabLeaveDialog(true);
-                clearInterval(interval);
-                return;
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [end_time_timestamp]);
-
-    useEffect(() => {
-        if (!hasInteractedRef.current) return;
-
-        const currentSoal = soal[currentIndex];
-        if (!currentSoal) return;
-
-        const jawabanSaatIni = jawaban[currentSoal.id];
-
-        saveAnswerFetch(jadwal.id, currentSoal.id, jawabanSaatIni);
-        // saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
-    }, [jawaban, currentIndex]);
-
     const saveAnswerFetch = useCallback(
         debounce(async (jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -129,6 +70,92 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
         }, 800),
         [],
     );
+
+    const submitJawaban = async (redirect = false) => {
+        saveAnswerFetch.flush();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+        try {
+            await fetch(route('peserta.submit'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({
+                    jadwal_id: jadwal.id,
+                    redirect,
+                }),
+                credentials: 'same-origin',
+            });
+
+            console.log('Jawaban berhasil dikumpulkan');
+            if (redirect) {
+                router.visit('/riwayat');
+
+                toast({
+                    variant: 'success',
+                    title: 'Tes Selesai',
+                    description: 'Jawaban Anda berhasil dikumpulkan.',
+                });
+            }
+        } catch {
+            toast({
+                variant: 'destructive',
+                title: 'Terjadi kesalahan!',
+                description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
+            });
+        }
+    };
+
+    // countdown
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const remainingSeconds = calculateTimeLeft();
+            setTimeLeft(remainingSeconds);
+            if (remainingSeconds <= 0) {
+                setAlertTitle('Waktu Habis');
+                setAlertDescription('Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim otomatis.');
+                submitJawaban();
+                setShowTabLeaveDialog(true);
+                clearInterval(interval);
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [end_time_timestamp]);
+
+    // save answer and prevent debounce on mount
+    useEffect(() => {
+        if (!hasInteractedRef.current) return;
+
+        const currentSoal = soal[currentIndex];
+        if (!currentSoal) return;
+
+        const jawabanSaatIni = jawaban[currentSoal.id];
+
+        saveAnswerFetch(jadwal.id, currentSoal.id, jawabanSaatIni);
+        // saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
+    }, [jawaban, currentIndex]);
+
+    // open other tab
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                setAlertTitle('Anda terdeteksi meninggalkan tab ujian');
+                setAlertDescription('Anda tidak dapat melanjutkan tes ini. Semua jawaban telah dikumpulkan');
+                submitJawaban();
+                setShowTabLeaveDialog(true);
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
 
     // const handleAnswer = () => {
     //     const currentSoal = soal[currentIndex];
@@ -243,7 +270,9 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                                         [soal[currentIndex].id]: !prev[soal[currentIndex].id],
                                     }))
                                 }
-                                onSubmit={handleSubmit}
+                                onSubmit={() => {
+                                    submitJawaban(true);
+                                }}
                             />
                         </div>
                     </div>
@@ -263,6 +292,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     );
 }
 
+// save answer (SPA)
 // eslint-disable-next-line react-hooks/exhaustive-deps
 // const saveAnswer = useCallback(
 //     debounce((jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {

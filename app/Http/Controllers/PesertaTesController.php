@@ -250,6 +250,16 @@ class PesertaTesController extends Controller
 
             $endTimeTimestamp = $endTime->timestamp;
 
+            $activeSessionsCount = DB::table('sessions')
+                ->where('user_id', $user->id)
+                ->count();
+
+            if ($activeSessionsCount > 1) {
+                return redirect()->route('peserta.daftar-tes')->withErrors([
+                    'error' => 'Anda sudah login di device lain. Silakan logout dari device lain untuk melanjutkan ujian.'
+                ]);
+            }
+
             return Inertia::render('peserta/soal/index', [
                 'jadwal' => $jadwal,
                 'soal' => $jadwal->soal->map(function ($s) {
