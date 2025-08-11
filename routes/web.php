@@ -1,72 +1,100 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\KategoriTesController;
 use App\Http\Controllers\KoreksiController;
-use App\Http\Controllers\SoalController;
 use App\Http\Controllers\PesertaTesController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SoalController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+// Root route - redirect to dashboard if authenticated, otherwise to login
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
+})->name('root');
 
 // Developer info page - accessible without authentication
 Route::get('/dev', function () {
     return Inertia::render('dev');
 })->name('dev');
 
-// peserta routes
-Route::middleware(['auth', 'role:peserta'])->group(function () {
-    Route::get('/daftar-tes', [PesertaTesController::class, 'index'])->name('peserta.daftar-tes');
-    // Route::post('/tes/soal', [PesertaTesController::class, 'startTest'])->name('peserta.soal');
-    Route::post('/peserta/start', [PesertaTesController::class, 'startTest'])->name('peserta.start');
-    Route::get('/tes/{id}/soal', [PesertaTesController::class, 'soal'])->name('peserta.soal');
-    Route::post('/save', [PesertaTesController::class, 'saveAnswer'])->name('peserta.save');
-    Route::post('/submit', [PesertaTesController::class, 'submit'])->name('peserta.submit');
-    Route::get('/riwayat', [PesertaTesController::class, 'riwayat'])->name('peserta.riwayat');
-});
-
+// Protected routes - requires authentication and email verification
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/', [DashboardController::class, 'index'])->name('home');
 
+    // Dashboard routes
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('home', [DashboardController::class, 'index'])->name('home'); // alias
 
-    // Routes yang hanya bisa diakses admin dan teacher
-    Route::middleware(['role:admin,teacher'])->group(function () {
-        // Definisikan route spesifik sebelum resource route
-        // Route::get('jadwal/kategori', function () {
-        //     return Inertia::render('jadwal/kategori');
-        // })->name('jadwal.kategori');
-        Route::get('jadwal/{jadwal}/soal', [JadwalController::class, 'soal'])->name('jadwal.soal');
-
-        // Resource route harus ditempatkan setelah route spesifik
-        Route::resource('jadwal', JadwalController::class);
-        Route::resource('kategori', KategoriTesController::class);
-        Route::post('kategori/bulk-destroy', [KategoriTesController::class, 'bulkDestroy'])->name('kategori.bulk-destroy');
-        Route::post('jadwal/soal', [SoalController::class, 'store'])->name('jadwal.soal.store');
-        Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])->name('jadwal.bulk-destroy');
-
-        // Soal routes (dalam prefix /jadwal)
-        Route::put('soal/{id}', [SoalController::class, 'update'])->name('soal.update');
-        Route::delete('jadwal/soal/{id}', [SoalController::class, 'destroy'])->name('soal.destroy');
-        Route::post('jadwal/soal/bulk-delete', [SoalController::class, 'bulkDelete'])->name('soal.bulkDelete');
-
-        Route::get('koreksi', [App\Http\Controllers\KoreksiController::class, 'index'])->name('koreksi');
-        Route::get('koreksi/{userId}/{jadwalId}', [App\Http\Controllers\KoreksiController::class, 'show'])->name('koreksi.detail');
-        Route::post('koreksi/{userId}/{jadwalId}', [App\Http\Controllers\KoreksiController::class, 'update'])->name('koreksi.update');
+    // PESERTA ROUTES
+    Route::middleware(['role:peserta'])->prefix('peserta')->name('peserta.')->group(function () {
+        Route::get('daftar-tes', [PesertaTesController::class, 'index'])->name('daftar-tes');
+        Route::post('start', [PesertaTesController::class, 'startTest'])->name('start');
+        Route::get('tes/{id}/soal', [PesertaTesController::class, 'soal'])->name('soal');
+        Route::post('save-answer', [PesertaTesController::class, 'saveAnswer'])->name('save');
+        Route::post('submit', [PesertaTesController::class, 'submit'])->name('submit');
+        Route::get('riwayat', [PesertaTesController::class, 'riwayat'])->name('riwayat');
     });
 
-    // Routes yang hanya bisa diakses admin
-    Route::middleware(['role:admin'])->group(function () {
-        Route::get('admin', function () {
-            return redirect()->route('users.index');
-        })->name('admin');
+    // ADMIN & TEACHER ROUTES
+    Route::middleware(['role:admin,teacher'])->group(function () {
 
-        // User management routes
+        // Kategori Tes Management
+        Route::resource('kategori', KategoriTesController::class);
+        Route::post('kategori/bulk-destroy', [KategoriTesController::class, 'bulkDestroy'])
+            ->name('kategori.bulk-destroy')
+            ->middleware('bulk.throttle');
+
+        // Jadwal Management
+        Route::resource('jadwal', JadwalController::class);
+        Route::get('jadwal/{jadwal}/soal', [JadwalController::class, 'soal'])->name('jadwal.soal');
+        Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])
+            ->name('jadwal.bulk-destroy')
+            ->middleware('bulk.throttle');
+
+        // Soal Management (nested under jadwal)
+        Route::prefix('jadwal')->name('jadwal.soal.')->group(function () {
+            Route::post('soal', [SoalController::class, 'store'])->name('store');
+            Route::put('soal/{id}', [SoalController::class, 'update'])->name('update');
+            Route::delete('soal/{id}', [SoalController::class, 'destroy'])->name('destroy');
+            Route::post('soal/bulk-delete', [SoalController::class, 'bulkDelete'])
+                ->name('bulk-delete')
+                ->middleware('bulk.throttle');
+        });
+
+        // Koreksi Management
+        Route::prefix('koreksi')->name('koreksi')->group(function () {
+            Route::get('/', [KoreksiController::class, 'index']);
+            Route::get('{userId}/{jadwalId}', [KoreksiController::class, 'show'])->name('.detail');
+            Route::post('{userId}/{jadwalId}', [KoreksiController::class, 'update'])->name('.update');
+        });
+    });
+
+    // ADMIN ONLY ROUTES
+    Route::middleware(['role:admin'])->group(function () {
+
+        // Admin redirect
+        Route::redirect('admin', 'users')->name('admin');
+
+        // User Management
         Route::resource('users', UserController::class)->except(['show', 'create', 'edit']);
-        Route::post('users/bulk-destroy', [UserController::class, 'bulkDestroy'])->name('users.bulk-destroy');
+        Route::post('users/bulk-destroy', [UserController::class, 'bulkDestroy'])
+            ->name('users.bulk-destroy')
+            ->middleware('bulk.throttle');
     });
 });
 
-require __DIR__ . '/settings.php';
+// Include additional route files
 require __DIR__ . '/auth.php';
+require __DIR__ . '/settings.php';

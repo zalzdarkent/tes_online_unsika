@@ -26,15 +26,15 @@ type UserData = {
     nama: string;
     email: string;
     role: 'admin' | 'teacher' | 'peserta';
-    alamat?: string;
-    no_hp?: string;
-    foto?: string;
+    alamat?: string | null;
+    no_hp?: string | null;
+    foto?: string | null;
     created_at: string;
     updated_at?: string;
-    prodi: string | null;
-    fakultas: string | null;
-    universitas: string | null;
-    npm: string | null;
+    prodi?: string | null;
+    fakultas?: string | null;
+    universitas?: string | null;
+    npm?: string | null;
 };
 
 type UserProps = {
@@ -89,6 +89,16 @@ export default function UsersIndex({ users }: UserProps) {
     };
 
     const handleBulkDelete = (selectedData: UserData[]) => {
+        // Batasi maksimal 100 item untuk menghindari memory issues
+        if (selectedData.length > 100) {
+            toast({
+                variant: 'destructive',
+                title: 'Peringatan!',
+                description: 'Maksimal 100 user dapat dihapus sekaligus.',
+            });
+            return;
+        }
+
         const selectedIds = selectedData.map((item) => item.id);
         router.post(
             route('users.bulk-destroy'),
@@ -100,10 +110,12 @@ export default function UsersIndex({ users }: UserProps) {
                         description: `${selectedIds.length} user berhasil dihapus`,
                     });
                 },
-                onError: () => {
+                onError: (errors: Record<string, string>) => {
+                    console.error('Bulk delete errors:', errors);
+                    const errorMessage = errors.error || errors.message || 'Gagal menghapus user';
                     toast({
                         title: 'Gagal',
-                        description: 'Gagal menghapus user',
+                        description: errorMessage,
                         variant: 'destructive',
                     });
                 },

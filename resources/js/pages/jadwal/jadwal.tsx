@@ -239,6 +239,16 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
     };
 
     const handleBulkDelete = (selectedData: JadwalData[]) => {
+        // Batasi maksimal 100 item untuk menghindari memory issues
+        if (selectedData.length > 100) {
+            toast({
+                variant: 'destructive',
+                title: 'Peringatan!',
+                description: 'Maksimal 100 jadwal dapat dihapus sekaligus.',
+            });
+            return;
+        }
+
         const selectedIds = selectedData.map((item) => item.id);
         console.log('Bulk delete for IDs:', selectedIds);
 
@@ -261,6 +271,12 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                             variant: 'destructive',
                             title: 'Error!',
                             description: errors.error,
+                        });
+                    } else if (errors.message) {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Error!',
+                            description: errors.message,
                         });
                     } else {
                         toast({

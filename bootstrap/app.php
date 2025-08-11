@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'bulk.throttle' => \App\Http\Middleware\BulkActionThrottle::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

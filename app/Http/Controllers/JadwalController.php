@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Jadwal;
+use App\Jobs\UpdateExpiredJadwalJob;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -29,23 +30,29 @@ class JadwalController extends Controller
 
     public function index()
     {
-        // Auto-update expired jadwal status setiap kali ada request
-        Jadwal::updateExpiredJadwalStatus();
-
-        // Hanya tampilkan jadwal milik user yang sedang login
         $userId = Auth::id();
-        $jadwal = Jadwal::where('user_id', $userId)
-            ->with('kategori') // Load relasi kategori
+        
+        // Dispatch job untuk update expired jadwal secara background
+        // Hanya untuk user yang sedang login untuk efisiensi
+        UpdateExpiredJadwalJob::dispatch($userId);
+
+        // Query yang lebih efisien dengan select specific columns
+        $jadwal = Jadwal::select([
+                'id', 'nama_jadwal', 'tanggal_mulai', 'tanggal_berakhir', 
+                'status', 'auto_close', 'user_id', 'id_jadwal_sebelumnya', 
+                'durasi', 'kategori_tes_id', 'created_at', 'updated_at'
+            ])
+            ->where('user_id', $userId)
+            ->with(['kategori:id,nama']) // Load hanya field yang dibutuhkan
             ->orderBy('created_at', 'asc')
             ->get()
             ->map(function ($item) {
-                // Status sudah diupdate otomatis di atas, langsung ambil dari database
                 return [
                     'id' => $item->id,
                     'nama_jadwal' => $item->nama_jadwal,
                     'tanggal_mulai' => $item->tanggal_mulai,
                     'tanggal_berakhir' => $item->tanggal_berakhir,
-                    'status' => $item->status, // Langsung ambil dari database
+                    'status' => $item->status,
                     'auto_close' => $item->auto_close,
                     'user_id' => $item->user_id,
                     'id_jadwal_sebelumnya' => $item->id_jadwal_sebelumnya,
@@ -60,7 +67,9 @@ class JadwalController extends Controller
         // return inertia rendering the index view with jadwal data
         return inertia('jadwal/jadwal', [
             'jadwal' => $jadwal,
-            'kategoriTes' => \App\Models\KategoriTes::where('user_id', $userId)->get(['id', 'nama']),
+            'kategoriTes' => \App\Models\KategoriTes::select('id', 'nama')
+                ->where('user_id', $userId)
+                ->get(),
         ]);
     }
 
@@ -378,12 +387,13 @@ class JadwalController extends Controller
     public function bulkDestroy(Request $request)
     {
         $validated = $request->validate([
-            'ids' => 'required|array|min:1',
+            'ids' => 'required|array|min:1|max:100', // Batasi maksimal 100 item
             'ids.*' => 'exists:jadwal,id',
         ], [
             'ids.required' => 'Pilih minimal satu jadwal untuk dihapus.',
             'ids.array' => 'Format data tidak valid.',
             'ids.min' => 'Pilih minimal satu jadwal untuk dihapus.',
+            'ids.max' => 'Maksimal 100 jadwal dapat dihapus sekaligus.',
             'ids.*.exists' => 'Salah satu jadwal tidak valid.',
         ]);
 
@@ -394,20 +404,22 @@ class JadwalController extends Controller
             // Pastikan semua jadwal yang akan dihapus milik user yang login
             $jadwalToDelete = Jadwal::whereIn('id', $ids)
                 ->where('user_id', $userId)
+                ->select('id', 'nama_jadwal') // Hanya ambil field yang diperlukan
                 ->get();
 
             if ($jadwalToDelete->count() !== count($ids)) {
                 abort(403, 'Anda tidak memiliki akses untuk menghapus beberapa jadwal yang dipilih.');
             }
 
-            // Check for any related jadwal that reference the ones to be deleted
+            // Check for any related jadwal that reference the ones to be deleted (lebih efisien)
             $relatedJadwal = Jadwal::whereIn('id_jadwal_sebelumnya', $ids)
                 ->where('user_id', $userId) // Hanya cek jadwal milik user yang sama
                 ->whereNotIn('id', $ids) // Exclude the ones being deleted
+                ->select('id', 'nama_jadwal', 'id_jadwal_sebelumnya') // Hanya field yang diperlukan
                 ->first();
 
             if ($relatedJadwal) {
-                $referencedJadwal = Jadwal::find($relatedJadwal->getAttribute('id_jadwal_sebelumnya'));
+                $referencedJadwal = $jadwalToDelete->where('id', $relatedJadwal->getAttribute('id_jadwal_sebelumnya'))->first();
                 return back()->withErrors([
                     'error' => "Tidak dapat menghapus jadwal '{$referencedJadwal->getAttribute('nama_jadwal')}' karena masih direferensikan oleh jadwal '{$relatedJadwal->getAttribute('nama_jadwal')}'."
                 ]);
@@ -419,6 +431,7 @@ class JadwalController extends Controller
 
             return redirect()->route('jadwal.index')->with('success', "{$deletedCount} jadwal berhasil dihapus!");
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Bulk delete jadwal error: ' . $e->getMessage());
             return back()->withErrors([
                 'error' => 'Terjadi kesalahan saat menghapus jadwal. Silakan coba lagi.'
             ]);
