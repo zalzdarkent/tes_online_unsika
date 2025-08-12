@@ -56,8 +56,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('kategori.bulk-destroy')
             ->middleware('bulk.throttle');
 
-        // Jadwal Management
-        Route::resource('jadwal', JadwalController::class);
+        // Jadwal Management - dengan cache untuk index
+        Route::get('jadwal', [JadwalController::class, 'index'])
+            ->name('jadwal.index')
+            ->middleware('cache.response:3'); // Cache 3 menit
+        Route::get('jadwal/create', [JadwalController::class, 'create'])->name('jadwal.create');
+        Route::post('jadwal', [JadwalController::class, 'store'])->name('jadwal.store');
+        Route::get('jadwal/{jadwal}', [JadwalController::class, 'show'])->name('jadwal.show');
+        Route::get('jadwal/{jadwal}/edit', [JadwalController::class, 'edit'])->name('jadwal.edit');
+        Route::put('jadwal/{jadwal}', [JadwalController::class, 'update'])->name('jadwal.update');
+        Route::delete('jadwal/{jadwal}', [JadwalController::class, 'destroy'])->name('jadwal.destroy');
+
         Route::get('jadwal/{jadwal}/soal', [JadwalController::class, 'soal'])->name('jadwal.soal');
         Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])
             ->name('jadwal.bulk-destroy')
@@ -87,8 +96,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Admin redirect
         Route::redirect('admin', 'users')->name('admin');
 
-        // User Management
-        Route::resource('users', UserController::class)->except(['show', 'create', 'edit']);
+        // User Management - dengan cache untuk index
+        Route::get('users', [UserController::class, 'index'])
+            ->name('users.index')
+            ->middleware('cache.response:5'); // Cache 5 menit
+        Route::post('users', [UserController::class, 'store'])->name('users.store');
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
         Route::post('users/bulk-destroy', [UserController::class, 'bulkDestroy'])
             ->name('users.bulk-destroy')
             ->middleware('bulk.throttle');

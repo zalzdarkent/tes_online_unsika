@@ -4,7 +4,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { filterMenuByRole } from '@/lib/auth-utils';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, ClipboardCheck, History, LayoutGrid, Settings, UsersRoundIcon } from 'lucide-react';
+import { Calendar, ClipboardCheck, History, LayoutGrid, UsersRoundIcon } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const platformNavItems: NavItem[] = [

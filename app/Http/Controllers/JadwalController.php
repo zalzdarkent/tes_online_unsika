@@ -7,6 +7,7 @@ use App\Jobs\UpdateExpiredJadwalJob;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class JadwalController extends Controller
 {
@@ -31,15 +32,19 @@ class JadwalController extends Controller
     public function index()
     {
         $userId = Auth::id();
-        
-        // Dispatch job untuk update expired jadwal secara background
-        // Hanya untuk user yang sedang login untuk efisiensi
-        UpdateExpiredJadwalJob::dispatch($userId);
+
+        // Hanya dispatch job jika belum dijalankan dalam 1 jam terakhir
+        // untuk mengurangi load server
+        $cacheKey = "jadwal_update_job_{$userId}";
+        if (!Cache::has($cacheKey)) {
+            UpdateExpiredJadwalJob::dispatch($userId);
+            Cache::put($cacheKey, true, 3600); // Cache 1 jam
+        }
 
         // Query yang lebih efisien dengan select specific columns
         $jadwal = Jadwal::select([
-                'id', 'nama_jadwal', 'tanggal_mulai', 'tanggal_berakhir', 
-                'status', 'auto_close', 'user_id', 'id_jadwal_sebelumnya', 
+                'id', 'nama_jadwal', 'tanggal_mulai', 'tanggal_berakhir',
+                'status', 'auto_close', 'user_id', 'id_jadwal_sebelumnya',
                 'durasi', 'kategori_tes_id', 'created_at', 'updated_at'
             ])
             ->where('user_id', $userId)

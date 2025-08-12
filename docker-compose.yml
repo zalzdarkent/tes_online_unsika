@@ -9,7 +9,8 @@ services:
     volumes:
       - .:/var/www
       - ./storage/app/public:/var/www/storage/app/public
-      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - ./php-production.ini:/usr/local/etc/php/conf.d/php-production.ini
+      - ./docker/php-fpm-optimized.conf:/usr/local/etc/php-fpm.d/www.conf
     depends_on:
       - mysql
       - redis
@@ -26,6 +27,7 @@ services:
     command: php artisan queue:work --sleep=3 --tries=3 --timeout=60
     volumes:
       - .:/var/www
+      - ./php-production.ini:/usr/local/etc/php/conf.d/php-production.ini
     depends_on:
       - app
       - mysql
@@ -43,6 +45,7 @@ services:
     command: /bin/sh -c "while true; do php artisan schedule:run; sleep 60; done"
     volumes:
       - .:/var/www
+      - ./php-production.ini:/usr/local/etc/php/conf.d/php-production.ini
     depends_on:
       - app
       - mysql
@@ -59,7 +62,7 @@ services:
       - "443:443"
     volumes:
       - .:/var/www
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx-optimized.conf:/etc/nginx/conf.d/default.conf
       - ./storage/app/public:/var/www/storage/app/public
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
@@ -88,7 +91,7 @@ services:
       PMA_HOST: mysql
       MYSQL_ROOT_PASSWORD: TpFBSyz35Fmc2ALT
     volumes:
-      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - ./php-production.ini:/usr/local/etc/php/conf.d/php-production.ini
     ports:
       - "8080:80"
     networks:
