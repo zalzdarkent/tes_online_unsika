@@ -7,8 +7,9 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - .:/var/www          
+      - .:/var/www
       - ./storage/app/public:/var/www/storage/app/public
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
     depends_on:
       - mysql
       - redis
@@ -86,6 +87,8 @@ services:
     environment:
       PMA_HOST: mysql
       MYSQL_ROOT_PASSWORD: TpFBSyz35Fmc2ALT
+    volumes:
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
     ports:
       - "8080:80"
     networks:

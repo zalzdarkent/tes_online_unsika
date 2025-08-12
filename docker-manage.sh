@@ -6,64 +6,64 @@
 case "$1" in
     status)
         echo "📊 Container Status:"
-        docker-compose ps
+        docker compose ps
         echo ""
         echo "🔍 System Resources:"
         docker stats --no-stream
         ;;
-        
+
     logs)
         if [ -n "$2" ]; then
             echo "📋 Showing logs for $2:"
-            docker-compose logs -f --tail=100 $2
+            docker compose logs -f --tail=100 $2
         else
             echo "📋 Available services:"
-            docker-compose config --services
+            docker compose config --services
             echo ""
             echo "Usage: $0 logs <service_name>"
             echo "Example: $0 logs app"
         fi
         ;;
-        
+
     restart)
         if [ -n "$2" ]; then
             echo "🔄 Restarting $2..."
-            docker-compose restart $2
+            docker compose restart $2
         else
             echo "🔄 Restarting all containers..."
-            docker-compose restart
+            docker compose restart
         fi
         ;;
-        
+
     stop)
         echo "🛑 Stopping all containers..."
-        docker-compose down
+        docker compose down
         ;;
-        
+
     cleanup)
         echo "🧹 Cleaning up Docker resources..."
-        docker-compose down
+        docker compose down
         docker system prune -f
         docker volume prune -f
         echo "✅ Cleanup completed"
         ;;
-        
+
     shell)
         if [ -n "$2" ]; then
             echo "🐚 Opening shell in $2..."
-            docker-compose exec $2 /bin/bash
+            docker compose exec $2 /bin/bash
         else
             echo "🐚 Opening shell in app container..."
-            docker-compose exec app /bin/bash
+            docker compose exec app /bin/bash
         fi
         ;;
-        
+
     artisan)
         shift
         echo "⚡ Running artisan command: $@"
-        docker-compose exec app php artisan "$@"
+        docker compose exec app php artisan "$@"
         ;;
-        
+
     *)
         echo "Docker Management Script"
         echo ""
