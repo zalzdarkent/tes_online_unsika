@@ -230,4 +230,116 @@ class SoalController extends Controller
         \App\Models\Soal::whereIn('id', $ids)->delete();
         return redirect()->back()->with('success', count($ids) . ' soal berhasil dihapus!');
     }
+
+    /**
+     * Import soal from Excel/CSV file.
+     */
+    public function import(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'soal' => 'required|array|min:1',
+                'soal.*.id_jadwal' => 'required|integer|exists:jadwal,id',
+                'soal.*.jenis_soal' => 'required|string|in:pilihan_ganda,multi_choice,esai,essay_gambar,essay_audio,skala,equation',
+                'soal.*.pertanyaan' => 'required|string',
+                'soal.*.skor' => 'required|integer|min:1',
+                'soal.*.opsi_a' => 'nullable|string',
+                'soal.*.opsi_b' => 'nullable|string',
+                'soal.*.opsi_c' => 'nullable|string',
+                'soal.*.opsi_d' => 'nullable|string',
+                'soal.*.jawaban_benar' => 'required|string',
+                'soal.*.skala_min' => 'nullable|integer|min:1',
+                'soal.*.skala_maks' => 'nullable|integer|min:2',
+                'soal.*.skala_label_min' => 'nullable|string|max:255',
+                'soal.*.skala_label_maks' => 'nullable|string|max:255',
+                'soal.*.equation' => 'nullable|string'
+            ]);
+
+            $soalData = $validated['soal'];
+            $successCount = 0;
+            $errors = [];
+
+            foreach ($soalData as $index => $soal) {
+                try {
+                    // Validasi khusus berdasarkan jenis soal
+                    if (in_array($soal['jenis_soal'], ['pilihan_ganda', 'multi_choice'])) {
+                        if (empty($soal['opsi_a']) || empty($soal['opsi_b'])) {
+                            throw new \Exception("Opsi A dan B wajib diisi untuk soal pilihan ganda pada baris " . ($index + 1));
+                        }
+                    }
+
+                    if ($soal['jenis_soal'] === 'skala') {
+                        if (empty($soal['skala_min']) || empty($soal['skala_maks'])) {
+                            throw new \Exception("Skala min dan max wajib diisi untuk soal skala pada baris " . ($index + 1));
+                        }
+                        if ($soal['skala_maks'] <= $soal['skala_min']) {
+                            throw new \Exception("Skala maksimum harus lebih besar dari minimum pada baris " . ($index + 1));
+                        }
+                    }
+
+                    // Buat soal baru
+                    \App\Models\Soal::create([
+                        'id_jadwal' => $soal['id_jadwal'],
+                        'jenis_soal' => $soal['jenis_soal'],
+                        'pertanyaan' => $soal['pertanyaan'],
+                        'skor' => $soal['skor'],
+                        'opsi_a' => $soal['opsi_a'] ?? null,
+                        'opsi_b' => $soal['opsi_b'] ?? null,
+                        'opsi_c' => $soal['opsi_c'] ?? null,
+                        'opsi_d' => $soal['opsi_d'] ?? null,
+                        'jawaban_benar' => $soal['jawaban_benar'],
+                        'skala_min' => $soal['skala_min'] ?? null,
+                        'skala_maks' => $soal['skala_maks'] ?? null,
+                        'skala_label_min' => $soal['skala_label_min'] ?? null,
+                        'skala_label_maks' => $soal['skala_label_maks'] ?? null,
+                        'equation' => $soal['equation'] ?? null,
+                    ]);
+
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $errors[] = "Baris " . ($index + 1) . ": " . $e->getMessage();
+                }
+            }
+
+            if ($successCount > 0) {
+                $message = "{$successCount} soal berhasil diimport.";
+                if (!empty($errors)) {
+                    $message .= " " . count($errors) . " soal gagal diimport.";
+                }
+                return redirect()->back()->with('success', $message);
+            } else {
+                return redirect()->back()->withErrors(['message' => 'Tidak ada soal yang berhasil diimport. ' . implode(' ', $errors)]);
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = collect($e->errors())->flatten()->toArray();
+            return redirect()->back()->withErrors([
+                'message' => 'Data tidak valid: ' . implode(', ', $errors)
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors([
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Download template file for soal import.
+     */
+    public function downloadTemplate()
+    {
+        $filePath = public_path('template-soal.xlsx');
+
+        if (!file_exists($filePath)) {
+            abort(404, 'Template file tidak ditemukan.');
+        }
+
+        $filename = 'template-soal.xlsx';
+        $headers = [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        return response()->download($filePath, $filename, $headers);
+    }
 }

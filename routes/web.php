@@ -82,6 +82,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('bulk.throttle');
         });
 
+        // Soal Import Route
+        Route::post('soal/import', [SoalController::class, 'import'])->name('soal.import');
+        Route::get('template-soal', [SoalController::class, 'downloadTemplate'])->name('soal.template');
+
         // Koreksi Management
         Route::prefix('koreksi')->name('koreksi')->group(function () {
             Route::get('/', [KoreksiController::class, 'index']);

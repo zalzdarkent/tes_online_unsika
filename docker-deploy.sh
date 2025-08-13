@@ -7,7 +7,7 @@ set -e  # Exit on any error
 
 PROJECT_NAME="tes_online_unsika"
 BACKUP_DIR="backups"
-COMPOSE_FILE="docker compose.yml"
+COMPOSE_FILE="docker-compose.yml"
 
 # Colors for output
 RED='\033[0;31m'
@@ -42,8 +42,8 @@ check_requirements() {
         exit 1
     fi
 
-    if ! command -v docker compose &> /dev/null && ! docker compose version &> /dev/null; then
-        print_error "Docker Compose is not installed!"
+    if ! docker compose version &> /dev/null; then
+        print_error "Docker Compose (plugin) is not installed!"
         exit 1
     fi
 

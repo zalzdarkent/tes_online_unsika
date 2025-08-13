@@ -30,7 +30,7 @@ print_status "Checking container status..."
 if ! docker compose ps | grep "Up" > /dev/null; then
     print_error "Some containers are not running!"
     docker compose ps
-    
+
     print_status "Starting all containers..."
     docker compose up -d
     sleep 10
@@ -87,7 +87,7 @@ if docker compose exec app php artisan tinker --execute="DB::connection()->getPd
     print_success "Database connection is working"
 else
     print_error "Database connection failed!"
-    
+
     print_status "Restarting MySQL container..."
     docker compose restart mysql
     sleep 10

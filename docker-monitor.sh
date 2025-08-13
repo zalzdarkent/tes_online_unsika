@@ -207,7 +207,7 @@ if command -v bc >/dev/null 2>&1; then
         print_warning "Jadwal page response time is high: ${JADWAL_TIME}s"
         echo "  → Consider implementing caching or optimizing queries"
     fi
-    
+
     if [ "$USERS_TIME" != "FAILED" ] && [ $(echo "$USERS_TIME > 1.0" | bc -l) -eq 1 ]; then
         print_warning "Users page response time is high: ${USERS_TIME}s"
         echo "  → Consider implementing pagination or caching"

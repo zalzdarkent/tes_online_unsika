@@ -25,6 +25,11 @@ interface ExcelSoal {
     opsi_c?: string;
     opsi_d?: string;
     jawaban_benar: string;
+    skala_min?: number;
+    skala_maks?: number;
+    skala_label_min?: string;
+    skala_label_maks?: string;
+    equation?: string;
 }
 
 export default function SoalImportModal({ trigger, open = false, onOpenChange, idJadwal, onSuccess }: SoalImportModalProps) {
@@ -140,10 +145,11 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
     const columns = [
         {
             accessorKey: 'jenis_soal',
-            header: 'Jenis Soal',
+            header: 'Jenis',
+            size: 140,
             cell: ({ row, getValue }) => (
                 <select
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
                     value={getValue() as string}
                     onChange={(e) => {
                         const newData = [...soalData];
@@ -152,34 +158,39 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                     }}
                 >
                     <option value="pilihan_ganda">Pilihan Ganda</option>
+                    <option value="multi_choice">Multi Pilihan</option>
                     <option value="esai">Esai</option>
                     <option value="skala">Skala</option>
+                    <option value="equation">Equation</option>
                 </select>
             ),
         },
         {
             accessorKey: 'pertanyaan',
             header: 'Pertanyaan',
+            size: 250,
             cell: ({ row, getValue }) => (
                 <input
                     type="text"
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
                     value={getValue() as string}
                     onChange={(e) => {
                         const newData = [...soalData];
                         newData[row.index].pertanyaan = e.target.value;
                         setSoalData(newData);
                     }}
+                    placeholder="Masukkan pertanyaan..."
                 />
             ),
         },
         {
             accessorKey: 'skor',
             header: 'Skor',
+            size: 70,
             cell: ({ row, getValue }) => (
                 <input
                     type="number"
-                    className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
                     value={getValue() as number}
                     onChange={(e) => {
                         const newData = [...soalData];
@@ -192,81 +203,91 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
         },
         {
             accessorKey: 'opsi_a',
-            header: 'Opsi A',
+            header: 'A',
+            size: 120,
             cell: ({ row, getValue }) => (
                 <input
                     type="text"
-                    className="w-full rounded-md border p-2"
+                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
                     value={getValue() as string || ''}
                     onChange={(e) => {
                         const newData = [...soalData];
                         newData[row.index].opsi_a = e.target.value;
                         setSoalData(newData);
                     }}
+                    placeholder="Opsi A"
                 />
             ),
         },
         {
             accessorKey: 'opsi_b',
-            header: 'Opsi B',
+            header: 'B',
+            size: 120,
             cell: ({ row, getValue }) => (
                 <input
                     type="text"
-                    className="w-full rounded-md border p-2"
+                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
                     value={getValue() as string || ''}
                     onChange={(e) => {
                         const newData = [...soalData];
                         newData[row.index].opsi_b = e.target.value;
                         setSoalData(newData);
                     }}
+                    placeholder="Opsi B"
                 />
             ),
         },
         {
             accessorKey: 'opsi_c',
-            header: 'Opsi C',
+            header: 'C',
+            size: 120,
             cell: ({ row, getValue }) => (
                 <input
                     type="text"
-                    className="w-full rounded-md border p-2"
+                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
                     value={getValue() as string || ''}
                     onChange={(e) => {
                         const newData = [...soalData];
                         newData[row.index].opsi_c = e.target.value;
                         setSoalData(newData);
                     }}
+                    placeholder="Opsi C"
                 />
             ),
         },
         {
             accessorKey: 'opsi_d',
-            header: 'Opsi D',
+            header: 'D',
+            size: 120,
             cell: ({ row, getValue }) => (
                 <input
                     type="text"
-                    className="w-full rounded-md border p-2"
+                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
                     value={getValue() as string || ''}
                     onChange={(e) => {
                         const newData = [...soalData];
                         newData[row.index].opsi_d = e.target.value;
                         setSoalData(newData);
                     }}
+                    placeholder="Opsi D"
                 />
             ),
         },
         {
             accessorKey: 'jawaban_benar',
-            header: 'Jawaban Benar',
+            header: 'Jawaban',
+            size: 90,
             cell: ({ row, getValue }) => (
                 <input
                     type="text"
-                    className="w-full rounded-md border p-2"
+                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
                     value={getValue() as string || ''}
                     onChange={(e) => {
                         const newData = [...soalData];
                         newData[row.index].jawaban_benar = e.target.value;
                         setSoalData(newData);
                     }}
+                    placeholder="a/b/c/d"
                 />
             ),
         },
@@ -277,7 +298,7 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
             <DialogTrigger asChild>
                 {trigger}
             </DialogTrigger>
-            <DialogContent className="max-h-[90vh] w-full max-w-3xl overflow-y-auto sm:max-w-[600px]">
+            <DialogContent className="max-h-[90vh] w-[95vw] max-w-7xl">
                 <DialogHeader className="border-b pb-4">
                     <DialogTitle className="flex items-center gap-2 text-xl">
                         <FileSpreadsheet className="h-5 w-5" />
@@ -285,27 +306,36 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-6 p-1">
+                <div className="max-h-[75vh] space-y-6 overflow-y-auto p-1">
                     {/* File Upload Section */}
                     <div className="rounded-lg border bg-card p-6">
                         <div className="mb-4">
                             <h3 className="mb-2 text-lg font-medium">Upload File Excel</h3>
-                            <p className="text-sm text-muted-foreground">
-                                Upload file Excel (.xlsx, .xls) yang berisi daftar soal. Pastikan format sesuai dengan template.
+                            <p className="text-sm text-muted-foreground mb-3">
+                                Upload file Excel (.xlsx, .xls) atau CSV yang berisi daftar soal. Pastikan format sesuai dengan template.
                             </p>
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                                <h4 className="font-medium text-blue-900 mb-2">Format yang Didukung:</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-blue-800">
+                                    <div>• <strong>Pilihan Ganda:</strong> jenis_soal = "pilihan_ganda"</div>
+                                    <div>• <strong>Multi Pilihan:</strong> jenis_soal = "multi_choice"</div>
+                                    <div>• <strong>Esai:</strong> jenis_soal = "esai"</div>
+                                    <div>• <strong>Skala:</strong> jenis_soal = "skala"</div>
+                                </div>
+                            </div>
                         </div>
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                             <div className="flex-1">
                                 <input
                                     type="file"
-                                    accept=".xlsx,.xls"
+                                    accept=".xlsx,.xls,.csv"
                                     onChange={handleFileUpload}
                                     className="w-full cursor-pointer rounded-lg border p-2 text-sm file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-secondary/80"
                                     disabled={uploading}
                                 />
                             </div>
                             <Button variant="outline" asChild className="w-full sm:w-auto">
-                                <a href="/template-soal.xlsx" download>
+                                <a href={route('soal.template')} download>
                                     Download Template
                                 </a>
                             </Button>
@@ -315,17 +345,20 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                     {/* Preview Table */}
                     {soalData.length > 0 && (
                         <div className="rounded-lg border bg-card p-6">
-                            <h3 className="mb-4 text-lg font-medium">Preview & Edit Data</h3>
-                            <div className="overflow-hidden rounded-md border">
-                                <div className="max-h-[400px] overflow-y-auto">
-                                    <div className="w-full min-w-[800px]">
-                                        <DataTable
-                                            columns={columns}
-                                            data={soalData}
-                                            searchColumn="pertanyaan"
-                                            searchPlaceholder="Cari pertanyaan..."
-                                        />
-                                    </div>
+                            <div className="mb-4 flex items-center justify-between">
+                                <h3 className="text-lg font-medium">Preview & Edit Data ({soalData.length} soal)</h3>
+                                <div className="text-xs text-muted-foreground">
+                                    💡 Scroll horizontal untuk melihat semua kolom
+                                </div>
+                            </div>
+                            <div className="overflow-auto rounded-md border">
+                                <div className="min-w-[1000px]">
+                                    <DataTable
+                                        columns={columns}
+                                        data={soalData}
+                                        searchColumn="pertanyaan"
+                                        searchPlaceholder="Cari pertanyaan..."
+                                    />
                                 </div>
                             </div>
                         </div>
