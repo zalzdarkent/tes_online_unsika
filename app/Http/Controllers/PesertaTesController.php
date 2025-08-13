@@ -148,7 +148,7 @@ class PesertaTesController extends Controller
         //
     }
     // todo: cek lg business logicnya ada yg ketinggalan ga
-    // track start time 
+    // track start time
     public function startTest(Request $request)
     {
         $request->validate([
@@ -188,7 +188,7 @@ class PesertaTesController extends Controller
                 ->where('id_jadwal', $jadwalId)
                 ->first();
 
-            if ($hasil && $hasil->is_submitted_test) {
+            if ($hasil && $hasil->is_submitted) {
                 return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Tes ini sudah selesai dan tidak dapat diakses kembali.'
                 ]);
@@ -232,7 +232,7 @@ class PesertaTesController extends Controller
                 ]);
             };
 
-            if ($hasil->is_submitted_test) {
+            if ($hasil->is_submitted) {
                 return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Tes ini sudah pernah dikerjakan dan tidak dapat diakses kembali.'
                 ]);
@@ -392,14 +392,18 @@ class PesertaTesController extends Controller
 
             // update status submit
             $hasil->update([
-                'is_submitted_test' => true,
+                'is_submitted' => true,
             ]);
 
-            return redirect()->route('peserta.riwayat');
+            // Return success response untuk Inertia
+            return response()->json([
+                'success' => true,
+                'message' => 'Jawaban berhasil dikumpulkan'
+            ]);
         } catch (\Exception $e) {
-            return back()->withErrors([
+            return response()->json([
                 'error' => 'Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.'
-            ])->withInput();
+            ], 500);
         }
     }
 
@@ -409,7 +413,7 @@ class PesertaTesController extends Controller
             $userId = Auth::id();
 
             $riwayat = \App\Models\HasilTestPeserta::where('id_user', $userId)
-                ->where('is_submitted_test', true)
+                ->where('is_submitted', true)
                 ->with('jadwal')
                 ->orderBy('created_at', 'desc')
                 ->get();

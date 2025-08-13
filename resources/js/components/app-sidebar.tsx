@@ -31,13 +31,13 @@ const mainNavItems: NavItem[] = [
     //menu untuk peserta
     {
         title: 'Daftar Tes',
-        href: '/daftar-tes',
+        href: '/peserta/daftar-tes',
         icon: Calendar,
         roles: ['peserta'],
     },
     {
         title: 'Riwayat Tes',
-        href: '/riwayat',
+        href: '/peserta/riwayat',
         icon: History,
         roles: ['peserta'],
     },

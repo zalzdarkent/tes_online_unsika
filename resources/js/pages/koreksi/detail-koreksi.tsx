@@ -60,7 +60,10 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
     useEffect(() => {
         const autoFilled = data.map((item) => {
             if (['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal) && item.skor_didapat === null) {
-                const benar = item.jawaban_peserta === item.jawaban_benar;
+                // Case-insensitive comparison untuk pilihan ganda
+                const jawabanPeserta = (item.jawaban_peserta || '').toString().toLowerCase().trim();
+                const jawabanBenar = (item.jawaban_benar || '').toString().toLowerCase().trim();
+                const benar = jawabanPeserta === jawabanBenar;
                 return { ...item, skor_didapat: benar ? item.skor_maksimal : 0 };
             }
             return item;
@@ -133,7 +136,10 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                     let status: 'benar' | 'salah' | 'belum' = 'belum';
                     if (skor_didapat !== null) {
                         if (['pilihan_ganda', 'multi_choice'].includes(jenis_soal)) {
-                            status = jawaban_peserta === jawaban_benar ? 'benar' : 'salah';
+                            // Case-insensitive comparison untuk pilihan ganda
+                            const jawabanPeserta = (jawaban_peserta || '').toString().toLowerCase().trim();
+                            const jawabanBenar = (jawaban_benar || '').toString().toLowerCase().trim();
+                            status = jawabanPeserta === jawabanBenar ? 'benar' : 'salah';
                         } else {
                             status = skor_didapat === skor_maksimal ? 'benar' : 'salah';
                         }
@@ -236,7 +242,7 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
             (item) =>
                 item.skor_didapat !== null &&
                 (['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal)
-                    ? item.jawaban_peserta === item.jawaban_benar
+                    ? (item.jawaban_peserta || '').toString().toLowerCase().trim() === (item.jawaban_benar || '').toString().toLowerCase().trim()
                     : item.skor_didapat === item.skor_maksimal),
         ).length;
 
@@ -244,7 +250,7 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
             (item) =>
                 item.skor_didapat !== null &&
                 (['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal)
-                    ? item.jawaban_peserta !== item.jawaban_benar
+                    ? (item.jawaban_peserta || '').toString().toLowerCase().trim() !== (item.jawaban_benar || '').toString().toLowerCase().trim()
                     : item.skor_didapat !== item.skor_maksimal),
         ).length;
 

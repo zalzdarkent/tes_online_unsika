@@ -9,7 +9,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import { ReactNode } from 'react';
 
 interface ConfirmDialogProps {
@@ -39,8 +38,8 @@ export default function ConfirmDialogWrapper({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
-                    <AlertDialogAction asChild>
-                        <Button onClick={onConfirm}>{confirmLabel}</Button>
+                    <AlertDialogAction onClick={onConfirm}>
+                        {confirmLabel}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

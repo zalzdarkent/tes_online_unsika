@@ -14,6 +14,7 @@ import SoalSidebar from './SoalSidebar';
 export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_timestamp }: PesertaTesPageProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [tandaiSoal, setTandaiSoal] = useState<Record<number, boolean>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [jawaban, setJawaban] = useState<Record<number, string[]>>(() => {
         const prefill: Record<number, string[]> = {};
         Object.entries(jawaban_tersimpan || {}).forEach(([soalId, ans]) => {
@@ -58,8 +59,6 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                     }),
                     credentials: 'same-origin',
                 });
-                // todo: hapus kalo udah kelar
-                console.log('Jawaban berhasil terkirim');
             } catch {
                 toast({
                     variant: 'destructive',
@@ -72,41 +71,76 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     );
 
     const submitJawaban = async (redirect = false) => {
-        saveAnswerFetch.flush();
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        if (isSubmitting) return; // Prevent multiple submissions
 
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        setIsSubmitting(true);
+
+        // Pastikan jawaban soal terakhir tersimpan dulu
+        const currentSoal = soal[currentIndex];
+        if (currentSoal && hasInteractedRef.current) {
+            const jawabanSaatIni = jawaban[currentSoal.id];
+            // Simpan jawaban terakhir langsung tanpa debounce
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+            const finalJawaban = Array.isArray(jawabanSaatIni) ? jawabanSaatIni.join(',') : '';
+
+            try {
+                await fetch(route('peserta.save'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        jadwal_id: jadwal.id,
+                        id_soal: currentSoal.id,
+                        jawaban: finalJawaban || null,
+                    }),
+                    credentials: 'same-origin',
+                });
+            } catch (error) {
+                console.warn('Failed to save last answer:', error);
+            }
+        }
+
+        // Cancel any pending debounced saves
+        saveAnswerFetch.cancel();
 
         try {
-            await fetch(route('peserta.submit'), {
+            const response = await fetch(route('peserta.submit'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
                 },
                 body: JSON.stringify({
                     jadwal_id: jadwal.id,
-                    redirect,
                 }),
                 credentials: 'same-origin',
             });
 
-            console.log('Jawaban berhasil dikumpulkan');
-            if (redirect) {
-                router.visit('/riwayat');
+            const data = await response.json();
 
+            if (response.ok && data.success) {
                 toast({
                     variant: 'success',
                     title: 'Tes Selesai',
                     description: 'Jawaban Anda berhasil dikumpulkan.',
                 });
+                if (redirect) {
+                    router.visit('/peserta/riwayat');
+                }
+            } else {
+                throw new Error(data.error || 'Terjadi kesalahan saat mengirim jawaban.');
             }
-        } catch {
+        } catch (error) {
+            setIsSubmitting(false);
             toast({
                 variant: 'destructive',
-                title: 'Terjadi kesalahan!',
-                description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
+                title: 'Gagal Mengirim Tes',
+                description: error instanceof Error ? error.message : 'Terjadi kesalahan saat mengirim jawaban.',
             });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -157,66 +191,20 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
         };
     }, []);
 
-    // const handleAnswer = () => {
-    //     const currentSoal = soal[currentIndex];
-    //     if (!currentSoal) return;
-
-    //     const jawabanSaatIni = jawaban[currentSoal.id];
-
-    //     saveAnswer(jadwal.id, currentSoal.id, jawabanSaatIni);
-    // };
-
     const handleNext = () => {
-        // handleAnswer();
         if (currentIndex < soal.length - 1) {
             setCurrentIndex(currentIndex + 1);
         }
     };
 
     const handlePrev = () => {
-        // handleAnswer();
         if (currentIndex > 0) {
             setCurrentIndex(currentIndex - 1);
         }
     };
 
     const handleSubmit = () => {
-        // handleAnswer();
-
-        saveAnswerFetch.flush();
-        // saveAnswer.flush?.();
-
-        router.post(
-            route('peserta.submit'),
-            {
-                // jawaban,
-                jadwal_id: jadwal.id,
-            },
-            {
-                onSuccess: () => {
-                    toast({
-                        variant: 'success',
-                        title: 'Tes Selesai',
-                        description: 'Jawaban Anda berhasil dikirim.',
-                    });
-                },
-                onError: (errors: Record<string, string>) => {
-                    if (errors.error) {
-                        toast({
-                            variant: 'destructive',
-                            title: 'Gagal Mengirim Tes',
-                            description: errors.error,
-                        });
-                    } else {
-                        toast({
-                            variant: 'destructive',
-                            title: 'Error',
-                            description: 'Terjadi kesalahan saat mengirim jawaban.',
-                        });
-                    }
-                },
-            },
-        );
+        submitJawaban(true);
     };
 
     const currentSoal = soal[currentIndex];
@@ -241,14 +229,12 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                     jawaban={jawaban}
                     tandaiSoal={tandaiSoal}
                     durasi={jadwal.durasi}
-                    // handleAnswer={handleAnswer}
                 />
 
                 {/* Main Content */}
                 <div className="relative mx-auto mt-4 flex-1 space-y-4 overflow-x-auto p-8 md:mt-0 md:max-w-4xl">
                     <SoalHeader currentIndex={currentIndex} totalSoal={soal.length} timeLeft={timeLeft} />
 
-                    {/* <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p> */}
                     <RichTextViewer content={currentSoal.pertanyaan} />
 
                     <SoalOpsi soal={currentSoal} jawaban={jawaban} setJawaban={setJawaban} hasInteractedRef={hasInteractedRef} />
@@ -270,9 +256,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                                         [soal[currentIndex].id]: !prev[soal[currentIndex].id],
                                     }))
                                 }
-                                onSubmit={() => {
-                                    submitJawaban(true);
-                                }}
+                                onSubmit={handleSubmit}
                             />
                         </div>
                     </div>
@@ -285,44 +269,9 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                     title={alertTitle}
                     description={alertDescription}
                     actionLabel="Keluar"
-                    onAction={() => router.visit('/riwayat')}
+                    onAction={() => router.visit('/peserta/riwayat')}
                 />
             )}
         </>
     );
 }
-
-// save answer (SPA)
-// eslint-disable-next-line react-hooks/exhaustive-deps
-// const saveAnswer = useCallback(
-//     debounce((jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {
-//         const finalJawaban = Array.isArray(jawaban) ? jawaban.join(',') : '';
-
-//         router.post(
-//             route('peserta.save'),
-//             {
-//                 jadwal_id: jadwalId,
-//                 id_soal: idSoal,
-//                 jawaban: finalJawaban,
-//             },
-
-//             {
-//                 preserveState: true,
-//                 preserveScroll: true,
-//                 only: [],
-//                 replace: true,
-//                 onSuccess: () => {
-//                     console.log('jawaban berhasil terkirim');
-//                 },
-//                 onError: () => {
-//                     toast({
-//                         variant: 'destructive',
-//                         title: 'Terjadi kesalahan!',
-//                         description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
-//                     });
-//                 },
-//             },
-//         );
-//     }, 1000),
-//     [],
-// );
