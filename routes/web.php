@@ -56,10 +56,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('kategori.bulk-destroy')
             ->middleware('bulk.throttle');
 
-        // Jadwal Management - dengan cache untuk index
-        Route::get('jadwal', [JadwalController::class, 'index'])
-            ->name('jadwal.index')
-            ->middleware('cache.response:3'); // Cache 3 menit
+        // Jadwal Management
+        Route::get('jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
         Route::get('jadwal/create', [JadwalController::class, 'create'])->name('jadwal.create');
         Route::post('jadwal', [JadwalController::class, 'store'])->name('jadwal.store');
         Route::get('jadwal/{jadwal}', [JadwalController::class, 'show'])->name('jadwal.show');
@@ -100,10 +98,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Admin redirect
         Route::redirect('admin', 'users')->name('admin');
 
-        // User Management - dengan cache untuk index
-        Route::get('users', [UserController::class, 'index'])
-            ->name('users.index')
-            ->middleware('cache.response:5'); // Cache 5 menit
+        // User Management
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
         Route::post('users', [UserController::class, 'store'])->name('users.store');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
