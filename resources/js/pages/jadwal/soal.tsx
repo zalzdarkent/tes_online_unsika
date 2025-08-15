@@ -120,7 +120,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
     const handleDeleteSingle = (soal: SoalData) => {
         console.log('Delete single soal:', soal.id);
 
-        router.delete(route('soal.destroy', soal.id), {
+        router.delete(route('jadwal.soal.destroy', soal.id), {
             onSuccess: () => {
                 toast({
                     variant: 'success',
