@@ -58,6 +58,10 @@ export default function UsersIndex({ users }: UserProps) {
     const [deleteDialog, setDeleteDialog] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
 
+    // Debug: Log data yang diterima
+    console.log('Users data received:', users);
+    console.log('Users count:', users?.length || 0);
+
     const handleDeleteSingle = (user: UserData) => {
         setSelectedUser(user);
         setDeleteDialog(true);
