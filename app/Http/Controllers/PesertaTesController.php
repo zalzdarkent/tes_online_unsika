@@ -58,7 +58,7 @@ class PesertaTesController extends Controller
             //     })
             //         ->orWhereHas('hasil', function ($q) use ($userId) {
             //             $q->where('id_user', $userId)
-            //                 ->where('is_submitted_test', false);
+            //                 ->where('is_submitted_test_test', false);
             //         });
             // })
             ->get()
@@ -188,7 +188,7 @@ class PesertaTesController extends Controller
                 ->where('id_jadwal', $jadwalId)
                 ->first();
 
-            if ($hasil && $hasil->is_submitted) {
+            if ($hasil && $hasil->is_submitted_test) {
                 return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Tes ini sudah selesai dan tidak dapat diakses kembali.'
                 ]);
@@ -232,7 +232,7 @@ class PesertaTesController extends Controller
                 ]);
             };
 
-            if ($hasil->is_submitted) {
+            if ($hasil->is_submitted_test) {
                 return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Tes ini sudah pernah dikerjakan dan tidak dapat diakses kembali.'
                 ]);
@@ -366,7 +366,7 @@ class PesertaTesController extends Controller
             //     ])->withInput();
             // }
 
-            // if ($hasil && $hasil->is_submitted_test) {
+            // if ($hasil && $hasil->is_submitted_test_test) {
             //     return redirect()->route('peserta.daftar-tes')->withErrors([
             //         'error' => 'Anda sudah pernah mengerjakan tes ini sebelumnya.'
             //     ])->withInput();
@@ -392,7 +392,7 @@ class PesertaTesController extends Controller
 
             // update status submit
             $hasil->update([
-                'is_submitted' => true,
+                'is_submitted_test' => true,
             ]);
 
             // Return success response untuk Inertia
@@ -413,7 +413,7 @@ class PesertaTesController extends Controller
             $userId = Auth::id();
 
             $riwayat = \App\Models\HasilTestPeserta::where('id_user', $userId)
-                ->where('is_submitted', true)
+                ->where('is_submitted_test', true)
                 ->with('jadwal')
                 ->orderBy('created_at', 'desc')
                 ->get();
