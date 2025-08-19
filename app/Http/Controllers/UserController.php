@@ -17,10 +17,10 @@ class UserController extends Controller
      */
     public function index()
     {
-        // Optimalisasi: Gunakan pagination untuk mengurangi memory usage
+        // Sementara tidak pakai pagination untuk debug
         $users = User::select('id', 'username', 'nama', 'email', 'role', 'alamat', 'no_hp', 'foto', 'created_at', 'updated_at', 'prodi', 'fakultas', 'universitas', 'npm')
             ->orderBy('created_at', 'desc')
-            ->paginate(50); // Batasi 50 user per halaman
+            ->get(); // Ubah dari paginate menjadi get()
 
         return Inertia::render('admin/users/index', [
             'users' => $users
