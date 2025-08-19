@@ -1,4 +1,3 @@
-// components/SoalOpsi.tsx
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -11,11 +10,10 @@ import Media from './Media';
 interface SoalOpsiProps {
     soal: Soal;
     jawaban: Record<number, string[]>;
-    setJawaban: (jawaban: Record<number, string[]>) => void;
-    hasInteractedRef: React.MutableRefObject<boolean>;
+    onJawabanChange: (soalId: number, jawaban: string[]) => void;
 }
 
-const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban, hasInteractedRef }) => {
+const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
     const opsi = [
         { label: 'A', text: s.opsi_a },
         { label: 'B', text: s.opsi_b },
@@ -32,8 +30,9 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban, hasInteract
                     className="mt-4 space-y-2"
                     value={jawaban[s.id]?.[0] || ''}
                     onValueChange={(val) => {
-                        hasInteractedRef.current = true;
-                        setJawaban({ ...jawaban, [s.id]: [val] });
+                        if (val) {
+                            onJawabanChange(s.id, [val]);
+                        }
                     }}
                 >
                     {opsi.map((o, i) => {
@@ -42,8 +41,7 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban, hasInteract
                             <div
                                 key={i}
                                 onClick={() => {
-                                    hasInteractedRef.current = true;
-                                    setJawaban({ ...jawaban, [s.id]: [o.label] });
+                                    onJawabanChange(s.id, [o.label]);
                                 }}
                                 className={`flex cursor-pointer items-center space-x-2 rounded-md border p-3 transition-all hover:bg-muted/70 ${
                                     isSelected ? 'border-primary' : 'border-muted'
@@ -74,9 +72,10 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban, hasInteract
                                 id={`soal_${s.id}_${o.label}`}
                                 checked={selected.includes(o.label)}
                                 onCheckedChange={(checked) => {
-                                    hasInteractedRef.current = true;
+                                    const selected = jawaban[s.id] || [];
                                     const next = checked ? [...selected, o.label] : selected.filter((item) => item !== o.label);
-                                    setJawaban({ ...jawaban, [s.id]: next });
+
+                                    onJawabanChange(s.id, next);
                                 }}
                             />
                             <Label htmlFor={`soal_${s.id}_${o.label}`}>
@@ -103,8 +102,7 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban, hasInteract
                         placeholder="Tulis jawaban Anda di sini..."
                         value={jawaban[s.id]?.[0] || ''}
                         onChange={(e) => {
-                            hasInteractedRef.current = true;
-                            setJawaban({ ...jawaban, [s.id]: [e.target.value] });
+                            onJawabanChange(s.id, [e.target.value]); // 👈 langsung pakai ini
                         }}
                         className="min-h-[120px] w-full max-w-full resize-y"
                     />
@@ -128,8 +126,9 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban, hasInteract
                 <RadioGroup
                     value={jawaban[s.id]?.[0] || ''}
                     onValueChange={(val) => {
-                        hasInteractedRef.current = true;
-                        setJawaban({ ...jawaban, [s.id]: [val] });
+                        if (val) {
+                            onJawabanChange(s.id, [val]);
+                        }
                     }}
                     className="space-y-2"
                 >
@@ -174,8 +173,7 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, setJawaban, hasInteract
                         placeholder="Tulis jawaban Anda di sini..."
                         value={jawaban[s.id]?.[0] || ''}
                         onChange={(e) => {
-                            hasInteractedRef.current = true;
-                            setJawaban({ ...jawaban, [s.id]: [e.target.value] });
+                            onJawabanChange(s.id, [e.target.value]);
                         }}
                     />
                 </div>
