@@ -223,12 +223,30 @@ class SoalController extends Controller
      */
     public function bulkDelete(Request $request)
     {
-        $ids = $request->input('ids', []);
-        if (!is_array($ids) || empty($ids)) {
-            return redirect()->back()->with('error', 'Tidak ada soal yang dipilih.');
+        try {
+            $ids = $request->input('ids', []);
+            
+            if (!is_array($ids) || empty($ids)) {
+                return redirect()->back()->with('error', 'Tidak ada soal yang dipilih.');
+            }
+
+            // Validasi maksimal 100 items
+            if (count($ids) > 100) {
+                return redirect()->back()->with('error', 'Maksimal 100 soal dapat dihapus sekaligus.');
+            }
+
+            // Hapus soal berdasarkan ID
+            $deletedCount = \App\Models\Soal::whereIn('id', $ids)->delete();
+            
+            if ($deletedCount > 0) {
+                return redirect()->back()->with('success', $deletedCount . ' soal berhasil dihapus!');
+            } else {
+                return redirect()->back()->with('error', 'Tidak ada soal yang berhasil dihapus.');
+            }
+            
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus soal: ' . $e->getMessage());
         }
-        \App\Models\Soal::whereIn('id', $ids)->delete();
-        return redirect()->back()->with('success', count($ids) . ' soal berhasil dihapus!');
     }
 
     /**

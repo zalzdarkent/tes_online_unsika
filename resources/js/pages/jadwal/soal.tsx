@@ -13,6 +13,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -147,9 +148,77 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
         });
     };
 
+    // Handler untuk bulk delete soal
+    const handleBulkDelete = (selectedData: SoalData[]) => {
+        // Batasi maksimal 100 item untuk menghindari memory issues
+        if (selectedData.length > 100) {
+            toast({
+                variant: 'destructive',
+                title: 'Peringatan!',
+                description: 'Maksimal 100 soal dapat dihapus sekaligus.',
+            });
+            return;
+        }
+
+        const selectedIds = selectedData.map((item) => item.id);
+        console.log('Bulk delete for IDs:', selectedIds);
+
+        // Gunakan router.post untuk mengirim request bulk delete
+        router.post(
+            route('jadwal.soal.bulk-delete'),
+            { ids: selectedIds },
+            {
+                onSuccess: () => {
+                    toast({
+                        variant: 'success',
+                        title: 'Berhasil!',
+                        description: `${selectedData.length} soal berhasil dihapus.`,
+                    });
+                },
+                onError: (errors: Record<string, string>) => {
+                    console.log('Delete errors:', errors);
+                    if (errors.error) {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Error!',
+                            description: errors.error,
+                        });
+                    } else if (errors.message) {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Error!',
+                            description: errors.message,
+                        });
+                    } else {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Error!',
+                            description: 'Terjadi kesalahan saat menghapus soal.',
+                        });
+                    }
+                },
+            },
+        );
+    };
+
     // Kolom DataTable
 
     const columns: ColumnDef<SoalData>[] = [
+        {
+            id: 'select',
+            header: ({ table }) => (
+                <Checkbox
+                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Select all"
+                />
+            ),
+            cell: ({ row }) => (
+                <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label="Select row" />
+            ),
+            enableSorting: false,
+            enableHiding: false,
+        },
         {
             accessorKey: 'id',
             header: 'No',
@@ -688,6 +757,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         searchPlaceholder="Cari pertanyaan..."
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Belum ada soal untuk jadwal ini.</div>}
                         showExportButton
+                        onBulkDelete={handleBulkDelete}
                     />
                     {renderSoalDetailModal()}
 
