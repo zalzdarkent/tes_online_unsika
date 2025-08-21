@@ -21,7 +21,7 @@ class JadwalController extends Controller
             ->where('user_id', $userId)
             ->firstOrFail();
 
-        $soal = $jadwal->soal()->orderBy('created_at', 'asc')->get();
+        $soal = $jadwal->soal()->orderBy('urutan_soal', 'asc')->orderBy('created_at', 'asc')->get();
 
         return inertia('jadwal/soal', [
             'jadwal' => $jadwal,

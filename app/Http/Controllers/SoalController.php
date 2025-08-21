@@ -89,7 +89,10 @@ class SoalController extends Controller
             $validated['media'] = $path;
         }
 
-        // Tambahkan data skala jika jenis soal adalah skala
+        // Tentukan urutan soal otomatis (urutan terakhir + 1)
+        $lastUrutan = \App\Models\Soal::where('id_jadwal', $validated['id_jadwal'])
+            ->max('urutan_soal');
+        $validated['urutan_soal'] = ($lastUrutan ?? 0) + 1;
 
         // Simpan ke database
         $soal = \App\Models\Soal::create($validated);
@@ -298,6 +301,7 @@ class SoalController extends Controller
                     // Buat soal baru
                     \App\Models\Soal::create([
                         'id_jadwal' => $soal['id_jadwal'],
+                        'urutan_soal' => $index + 1, // Gunakan index + 1 sebagai urutan
                         'jenis_soal' => $soal['jenis_soal'],
                         'pertanyaan' => $soal['pertanyaan'],
                         'skor' => $soal['skor'],
