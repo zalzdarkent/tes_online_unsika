@@ -114,6 +114,10 @@ export default function SoalFormModal({
                 uiType = soal.media ? 'multi_choice_gambar' : 'multi_choice';
             } else if (soal.jenis_soal === 'esai') {
                 uiType = soal.media ? 'essay_gambar' : 'essay';
+            } else if (soal.jenis_soal === 'essay_gambar') {
+                uiType = 'essay_gambar';
+            } else if (soal.jenis_soal === 'essay_audio') {
+                uiType = 'essay_audio';
             }
 
             setTipeJawaban(uiType);
@@ -221,7 +225,11 @@ export default function SoalFormModal({
                       ? 'multi_choice'
                       : tipeJawaban === 'essay'
                         ? 'esai'
-                        : tipeJawaban,
+                        : tipeJawaban === 'essay_gambar'
+                          ? 'essay_gambar'
+                          : tipeJawaban === 'essay_audio'
+                            ? 'essay_audio'
+                            : tipeJawaban,
             );
             formData.append('pertanyaan', pertanyaan);
             formData.append('skor', String(skor));
@@ -271,7 +279,7 @@ export default function SoalFormModal({
             formData.append('media', media);
 
             // Determine route based on mode
-            const route = mode === 'edit' && soal ? `/soal/${soal.id}` : `/jadwal/soal`;
+            const routePath = mode === 'edit' && soal ? route('jadwal.soal.update', soal.id) : route('jadwal.soal.store');
 
             // Add _method field for Laravel to handle PUT request via POST
             if (mode === 'edit') {
@@ -279,7 +287,7 @@ export default function SoalFormModal({
             }
 
             // Tambahkan field lain sesuai kebutuhan
-            router.post(route, formData, {
+            router.post(routePath, formData, {
                 onSuccess: () => {
                     setLoading(false);
                     setOpen(false);
@@ -312,7 +320,11 @@ export default function SoalFormModal({
                       ? 'multi_choice'
                       : tipeJawaban === 'essay'
                         ? 'esai'
-                        : tipeJawaban,
+                        : tipeJawaban === 'essay_gambar'
+                          ? 'essay_gambar'
+                          : tipeJawaban === 'essay_audio'
+                            ? 'essay_audio'
+                            : tipeJawaban,
                 pertanyaan,
                 skor,
             } as Record<string, string | number>;
@@ -362,10 +374,10 @@ export default function SoalFormModal({
             // Tambahkan field lain sesuai kebutuhan
 
             // Determine route based on mode
-            const route = mode === 'edit' && soal ? `/soal/${soal.id}` : `/jadwal/soal`;
+            const routePath = mode === 'edit' && soal ? route('jadwal.soal.update', soal.id) : route('jadwal.soal.store');
             const method = mode === 'edit' ? 'put' : 'post';
 
-            router[method](route, payload, {
+            router[method](routePath, payload, {
                 onSuccess: () => {
                     setLoading(false);
                     setOpen(false);
