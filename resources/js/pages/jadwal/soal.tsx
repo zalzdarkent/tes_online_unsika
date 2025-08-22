@@ -428,7 +428,10 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                 </svg>
                                 Pertanyaan
                             </h3>
-                            <div className="rounded-md bg-gray-200 p-4 leading-relaxed whitespace-pre-line text-black">{selectedSoal.pertanyaan}</div>
+                            <div 
+                                className="prose rounded-md bg-gray-200 p-4 leading-relaxed text-black max-w-none"
+                                dangerouslySetInnerHTML={{ __html: selectedSoal.pertanyaan }}
+                            />
                         </div>
 
                         {/* Opsi Jawaban */}

@@ -51,7 +51,7 @@ class SoalController extends Controller
         ]);
 
         // Handle jawaban_benar untuk multi_choice (di store dan update)
-        if ($request->jenis_soal === 'pilihan_ganda_multi') {
+        if ($request->jenis_soal === 'multi_choice') {
             // Jika frontend mengirim array, ubah ke string CSV
             $jawabanMulti = $request->input('jawaban_benar');
             if (is_array($jawabanMulti)) {
@@ -59,6 +59,17 @@ class SoalController extends Controller
             } else {
                 $validated['jawaban_benar'] = $jawabanMulti;
             }
+        }
+
+        // Validasi khusus untuk pilihan ganda
+        if (in_array($request->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
+            $request->validate([
+                'opsi_a' => 'required|string',
+                'opsi_b' => 'required|string',
+                'opsi_c' => 'required|string',
+                'opsi_d' => 'required|string',
+                'jawaban_benar' => 'required',
+            ]);
         }
 
         // Validasi khusus untuk skala
@@ -144,7 +155,7 @@ class SoalController extends Controller
         ]);
 
         // Handle jawaban_benar untuk multi_choice (di update juga)
-        if ($request->jenis_soal === 'pilihan_ganda_multi') {
+        if ($request->jenis_soal === 'multi_choice') {
             $jawabanMulti = $request->input('jawaban_benar');
             if (is_array($jawabanMulti)) {
                 $validated['jawaban_benar'] = implode(',', $jawabanMulti);
@@ -154,7 +165,7 @@ class SoalController extends Controller
         }
 
         // Validasi khusus untuk pilihan ganda
-        if (in_array($request->jenis_soal, ['pilihan_ganda', 'pilihan_ganda_multi'])) {
+        if (in_array($request->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
             $request->validate([
                 'opsi_a' => 'required|string',
                 'opsi_b' => 'required|string',

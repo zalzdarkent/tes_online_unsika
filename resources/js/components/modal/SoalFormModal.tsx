@@ -110,7 +110,7 @@ export default function SoalFormModal({
             let uiType = soal.jenis_soal;
             if (soal.jenis_soal === 'pilihan_ganda') {
                 uiType = soal.media ? 'single_choice_gambar' : 'single_choice';
-            } else if (soal.jenis_soal === 'pilihan_ganda_multi') {
+            } else if (soal.jenis_soal === 'multi_choice') {
                 uiType = soal.media ? 'multi_choice_gambar' : 'multi_choice';
             } else if (soal.jenis_soal === 'esai') {
                 uiType = soal.media ? 'essay_gambar' : 'essay';
@@ -131,7 +131,7 @@ export default function SoalFormModal({
             }
 
             // Load jawaban benar
-            if (soal.jenis_soal === 'pilihan_ganda_multi') {
+            if (soal.jenis_soal === 'multi_choice') {
                 setJawabanBenarMulti(soal.jawaban_benar.split(','));
             } else {
                 setJawabanBenar(soal.jawaban_benar);
@@ -218,7 +218,7 @@ export default function SoalFormModal({
                 tipeJawaban.startsWith('single_choice')
                     ? 'pilihan_ganda'
                     : tipeJawaban.startsWith('multi_choice')
-                      ? 'pilihan_ganda_multi'
+                      ? 'multi_choice'
                       : tipeJawaban === 'essay'
                         ? 'esai'
                         : tipeJawaban,
@@ -233,6 +233,13 @@ export default function SoalFormModal({
                 formData.append('jawaban_benar', jawabanBenar);
             }
             if (tipeJawaban === 'multi_choice') {
+                formData.append('opsi_a', opsi[0]);
+                formData.append('opsi_b', opsi[1]);
+                formData.append('opsi_c', opsi[2]);
+                formData.append('opsi_d', opsi[3]);
+                formData.append('jawaban_benar', jawabanBenarMulti.join(','));
+            }
+            if (tipeJawaban === 'multi_choice_gambar') {
                 formData.append('opsi_a', opsi[0]);
                 formData.append('opsi_b', opsi[1]);
                 formData.append('opsi_c', opsi[2]);
@@ -302,7 +309,7 @@ export default function SoalFormModal({
                 jenis_soal: tipeJawaban.startsWith('single_choice')
                     ? 'pilihan_ganda'
                     : tipeJawaban.startsWith('multi_choice')
-                      ? 'pilihan_ganda_multi'
+                      ? 'multi_choice'
                       : tipeJawaban === 'essay'
                         ? 'esai'
                         : tipeJawaban,
@@ -325,6 +332,13 @@ export default function SoalFormModal({
             }
 
             if (tipeJawaban === 'multi_choice') {
+                payload.opsi_a = opsi[0];
+                payload.opsi_b = opsi[1];
+                payload.opsi_c = opsi[2];
+                payload.opsi_d = opsi[3];
+                payload.jawaban_benar = jawabanBenarMulti.join(',');
+            }
+            if (tipeJawaban === 'multi_choice_gambar') {
                 payload.opsi_a = opsi[0];
                 payload.opsi_b = opsi[1];
                 payload.opsi_c = opsi[2];

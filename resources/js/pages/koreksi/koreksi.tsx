@@ -1,12 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
+import { FilterConfig } from '@/components/ui/data-table-filter';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { ClipboardCheck, Eye, Trash2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
 
 interface DataKoreksi {
     id_user: number;
@@ -16,10 +18,17 @@ interface DataKoreksi {
     total_soal: number;
     total_skor: number | null;
     waktu_ujian: string;
+    status_koreksi?: string | null;
+}
+
+interface JadwalItem {
+    id: number;
+    nama_jadwal: string;
 }
 
 interface Props {
     data: DataKoreksi[];
+    jadwalList: JadwalItem[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -29,7 +38,75 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Koreksi({ data }: Props) {
+export default function Koreksi({ data, jadwalList }: Props) {
+    const [activeFilters, setActiveFilters] = useState<Record<string, (string | number | boolean)[]>>({});
+
+    // Define filter configurations
+    const filterConfigs: FilterConfig[] = useMemo(() => [
+        {
+            id: 'jadwal',
+            label: 'Jadwal Tes',
+            type: 'checkbox',
+            options: jadwalList.map(jadwal => ({
+                id: jadwal.id.toString(),
+                label: jadwal.nama_jadwal,
+                value: jadwal.id
+            }))
+        },
+        {
+            id: 'status_koreksi',
+            label: 'Status Koreksi',
+            type: 'checkbox',
+            options: [
+                { id: 'belum_dikoreksi', label: 'Belum Dikoreksi', value: 'belum_dikoreksi' },
+                { id: 'draft', label: 'Draft', value: 'draft' },
+                { id: 'final', label: 'Final', value: 'submitted' }
+            ]
+        }
+    ], [jadwalList]);
+
+    // Filter data based on active filters
+    const filteredData = useMemo(() => {
+        if (Object.keys(activeFilters).length === 0) {
+            return data;
+        }
+
+        return data.filter(item => {
+            // Check jadwal filter
+            if (activeFilters.jadwal && activeFilters.jadwal.length > 0) {
+                if (!activeFilters.jadwal.includes(item.id_jadwal)) {
+                    return false;
+                }
+            }
+
+            // Check status koreksi filter
+            if (activeFilters.status_koreksi && activeFilters.status_koreksi.length > 0) {
+                const isKoreksi = item.total_skor !== null;
+                let statusValue: string;
+                
+                if (!isKoreksi) {
+                    statusValue = 'belum_dikoreksi';
+                } else if (item.status_koreksi === 'submitted') {
+                    statusValue = 'submitted';
+                } else {
+                    statusValue = 'draft';
+                }
+                
+                if (!activeFilters.status_koreksi.includes(statusValue)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }, [data, activeFilters]);
+
+    const handleFilterChange = (filterId: string, selectedValues: (string | number | boolean)[]) => {
+        setActiveFilters(prev => ({
+            ...prev,
+            [filterId]: selectedValues
+        }));
+    };
     const columns: ColumnDef<DataKoreksi>[] = [
         {
             id: 'select',
@@ -64,6 +141,37 @@ export default function Koreksi({ data }: Props) {
             cell: ({ row }) => {
                 const skor = row.original.total_skor;
                 return skor !== null ? skor : 'Belum dikoreksi';
+            },
+        },
+        {
+            accessorKey: 'status_koreksi',
+            header: 'Status Koreksi',
+            cell: ({ row }) => {
+                const data = row.original;
+                const isKoreksi = data.total_skor !== null;
+                const status = data.status_koreksi;
+                
+                if (!isKoreksi) {
+                    return (
+                        <span className="rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                            Belum Dikoreksi
+                        </span>
+                    );
+                }
+                
+                if (status === 'submitted') {
+                    return (
+                        <span className="rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            Final
+                        </span>
+                    );
+                }
+                
+                return (
+                    <span className="rounded-full px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                        Draft
+                    </span>
+                );
             },
         },
         {
@@ -159,12 +267,15 @@ export default function Koreksi({ data }: Props) {
                 <h2 className="text-2xl font-bold">Koreksi Peserta</h2>
                 <DataTable
                     columns={columns}
-                    data={data}
+                    data={filteredData}
                     searchColumn="nama_peserta"
                     searchPlaceholder="Cari nama peserta..."
                     exportFilename="data-koreksi"
                     showExportButton
                     onBulkDelete={handleBulkDelete}
+                    filters={filterConfigs}
+                    onFilterChange={handleFilterChange}
+                    activeFilters={activeFilters}
                     emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada daftar koreksi yang tersedia saat ini.</div>}
                 />
             </div>

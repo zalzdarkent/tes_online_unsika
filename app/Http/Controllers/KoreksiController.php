@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Jawaban;
 use App\Models\HasilTestPeserta;
+use App\Models\Jadwal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -49,8 +50,14 @@ class KoreksiController extends Controller
                 ];
             });
 
+        // Ambil semua jadwal untuk dropdown filter
+        $jadwalList = Jadwal::select('id', 'nama_jadwal')
+            ->orderBy('nama_jadwal')
+            ->get();
+
         return Inertia::render('koreksi/koreksi', [
-            'data' => $data
+            'data' => $data,
+            'jadwalList' => $jadwalList
         ]);
     }
 
