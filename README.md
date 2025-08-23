@@ -178,13 +178,13 @@ php artisan queue:work
 <div align="center">
 
 ### Dashboard Overview
-![Dashboard](https://via.placeholder.com/800x400/4F46E5/FFFFFF?text=Dashboard+Screenshot)
+![Dashboard](public/Screenshots/dashboard.png)
 
 ### Test Interface  
-![Test Interface](https://via.placeholder.com/800x400/059669/FFFFFF?text=Test+Interface+Screenshot)
+![Test Interface](public/Screenshots/test_interview.png)
 
 ### Question Management
-![Question Management](https://via.placeholder.com/800x400/DC2626/FFFFFF?text=Question+Management+Screenshot)
+![Question Management](public/Screenshots/question_management.png)
 
 </div>
 
