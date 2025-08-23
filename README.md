@@ -3,7 +3,7 @@
 
 <div align="center">
 
-![Logo UNSIKA](public/logo-unsika-new.png)
+<img src="public/logo-unsika-new.png" alt="Logo UNSIKA" width="150" height="150">
 
 [![Laravel](https://img.shields.io/badge/Laravel-12.0-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
 [![React](https://img.shields.io/badge/React-18.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
