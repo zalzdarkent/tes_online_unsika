@@ -27,7 +27,7 @@ export default function DevPage() {
 
     const teamMembers = [
         {
-            name: 'Alif - Testing CI/CD',
+            name: 'Alif - Testing',
             role: 'Lead Developer',
             description: 'Full Stack Developer yang fokus pada pengembangan backend dan frontend aplikasi',
             photo: '/team/alif-fadillah-ummar.jpg', // Foto akan disimpan di public/team/
