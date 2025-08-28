@@ -2,12 +2,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
 import { FilterConfig } from '@/components/ui/data-table-filter';
+import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { ClipboardCheck, Eye, Trash2 } from 'lucide-react';
+import { ClipboardCheck, Eye, Trash2, CheckSquare } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 interface DataKoreksi {
@@ -40,6 +41,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Koreksi({ data, jadwalList }: Props) {
     const [activeFilters, setActiveFilters] = useState<Record<string, (string | number | boolean)[]>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { toast } = useToast();
 
     // Define filter configurations
     const filterConfigs: FilterConfig[] = useMemo(() => [
@@ -83,7 +86,7 @@ export default function Koreksi({ data, jadwalList }: Props) {
             if (activeFilters.status_koreksi && activeFilters.status_koreksi.length > 0) {
                 const isKoreksi = item.total_skor !== null;
                 let statusValue: string;
-                
+
                 if (!isKoreksi) {
                     statusValue = 'belum_dikoreksi';
                 } else if (item.status_koreksi === 'submitted') {
@@ -91,7 +94,7 @@ export default function Koreksi({ data, jadwalList }: Props) {
                 } else {
                     statusValue = 'draft';
                 }
-                
+
                 if (!activeFilters.status_koreksi.includes(statusValue)) {
                     return false;
                 }
@@ -150,7 +153,7 @@ export default function Koreksi({ data, jadwalList }: Props) {
                 const data = row.original;
                 const isKoreksi = data.total_skor !== null;
                 const status = data.status_koreksi;
-                
+
                 if (!isKoreksi) {
                     return (
                         <span className="rounded-full px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
@@ -158,7 +161,7 @@ export default function Koreksi({ data, jadwalList }: Props) {
                         </span>
                     );
                 }
-                
+
                 if (status === 'submitted') {
                     return (
                         <span className="rounded-full px-2 py-1 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
@@ -166,7 +169,7 @@ export default function Koreksi({ data, jadwalList }: Props) {
                         </span>
                     );
                 }
-                
+
                 return (
                     <span className="rounded-full px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                         Draft
@@ -260,6 +263,65 @@ export default function Koreksi({ data, jadwalList }: Props) {
         // );
     };
 
+    const handleBatchSubmit = (selectedData: DataKoreksi[]) => {
+        // Filter hanya yang bisa di-submit (sudah dikoreksi tapi belum final)
+        const eligibleData = selectedData.filter(item =>
+            item.total_skor !== null && item.status_koreksi !== 'submitted'
+        );
+
+        if (eligibleData.length === 0) {
+            toast({
+                variant: 'destructive',
+                title: 'Tidak ada data yang bisa disubmit',
+                description: 'Pilih peserta yang sudah dikoreksi dan belum final.',
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        const submitData = eligibleData.map(item => ({
+            id_user: item.id_user,
+            id_jadwal: item.id_jadwal,
+            nama_peserta: item.nama_peserta,
+        }));
+
+        router.post('/koreksi/batch-submit',
+            { items: submitData },
+            {
+                onSuccess: () => {
+                    toast({
+                        variant: 'success',
+                        title: 'Berhasil!',
+                        description: `${eligibleData.length} koreksi berhasil disubmit sebagai final.`,
+                    });
+                    setIsSubmitting(false);
+                    // Refresh data
+                    router.reload({ only: ['data'] });
+                },
+                onError: (errors) => {
+                    console.log('Batch submit errors:', errors);
+                    toast({
+                        variant: 'destructive',
+                        title: 'Gagal!',
+                        description: errors.message || 'Terjadi kesalahan saat batch submit.',
+                    });
+                    setIsSubmitting(false);
+                },
+            }
+        );
+    };
+
+    const customBulkActions = [
+        {
+            label: 'Submit Final',
+            icon: <CheckSquare className="h-4 w-4" />,
+            action: handleBatchSubmit,
+            variant: 'default' as const,
+            disabled: isSubmitting,
+        },
+    ];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Koreksi Peserta" />
@@ -273,6 +335,7 @@ export default function Koreksi({ data, jadwalList }: Props) {
                     exportFilename="data-koreksi"
                     showExportButton
                     onBulkDelete={handleBulkDelete}
+                    customBulkActions={customBulkActions}
                     filters={filterConfigs}
                     onFilterChange={handleFilterChange}
                     activeFilters={activeFilters}

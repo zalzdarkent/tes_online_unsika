@@ -223,4 +223,73 @@ class KoreksiController extends Controller
     {
         //
     }
+
+    /**
+     * Batch submit multiple koreksi as final
+     */
+    public function batchSubmit(Request $request)
+    {
+        $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.id_user' => 'required|integer',
+            'items.*.id_jadwal' => 'required|integer',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $successCount = 0;
+            $errorMessages = [];
+
+            foreach ($request->items as $item) {
+                $userId = $item['id_user'];
+                $jadwalId = $item['id_jadwal'];
+
+                // Cek apakah hasil test peserta sudah ada
+                $hasilTest = HasilTestPeserta::where('id_user', $userId)
+                    ->where('id_jadwal', $jadwalId)
+                    ->first();
+
+                // Skip jika sudah submitted
+                if ($hasilTest && $hasilTest->status_koreksi === 'submitted') {
+                    $errorMessages[] = "Peserta {$item['nama_peserta']} sudah dalam status final.";
+                    continue;
+                }
+
+                // Skip jika belum ada data koreksi
+                if (!$hasilTest) {
+                    $errorMessages[] = "Peserta {$item['nama_peserta']} belum memiliki data koreksi.";
+                    continue;
+                }
+
+                // Update status ke submitted
+                $hasilTest->update(['status_koreksi' => 'submitted']);
+                $successCount++;
+            }
+
+            DB::commit();
+
+            $message = $successCount > 0
+                ? "Berhasil submit {$successCount} koreksi sebagai final."
+                : "Tidak ada koreksi yang berhasil disubmit.";
+
+            if (!empty($errorMessages)) {
+                $message .= " Peringatan: " . implode(" ", $errorMessages);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'success_count' => $successCount,
+                'errors' => $errorMessages
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal melakukan batch submit: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

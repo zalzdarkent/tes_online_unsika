@@ -52,12 +52,21 @@ import {
 } from "@/components/ui/select"
 import { DataTableFilter, FilterConfig } from "@/components/ui/data-table-filter"
 
+interface BulkAction<TData> {
+  label: string
+  icon?: React.ReactNode
+  action: (selectedData: TData[]) => void
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
+  disabled?: boolean
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   onAddNew?: () => void
   addButtonLabel?: string
   onBulkDelete?: (selectedRows: TData[]) => void
+  customBulkActions?: BulkAction<TData>[]
   searchColumn?: string
   searchPlaceholder?: string
   emptyMessage?: React.ReactNode
@@ -75,6 +84,7 @@ export function DataTable<TData, TValue>({
   onAddNew,
   addButtonLabel = "Tambah Data",
   onBulkDelete,
+  customBulkActions = [],
   searchColumn,
   searchPlaceholder = "Cari data...",
   emptyMessage,
@@ -173,6 +183,24 @@ export function DataTable<TData, TValue>({
             </span>
           </div>
           <div className="flex items-center gap-2">
+            {/* Custom Bulk Actions */}
+            {customBulkActions.map((action, index) => (
+              <Button
+                key={index}
+                variant={action.variant || 'default'}
+                size="sm"
+                className="cursor-pointer"
+                disabled={action.disabled}
+                onClick={() => {
+                  const selectedData = selectedRows.map(row => row.original)
+                  action.action(selectedData)
+                }}
+              >
+                {action.icon && <span className="mr-2">{action.icon}</span>}
+                {action.label} ({selectedRows.length})
+              </Button>
+            ))}
+
             {onBulkDelete && (
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>

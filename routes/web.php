@@ -89,6 +89,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', [KoreksiController::class, 'index']);
             Route::get('{userId}/{jadwalId}', [KoreksiController::class, 'show'])->name('.detail');
             Route::post('{userId}/{jadwalId}', [KoreksiController::class, 'update'])->name('.update');
+            Route::post('batch-submit', [KoreksiController::class, 'batchSubmit'])
+                ->name('.batch-submit')
+                ->middleware('bulk.throttle');
         });
     });
 
