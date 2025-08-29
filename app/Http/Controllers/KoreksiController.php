@@ -277,19 +277,12 @@ class KoreksiController extends Controller
                 $message .= " Peringatan: " . implode(" ", $errorMessages);
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'success_count' => $successCount,
-                'errors' => $errorMessages
-            ]);
+            // Gunakan redirect dengan session flash message untuk Inertia
+            return redirect()->route('koreksi.index')->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollback();
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal melakukan batch submit: ' . $e->getMessage()
-            ], 500);
+            return redirect()->route('koreksi.index')->with('error', 'Gagal melakukan batch submit: ' . $e->getMessage());
         }
     }
 }

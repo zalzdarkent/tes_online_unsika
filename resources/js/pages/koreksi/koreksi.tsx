@@ -289,15 +289,10 @@ export default function Koreksi({ data, jadwalList }: Props) {
         router.post('/koreksi/batch-submit',
             { items: submitData },
             {
-                onSuccess: () => {
-                    toast({
-                        variant: 'success',
-                        title: 'Berhasil!',
-                        description: `${eligibleData.length} koreksi berhasil disubmit sebagai final.`,
-                    });
+                onSuccess: (page) => {
                     setIsSubmitting(false);
-                    // Refresh data
-                    router.reload({ only: ['data'] });
+                    // Flash message akan ditangani oleh AppLayout atau layout lain
+                    // Data akan ter-refresh otomatis karena redirect
                 },
                 onError: (errors) => {
                     console.log('Batch submit errors:', errors);
