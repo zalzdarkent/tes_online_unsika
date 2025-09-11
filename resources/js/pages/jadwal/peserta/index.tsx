@@ -3,6 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
@@ -68,11 +69,45 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Alert Dialog States
+    const [alertDialog, setAlertDialog] = useState<{
+        isOpen: boolean;
+        title: string;
+        description: string;
+        onConfirm: () => void;
+        confirmText?: string;
+        variant?: 'default' | 'destructive';
+    }>({
+        isOpen: false,
+        title: '',
+        description: '',
+        onConfirm: () => {},
+        confirmText: 'Ya',
+        variant: 'default'
+    });
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Jadwal Tes', href: '/jadwal' },
         { title: jadwal.nama_jadwal, href: `/jadwal/${jadwal.id}/soal` },
         { title: 'Peserta', href: `/jadwal/${jadwal.id}/peserta` },
     ];
+
+    const showAlert = (
+        title: string,
+        description: string,
+        onConfirm: () => void,
+        confirmText: string = 'Ya',
+        variant: 'default' | 'destructive' = 'default'
+    ) => {
+        setAlertDialog({
+            isOpen: true,
+            title,
+            description,
+            onConfirm,
+            confirmText,
+            variant
+        });
+    };
 
     const handleRefresh = () => {
         router.reload();
@@ -129,24 +164,32 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             return;
         }
 
-        router.post(
-            route('jadwal.peserta.bulk-approve', jadwal.id),
-            { ids: menungguIds },
-            {
-                onSuccess: () => {
-                    toast({
-                        title: 'Berhasil!',
-                        description: `${menungguIds.length} peserta berhasil disetujui.`,
-                    });
-                },
-                onError: (errors) => {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Error!',
-                        description: errors.error || 'Terjadi kesalahan.',
-                    });
-                },
-            }
+        showAlert(
+            'Konfirmasi Persetujuan',
+            `Yakin ingin menyetujui ${menungguIds.length} peserta yang dipilih?`,
+            () => {
+                router.post(
+                    route('jadwal.peserta.bulk-approve', jadwal.id),
+                    { ids: menungguIds },
+                    {
+                        onSuccess: () => {
+                            toast({
+                                title: 'Berhasil!',
+                                description: `${menungguIds.length} peserta berhasil disetujui.`,
+                            });
+                        },
+                        onError: (errors) => {
+                            toast({
+                                variant: 'destructive',
+                                title: 'Error!',
+                                description: errors.error || 'Terjadi kesalahan.',
+                            });
+                        },
+                    }
+                );
+            },
+            'Setujui',
+            'default'
         );
     };
 
@@ -162,89 +205,121 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             return;
         }
 
-        router.post(
-            route('jadwal.peserta.bulk-reject', jadwal.id),
-            { ids: menungguIds },
-            {
-                onSuccess: () => {
-                    toast({
-                        title: 'Berhasil!',
-                        description: `${menungguIds.length} peserta ditolak.`,
-                    });
-                },
-                onError: (errors) => {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Error!',
-                        description: errors.error || 'Terjadi kesalahan.',
-                    });
-                },
-            }
+        showAlert(
+            'Konfirmasi Penolakan',
+            `Yakin ingin menolak ${menungguIds.length} peserta yang dipilih?`,
+            () => {
+                router.post(
+                    route('jadwal.peserta.bulk-reject', jadwal.id),
+                    { ids: menungguIds },
+                    {
+                        onSuccess: () => {
+                            toast({
+                                title: 'Berhasil!',
+                                description: `${menungguIds.length} peserta ditolak.`,
+                            });
+                        },
+                        onError: (errors) => {
+                            toast({
+                                variant: 'destructive',
+                                title: 'Error!',
+                                description: errors.error || 'Terjadi kesalahan.',
+                            });
+                        },
+                    }
+                );
+            },
+            'Tolak',
+            'destructive'
         );
     };
 
     const handleApprove = (registrationId: number) => {
-        router.post(
-            route('jadwal.peserta.approve', [jadwal.id, registrationId]),
-            {},
-            {
-                onSuccess: () => {
-                    toast({
-                        title: 'Berhasil!',
-                        description: 'Peserta berhasil disetujui.',
-                    });
-                },
-                onError: (errors) => {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Error!',
-                        description: errors.error || 'Terjadi kesalahan.',
-                    });
-                },
-            }
+        showAlert(
+            'Konfirmasi Persetujuan',
+            'Yakin ingin menyetujui peserta ini?',
+            () => {
+                router.post(
+                    route('jadwal.peserta.approve', [jadwal.id, registrationId]),
+                    {},
+                    {
+                        onSuccess: () => {
+                            toast({
+                                title: 'Berhasil!',
+                                description: 'Peserta berhasil disetujui.',
+                            });
+                        },
+                        onError: (errors) => {
+                            toast({
+                                variant: 'destructive',
+                                title: 'Error!',
+                                description: errors.error || 'Terjadi kesalahan.',
+                            });
+                        },
+                    }
+                );
+            },
+            'Setujui',
+            'default'
         );
     };
 
     const handleReject = (registrationId: number) => {
-        router.post(
-            route('jadwal.peserta.reject', [jadwal.id, registrationId]),
-            {},
-            {
-                onSuccess: () => {
-                    toast({
-                        title: 'Berhasil!',
-                        description: 'Peserta ditolak.',
-                    });
-                },
-                onError: (errors) => {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Error!',
-                        description: errors.error || 'Terjadi kesalahan.',
-                    });
-                },
-            }
+        showAlert(
+            'Konfirmasi Penolakan',
+            'Yakin ingin menolak peserta ini?',
+            () => {
+                router.post(
+                    route('jadwal.peserta.reject', [jadwal.id, registrationId]),
+                    {},
+                    {
+                        onSuccess: () => {
+                            toast({
+                                title: 'Berhasil!',
+                                description: 'Peserta ditolak.',
+                            });
+                        },
+                        onError: (errors) => {
+                            toast({
+                                variant: 'destructive',
+                                title: 'Error!',
+                                description: errors.error || 'Terjadi kesalahan.',
+                            });
+                        },
+                    }
+                );
+            },
+            'Tolak',
+            'destructive'
         );
     };
 
     const handleDelete = (registrationId: number) => {
-        router.delete(
-            route('jadwal.peserta.destroy', [jadwal.id, registrationId]),
-            {
-                onSuccess: () => {
-                    toast({
-                        title: 'Berhasil!',
-                        description: 'Peserta berhasil dihapus dari jadwal.',
-                    });
-                },
-                onError: (errors) => {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Error!',
-                        description: errors.error || 'Terjadi kesalahan.',
-                    });
-                },
-            }
+        showAlert(
+            'Konfirmasi Hapus',
+            'Yakin ingin menghapus peserta ini dari jadwal?',
+            () => {
+                router.delete(
+                    route('jadwal.peserta.destroy', [jadwal.id, registrationId]),
+                    {
+                        onSuccess: () => {
+                            toast({
+                                title: 'Berhasil!',
+                                description: 'Peserta berhasil dihapus dari jadwal.',
+                            });
+                        },
+                        onError: (errors) => {
+                            toast({
+                                variant: 'destructive',
+                                title: 'Error!',
+                                description: errors.error || 'Terjadi kesalahan.',
+                            });
+                        },
+                    }
+                );
+            },
+            'Hapus',
+            'destructive'
         );
     };
 
@@ -403,22 +478,23 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                         Daftarkan Peserta
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-4xl max-h-[80vh]">
-                                    <DialogHeader>
+                                <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+                                    <DialogHeader className="flex-shrink-0">
                                         <DialogTitle>Daftarkan Peserta ke Jadwal</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
                                         <p className="text-sm text-muted-foreground">
                                             Pilih peserta yang ingin didaftarkan ke jadwal "{jadwal.nama_jadwal}".
                                         </p>
+                                    </DialogHeader>
 
+                                    <div className="flex-1 overflow-hidden">
                                         {allPeserta.length === 0 ? (
                                             <div className="text-center py-8 text-muted-foreground">
                                                 Semua peserta sudah terdaftar di jadwal ini.
                                             </div>
                                         ) : (
-                                            <div className="space-y-4">
-                                                <DataTable
+                                            <div className="h-full flex flex-col space-y-4">
+                                                <div className="flex-1 overflow-hidden">
+                                                    <DataTable
                                                     columns={[
                                                         {
                                                             id: 'select',
@@ -503,7 +579,9 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                                         </div>
                                                     }
                                                 />
-                                                <div className="flex justify-between items-center pt-4 border-t">
+                                                </div>
+
+                                                <div className="flex-shrink-0 flex justify-between items-center pt-4 border-t bg-background">
                                                     <div className="text-sm text-muted-foreground">
                                                         {selectedPeserta.length} peserta dipilih
                                                     </div>
@@ -560,27 +638,33 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                         ]}
                         onBulkDelete={(selectedData) => {
                             const ids = selectedData.map(item => item.id);
-                            if (confirm('Yakin ingin menghapus peserta terpilih dari jadwal ini?')) {
-                                router.post(
-                                    route('jadwal.peserta.bulk-delete', jadwal.id),
-                                    { ids },
-                                    {
-                                        onSuccess: () => {
-                                            toast({
-                                                title: 'Berhasil!',
-                                                description: `${ids.length} peserta berhasil dihapus.`,
-                                            });
-                                        },
-                                        onError: (errors) => {
-                                            toast({
-                                                variant: 'destructive',
-                                                title: 'Error!',
-                                                description: errors.error || 'Terjadi kesalahan.',
-                                            });
-                                        },
-                                    }
-                                );
-                            }
+                            showAlert(
+                                'Konfirmasi Hapus',
+                                `Yakin ingin menghapus ${ids.length} peserta terpilih dari jadwal ini?`,
+                                () => {
+                                    router.post(
+                                        route('jadwal.peserta.bulk-delete', jadwal.id),
+                                        { ids },
+                                        {
+                                            onSuccess: () => {
+                                                toast({
+                                                    title: 'Berhasil!',
+                                                    description: `${ids.length} peserta berhasil dihapus.`,
+                                                });
+                                            },
+                                            onError: (errors) => {
+                                                toast({
+                                                    variant: 'destructive',
+                                                    title: 'Error!',
+                                                    description: errors.error || 'Terjadi kesalahan.',
+                                                });
+                                            },
+                                        }
+                                    );
+                                },
+                                'Hapus',
+                                'destructive'
+                            );
                         }}
                         emptyMessage={
                             <div className="w-full py-8 text-center text-gray-500">
@@ -590,6 +674,32 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                     />
                 </div>
             </JadwalLayout>
+
+            {/* Alert Dialog */}
+            <AlertDialog open={alertDialog.isOpen} onOpenChange={(open) => setAlertDialog(prev => ({ ...prev, isOpen: open }))}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{alertDialog.title}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {alertDialog.description}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setAlertDialog(prev => ({ ...prev, isOpen: false }))}>
+                            Batal
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                alertDialog.onConfirm();
+                                setAlertDialog(prev => ({ ...prev, isOpen: false }));
+                            }}
+                            className={alertDialog.variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+                        >
+                            {alertDialog.confirmText}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     );
 }

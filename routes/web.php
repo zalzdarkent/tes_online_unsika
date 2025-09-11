@@ -74,7 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('jadwal.bulk-destroy')
             ->middleware('bulk.throttle');
 
-        // Jadwal Peserta Management (untuk teacher)
+        // Jadwal Peserta Management (untuk admin & teacher)
         Route::prefix('jadwal/{jadwal}')->name('jadwal.peserta.')->group(function () {
             Route::get('peserta', [JadwalPesertaController::class, 'index'])->name('index');
             Route::post('peserta/daftarkan', [JadwalPesertaController::class, 'daftarkanPeserta'])->name('daftarkan');

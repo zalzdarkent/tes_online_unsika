@@ -20,8 +20,8 @@ class JadwalPesertaController extends Controller
     {
         $jadwal = Jadwal::with(['kategori', 'user'])->findOrFail($jadwalId);
 
-        // Hanya teacher yang bisa melihat halaman ini
-        if (Auth::user()->role !== 'teacher') {
+        // Hanya admin dan teacher yang bisa melihat halaman ini
+        if (!in_array(Auth::user()->role, ['admin', 'teacher'])) {
             abort(403, 'Anda tidak memiliki akses untuk melihat halaman ini.');
         }
 
@@ -116,8 +116,8 @@ class JadwalPesertaController extends Controller
 
         $user = Auth::user();
 
-        // Pastikan user adalah teacher
-        if ($user->role !== 'teacher') {
+        // Pastikan user adalah admin atau teacher
+        if (!in_array($user->role, ['admin', 'teacher'])) {
             return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk mendaftarkan peserta.']);
         }
 
@@ -168,8 +168,8 @@ class JadwalPesertaController extends Controller
         $registration = JadwalPeserta::findOrFail($registrationId);
         $user = Auth::user();
 
-        // Pastikan user adalah teacher
-        if ($user->role !== 'teacher') {
+        // Pastikan user adalah admin atau teacher
+        if (!in_array($user->role, ['admin', 'teacher'])) {
             return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk approve peserta.']);
         }
 
@@ -194,8 +194,8 @@ class JadwalPesertaController extends Controller
         $registration = JadwalPeserta::findOrFail($registrationId);
         $user = Auth::user();
 
-        // Pastikan user adalah teacher
-        if ($user->role !== 'teacher') {
+        // Pastikan user adalah admin atau teacher
+        if (!in_array($user->role, ['admin', 'teacher'])) {
             return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk menolak peserta.']);
         }
 
@@ -221,8 +221,8 @@ class JadwalPesertaController extends Controller
 
         $user = Auth::user();
 
-        // Pastikan user adalah teacher
-        if ($user->role !== 'teacher') {
+        // Pastikan user adalah admin atau teacher
+        if (!in_array($user->role, ['admin', 'teacher'])) {
             return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk approve peserta.']);
         }
 
@@ -250,8 +250,8 @@ class JadwalPesertaController extends Controller
 
         $user = Auth::user();
 
-        // Pastikan user adalah teacher
-        if ($user->role !== 'teacher') {
+        // Pastikan user adalah admin atau teacher
+        if (!in_array($user->role, ['admin', 'teacher'])) {
             return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk menolak peserta.']);
         }
 
@@ -275,8 +275,8 @@ class JadwalPesertaController extends Controller
         $registration = JadwalPeserta::findOrFail($registrationId);
         $user = Auth::user();
 
-        // Pastikan user adalah teacher
-        if ($user->role !== 'teacher') {
+        // Pastikan user adalah admin atau teacher
+        if (!in_array($user->role, ['admin', 'teacher'])) {
             return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk menghapus peserta.']);
         }
 
@@ -297,8 +297,8 @@ class JadwalPesertaController extends Controller
 
         $user = Auth::user();
 
-        // Pastikan user adalah teacher
-        if ($user->role !== 'teacher') {
+        // Pastikan user adalah admin atau teacher
+        if (!in_array($user->role, ['admin', 'teacher'])) {
             return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk menghapus peserta.']);
         }
 
