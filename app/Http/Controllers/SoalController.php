@@ -239,7 +239,7 @@ class SoalController extends Controller
     {
         try {
             $ids = $request->input('ids', []);
-            
+
             if (!is_array($ids) || empty($ids)) {
                 return redirect()->back()->with('error', 'Tidak ada soal yang dipilih.');
             }
@@ -251,13 +251,13 @@ class SoalController extends Controller
 
             // Hapus soal berdasarkan ID
             $deletedCount = \App\Models\Soal::whereIn('id', $ids)->delete();
-            
+
             if ($deletedCount > 0) {
                 return redirect()->back()->with('success', $deletedCount . ' soal berhasil dihapus!');
             } else {
                 return redirect()->back()->with('error', 'Tidak ada soal yang berhasil dihapus.');
             }
-            
+
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus soal: ' . $e->getMessage());
         }
@@ -269,25 +269,55 @@ class SoalController extends Controller
     public function import(Request $request)
     {
         try {
+            // Konversi semua nilai ke string terlebih dahulu untuk opsi dan jawaban
+            $soalData = collect($request->input('soal', []))->map(function ($soal) {
+                return [
+                    'id_jadwal' => $soal['id_jadwal'] ?? null,
+                    'jenis_soal' => $soal['jenis_soal'] ?? 'pilihan_ganda',
+                    'pertanyaan' => $soal['pertanyaan'] ?? '',
+                    'skor' => $soal['skor'] ?? 1,
+                    'opsi_a' => isset($soal['opsi_a']) ? (string)$soal['opsi_a'] : null,
+                    'opsi_b' => isset($soal['opsi_b']) ? (string)$soal['opsi_b'] : null,
+                    'opsi_c' => isset($soal['opsi_c']) ? (string)$soal['opsi_c'] : null,
+                    'opsi_d' => isset($soal['opsi_d']) ? (string)$soal['opsi_d'] : null,
+                    'jawaban_benar' => isset($soal['jawaban_benar']) ? (string)$soal['jawaban_benar'] : '',
+                    'skala_min' => $soal['skala_min'] ?? null,
+                    'skala_maks' => $soal['skala_maks'] ?? null,
+                    'skala_label_min' => isset($soal['skala_label_min']) ? (string)$soal['skala_label_min'] : null,
+                    'skala_label_maks' => isset($soal['skala_label_maks']) ? (string)$soal['skala_label_maks'] : null,
+                    'equation' => isset($soal['equation']) ? (string)$soal['equation'] : null,
+                ];
+            })->toArray();
+
             $validated = $request->validate([
                 'soal' => 'required|array|min:1',
-                'soal.*.id_jadwal' => 'required|integer|exists:jadwal,id',
-                'soal.*.jenis_soal' => 'required|string|in:pilihan_ganda,multi_choice,esai,essay_gambar,essay_audio,skala,equation',
-                'soal.*.pertanyaan' => 'required|string',
-                'soal.*.skor' => 'required|integer|min:1',
-                'soal.*.opsi_a' => 'nullable|string',
-                'soal.*.opsi_b' => 'nullable|string',
-                'soal.*.opsi_c' => 'nullable|string',
-                'soal.*.opsi_d' => 'nullable|string',
-                'soal.*.jawaban_benar' => 'required|string',
-                'soal.*.skala_min' => 'nullable|integer|min:1',
-                'soal.*.skala_maks' => 'nullable|integer|min:2',
-                'soal.*.skala_label_min' => 'nullable|string|max:255',
-                'soal.*.skala_label_maks' => 'nullable|string|max:255',
-                'soal.*.equation' => 'nullable|string'
             ]);
 
-            $soalData = $validated['soal'];
+            // Validasi manual untuk setiap soal
+            foreach ($soalData as $index => $soal) {
+                $validator = \Illuminate\Support\Facades\Validator::make($soal, [
+                    'id_jadwal' => 'required|integer|exists:jadwal,id',
+                    'jenis_soal' => 'required|string|in:pilihan_ganda,multi_choice,esai,essay_gambar,essay_audio,skala,equation',
+                    'pertanyaan' => 'required|string',
+                    'skor' => 'required|integer|min:1',
+                    'opsi_a' => 'nullable|string',
+                    'opsi_b' => 'nullable|string',
+                    'opsi_c' => 'nullable|string',
+                    'opsi_d' => 'nullable|string',
+                    'jawaban_benar' => 'required|string',
+                    'skala_min' => 'nullable|integer|min:1',
+                    'skala_maks' => 'nullable|integer|min:2',
+                    'skala_label_min' => 'nullable|string|max:255',
+                    'skala_label_maks' => 'nullable|string|max:255',
+                    'equation' => 'nullable|string'
+                ]);
+
+                if ($validator->fails()) {
+                    $errors = $validator->errors()->all();
+                    throw new \Illuminate\Validation\ValidationException($validator);
+                }
+            }
+
             $successCount = 0;
             $errors = [];
 
@@ -304,7 +334,7 @@ class SoalController extends Controller
                         if (empty($soal['skala_min']) || empty($soal['skala_maks'])) {
                             throw new \Exception("Skala min dan max wajib diisi untuk soal skala pada baris " . ($index + 1));
                         }
-                        if ($soal['skala_maks'] <= $soal['skala_min']) {
+                        if ((int)$soal['skala_maks'] <= (int)$soal['skala_min']) {
                             throw new \Exception("Skala maksimum harus lebih besar dari minimum pada baris " . ($index + 1));
                         }
                     }
@@ -315,17 +345,17 @@ class SoalController extends Controller
                         'urutan_soal' => $index + 1, // Gunakan index + 1 sebagai urutan
                         'jenis_soal' => $soal['jenis_soal'],
                         'pertanyaan' => $soal['pertanyaan'],
-                        'skor' => $soal['skor'],
-                        'opsi_a' => $soal['opsi_a'] ?? null,
-                        'opsi_b' => $soal['opsi_b'] ?? null,
-                        'opsi_c' => $soal['opsi_c'] ?? null,
-                        'opsi_d' => $soal['opsi_d'] ?? null,
+                        'skor' => (int)$soal['skor'],
+                        'opsi_a' => $soal['opsi_a'],
+                        'opsi_b' => $soal['opsi_b'],
+                        'opsi_c' => $soal['opsi_c'],
+                        'opsi_d' => $soal['opsi_d'],
                         'jawaban_benar' => $soal['jawaban_benar'],
-                        'skala_min' => $soal['skala_min'] ?? null,
-                        'skala_maks' => $soal['skala_maks'] ?? null,
-                        'skala_label_min' => $soal['skala_label_min'] ?? null,
-                        'skala_label_maks' => $soal['skala_label_maks'] ?? null,
-                        'equation' => $soal['equation'] ?? null,
+                        'skala_min' => $soal['skala_min'],
+                        'skala_maks' => $soal['skala_maks'],
+                        'skala_label_min' => $soal['skala_label_min'],
+                        'skala_label_maks' => $soal['skala_label_maks'],
+                        'equation' => $soal['equation'],
                     ]);
 
                     $successCount++;

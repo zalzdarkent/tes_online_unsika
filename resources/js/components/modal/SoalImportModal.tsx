@@ -60,11 +60,21 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData: ExcelSoal[] = XLSX.utils.sheet_to_json(firstSheet);
 
-                // Validasi data
+                // Validasi data dan konversi ke string
                 const validatedData = jsonData.map((item) => ({
-                    ...item,
-                    jenis_soal: item.jenis_soal || 'pilihan_ganda',
+                    jenis_soal: String(item.jenis_soal || 'pilihan_ganda'),
+                    pertanyaan: String(item.pertanyaan || ''),
                     skor: Number(item.skor) || 1,
+                    opsi_a: item.opsi_a ? String(item.opsi_a) : '',
+                    opsi_b: item.opsi_b ? String(item.opsi_b) : '',
+                    opsi_c: item.opsi_c ? String(item.opsi_c) : '',
+                    opsi_d: item.opsi_d ? String(item.opsi_d) : '',
+                    jawaban_benar: String(item.jawaban_benar || ''),
+                    skala_min: item.skala_min ? Number(item.skala_min) : undefined,
+                    skala_maks: item.skala_maks ? Number(item.skala_maks) : undefined,
+                    skala_label_min: item.skala_label_min ? String(item.skala_label_min) : '',
+                    skala_label_maks: item.skala_label_maks ? String(item.skala_label_maks) : '',
+                    equation: item.equation ? String(item.equation) : '',
                 }));
 
                 setSoalData(validatedData);
