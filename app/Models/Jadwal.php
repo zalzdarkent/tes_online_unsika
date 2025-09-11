@@ -76,6 +76,30 @@ class Jadwal extends Model
     }
 
     /**
+     * Relasi ke peserta yang terdaftar di jadwal ini
+     */
+    public function pesertaTerdaftar()
+    {
+        return $this->hasMany(JadwalPeserta::class, 'id_jadwal');
+    }
+
+    /**
+     * Relasi ke peserta yang sudah disetujui
+     */
+    public function pesertaDisetujui()
+    {
+        return $this->hasMany(JadwalPeserta::class, 'id_jadwal')->where('status', 'disetujui');
+    }
+
+    /**
+     * Relasi ke peserta yang menunggu approval
+     */
+    public function pesertaMenunggu()
+    {
+        return $this->hasMany(JadwalPeserta::class, 'id_jadwal')->where('status', 'menunggu');
+    }
+
+    /**
      * Check dan update status jadwal berdasarkan tanggal berakhir
      */
     public function checkAndUpdateStatus()

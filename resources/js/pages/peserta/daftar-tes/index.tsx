@@ -1,6 +1,7 @@
 import ConfirmDialogWrapper from '@/components/modal/ConfirmDialogWrapper';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
@@ -21,10 +22,16 @@ interface JadwalData {
         nama_jadwal: string;
     } | null;
     sudah_kerjakan_jadwal_sebelumnya: boolean;
+    // Tambahan untuk sistem pendaftaran
+    status_pendaftaran?: 'menunggu' | 'disetujui' | 'ditolak' | null;
+    sudah_daftar: boolean;
+    bisa_mulai_tes: boolean;
 }
 
 interface Props {
     jadwal: JadwalData[];
+    isProfileComplete: boolean;
+    missingProfileFields: string[];
     debug?: {
         total_jadwal_in_db: number;
         jadwal_status_buka: number;
@@ -43,7 +50,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function DaftarTes({ jadwal }: Props) {
+export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFields }: Props) {
     const { props } = usePage<{ errors?: Record<string, string> }>();
 
     useEffect(() => {
@@ -65,6 +72,38 @@ export default function DaftarTes({ jadwal }: Props) {
                     toast({
                         variant: 'destructive',
                         title: 'Gagal memulai tes',
+                        description: errors.error,
+                    });
+                },
+            },
+        );
+    };
+
+    const handleDaftar = (id_jadwal: number) => {
+        // Check profil lengkap dulu
+        if (!isProfileComplete) {
+            toast({
+                variant: 'destructive',
+                title: 'Profil Belum Lengkap',
+                description: `Harap lengkapi profil Anda terlebih dahulu: ${missingProfileFields.join(', ')}`,
+            });
+            return;
+        }
+
+        router.post(
+            route('peserta.daftar'),
+            { id_jadwal },
+            {
+                onSuccess: () => {
+                    toast({
+                        title: 'Berhasil!',
+                        description: 'Pendaftaran berhasil! Menunggu persetujuan dari penyelenggara tes.',
+                    });
+                },
+                onError: (errors) => {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Gagal mendaftar',
                         description: errors.error,
                     });
                 },
@@ -129,6 +168,36 @@ export default function DaftarTes({ jadwal }: Props) {
             },
         },
         {
+            accessorKey: 'status_pendaftaran',
+            header: 'Status Pendaftaran',
+            enableSorting: true,
+            enableHiding: true,
+            cell: ({ row }) => {
+                const statusPendaftaran = row.original.status_pendaftaran;
+                const sudahDaftar = row.original.sudah_daftar;
+
+                if (!sudahDaftar) {
+                    return <span className="text-sm text-muted-foreground">Belum Daftar</span>;
+                }
+
+                const statusMap: Record<string, { text: string; color: string }> = {
+                    'menunggu': { text: 'Menunggu', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+                    'disetujui': { text: 'Disetujui', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+                    'ditolak': { text: 'Ditolak', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+                };
+
+                const statusConfig = statusPendaftaran && statusMap[statusPendaftaran]
+                    ? statusMap[statusPendaftaran]
+                    : { text: 'Unknown', color: 'bg-gray-100 text-gray-800' };
+
+                return (
+                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusConfig.color}`}>
+                        {statusConfig.text}
+                    </span>
+                );
+            },
+        },
+        {
             accessorKey: 'id_jadwal_sebelumnya',
             header: 'Jadwal Sebelumnya',
             enableSorting: false,
@@ -141,26 +210,89 @@ export default function DaftarTes({ jadwal }: Props) {
             id: 'actions',
             header: 'Aksi',
             cell: ({ row }) => {
-                const { id, sudah_kerjakan_jadwal_sebelumnya, tanggal_mulai } = row.original;
+                const {
+                    id,
+                    sudah_kerjakan_jadwal_sebelumnya,
+                    tanggal_mulai,
+                    status_pendaftaran,
+                    sudah_daftar,
+                    bisa_mulai_tes
+                } = row.original;
 
+                // Jika belum mengerjakan tes sebelumnya
                 if (!sudah_kerjakan_jadwal_sebelumnya) {
                     return <span className="text-sm text-muted-foreground italic">Anda belum mengerjakan tes sebelumnya</span>;
                 }
 
+                // Jika belum dimulai
                 if (new Date(tanggal_mulai) > new Date()) {
                     return <span className="text-sm text-muted-foreground italic">Belum dimulai</span>;
                 }
 
-                return (
-                    <ConfirmDialogWrapper
-                        title="Mulai Tes?"
-                        description="Apakah Anda yakin ingin memulai tes ini? Pastikan Anda sudah siap."
-                        confirmLabel="Mulai"
-                        cancelLabel="Batal"
-                        onConfirm={() => handleStart(id)}
-                        trigger={<Button>Mulai Tes</Button>}
-                    />
-                );
+                // Jika belum daftar
+                if (!sudah_daftar) {
+                    if (!isProfileComplete) {
+                        return (
+                            <div className="flex items-center gap-2">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="inline-block">
+                                            <Button disabled>Daftar</Button>
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Profil belum lengkap. Harap lengkapi: {missingProfileFields.join(', ')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.visit('/settings')}
+                                    className="text-xs"
+                                >
+                                    Lengkapi Profil & Info Akademik
+                                </Button>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <ConfirmDialogWrapper
+                            title="Daftar Tes?"
+                            description="Apakah Anda yakin ingin mendaftar tes ini?"
+                            confirmLabel="Daftar"
+                            cancelLabel="Batal"
+                            onConfirm={() => handleDaftar(id)}
+                            trigger={<Button>Daftar</Button>}
+                        />
+                    );
+                }
+
+                // Jika sudah daftar tapi belum disetujui
+                if (status_pendaftaran === 'menunggu') {
+                    return <span className="text-sm text-yellow-600 italic">Menunggu Persetujuan</span>;
+                }
+
+                // Jika ditolak
+                if (status_pendaftaran === 'ditolak') {
+                    return <span className="text-sm text-red-600 italic">Pendaftaran Ditolak</span>;
+                }
+
+                // Jika disetujui, bisa mulai tes
+                if (bisa_mulai_tes) {
+                    return (
+                        <ConfirmDialogWrapper
+                            title="Mulai Tes?"
+                            description="Apakah Anda yakin ingin memulai tes ini? Pastikan Anda sudah siap."
+                            confirmLabel="Mulai"
+                            cancelLabel="Batal"
+                            onConfirm={() => handleStart(id)}
+                            trigger={<Button>Mulai Tes</Button>}
+                        />
+                    );
+                }
+
+                return <span className="text-sm text-muted-foreground italic">Tidak dapat mengikuti tes</span>;
             },
         },
     ];
@@ -168,33 +300,35 @@ export default function DaftarTes({ jadwal }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Daftar Tes" />
-            <div className="space-y-6 p-6">
-                <h1 className="text-2xl font-bold">Daftar Tes Tersedia</h1>
+            <TooltipProvider>
+                <div className="space-y-6 p-6">
+                    <h1 className="text-2xl font-bold">Daftar Tes Tersedia</h1>
 
-                {/* Debug Info - Hapus setelah troubleshooting selesai */}
-                {/* {debug && (
-                    <div className="rounded-lg bg-yellow-50 p-4 text-sm">
-                        <h3 className="font-semibold text-yellow-800">Debug Info:</h3>
-                        <div className="mt-2 space-y-1 text-yellow-700">
-                            <p>Total jadwal di database: {debug.total_jadwal_in_db}</p>
-                            <p>Jadwal dengan status BUKA: {debug.jadwal_status_buka}</p>
-                            <p>Jadwal belum dikerjakan: {debug.jadwal_belum_dikerjakan}</p>
-                            <p>Total jadwal yang ditemukan: {debug.total_jadwal_found}</p>
-                            <p>Waktu sekarang: {debug.current_time}</p>
-                            <p>User ID: {debug.user_id}</p>
-                            <p className="font-semibold">{debug.note}</p>
+                    {/* Debug Info - Hapus setelah troubleshooting selesai */}
+                    {/* {debug && (
+                        <div className="rounded-lg bg-yellow-50 p-4 text-sm">
+                            <h3 className="font-semibold text-yellow-800">Debug Info:</h3>
+                            <div className="mt-2 space-y-1 text-yellow-700">
+                                <p>Total jadwal di database: {debug.total_jadwal_in_db}</p>
+                                <p>Jadwal dengan status BUKA: {debug.jadwal_status_buka}</p>
+                                <p>Jadwal belum dikerjakan: {debug.jadwal_belum_dikerjakan}</p>
+                                <p>Total jadwal yang ditemukan: {debug.total_jadwal_found}</p>
+                                <p>Waktu sekarang: {debug.current_time}</p>
+                                <p>User ID: {debug.user_id}</p>
+                                <p className="font-semibold">{debug.note}</p>
+                            </div>
                         </div>
-                    </div>
-                )} */}
+                    )} */}
 
-                <DataTable
-                    columns={columns}
-                    data={jadwal}
-                    searchColumn="nama_jadwal"
-                    searchPlaceholder="Cari tes..."
-                    emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}
-                />
-            </div>
+                    <DataTable
+                        columns={columns}
+                        data={jadwal}
+                        searchColumn="nama_jadwal"
+                        searchPlaceholder="Cari tes..."
+                        emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}
+                    />
+                </div>
+            </TooltipProvider>
         </AppLayout>
     );
 }

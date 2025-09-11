@@ -21,7 +21,7 @@ import JadwalLayout from '@/layouts/jadwal/layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Edit, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { Edit, Eye, MoreHorizontal, Plus, Trash2, Users } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 // Helper function untuk format tanggal tanpa timezone conversion
@@ -101,6 +101,7 @@ type JadwalData = {
     durasi: number | null;
     kategori: string;
     kategori_tes_id: number | null;
+    jumlah_peserta: number;
     created_at: string;
     updated_at: string;
 };
@@ -402,6 +403,35 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
             },
         },
         {
+            accessorKey: 'jumlah_peserta',
+            header: 'Jumlah Peserta',
+            enableSorting: true,
+            enableHiding: true,
+            cell: ({ row }) => {
+                const jumlahPeserta = row.getValue('jumlah_peserta') as number;
+                const jadwalItem = row.original;
+                return (
+                    <div className="flex items-center gap-2">
+                        <span className={`font-medium ${jumlahPeserta > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                            {jumlahPeserta}
+                        </span>
+                        {jumlahPeserta > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                                onClick={() => {
+                                    router.visit(`/jadwal/${jadwalItem.id}/peserta`);
+                                }}
+                            >
+                                Lihat
+                            </Button>
+                        )}
+                    </div>
+                );
+            },
+        },
+        {
             accessorKey: 'durasi',
             header: 'Durasi (menit)',
             enableSorting: true,
@@ -447,6 +477,15 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                             >
                                 <Eye className="mr-2 h-4 w-4" />
                                 Lihat Soal
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => {
+                                    router.visit(`/jadwal/${jadwalItem.id}/peserta`);
+                                }}
+                            >
+                                <Users className="mr-2 h-4 w-4" />
+                                Lihat Peserta
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="cursor-pointer"

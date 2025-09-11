@@ -9,6 +9,7 @@ use App\Models\Jadwal;
 use App\Models\HasilTestPeserta;
 use App\Models\Jawaban;
 use App\Models\Soal;
+use App\Models\JadwalPeserta;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -41,7 +42,7 @@ class PesertaTesController extends Controller
             $query->where('id_user', $userId);
         })->count();
 
-        $jadwal = Jadwal::with('jadwalSebelumnya')
+        $jadwal = Jadwal::with(['jadwalSebelumnya', 'pesertaTerdaftar'])
             // TIDAK ada filter user_id karena peserta harus bisa lihat semua jadwal tes
             // HAPUS filter tanggal mulai - tampilkan semua jadwal
             // ->where('tanggal_mulai', '<=', $now) // DIHAPUS
@@ -81,13 +82,30 @@ class PesertaTesController extends Controller
                         ->where('id_jadwal', $item->jadwalSebelumnya->id)
                         ->exists();
                 }
+
+                // Tambahkan informasi pendaftaran peserta
+                $registration = JadwalPeserta::where('id_jadwal', $item->id)
+                    ->where('id_peserta', $userId)
+                    ->first();
+
+                $item->status_pendaftaran = $registration ? $registration->status : null;
+                $item->sudah_daftar = $registration !== null;
+                $item->bisa_mulai_tes = $registration && $registration->status === 'disetujui';
+
                 return $item;
             })
             ->filter() // Hapus item yang null (status Tutup)
             ->values(); // Reset array keys setelah filter
 
+        // Check apakah profil user lengkap
+        $user = Auth::user();
+        $isProfileComplete = $user->isProfileComplete();
+        $missingProfileFields = $isProfileComplete ? [] : $user->getMissingProfileFields();
+
         return Inertia::render('peserta/daftar-tes/index', [
             'jadwal' => $jadwal,
+            'isProfileComplete' => $isProfileComplete,
+            'missingProfileFields' => $missingProfileFields,
             'debug' => [
                 'total_jadwal_in_db' => $totalJadwalInDB,
                 'jadwal_status_buka' => $jadwalStatusBuka,

@@ -80,4 +80,61 @@ class User extends Authenticatable
     {
         return $this->hasMany(HasilTestPeserta::class, 'id_user');
     }
+
+    /**
+     * Relasi ke jadwal yang diikuti peserta
+     */
+    public function jadwalPeserta()
+    {
+        return $this->hasMany(JadwalPeserta::class, 'id_peserta');
+    }
+
+    /**
+     * Relasi ke jadwal yang di-approve oleh user
+     */
+    public function jadwalApproved()
+    {
+        return $this->hasMany(JadwalPeserta::class, 'approved_by');
+    }
+
+    /**
+     * Check apakah profil lengkap untuk mengikuti tes
+     */
+    public function isProfileComplete(): bool
+    {
+        return !empty($this->nama) &&
+               !empty($this->email) &&
+               !empty($this->alamat) &&
+               !empty($this->no_hp) &&
+               !empty($this->prodi) &&
+               !empty($this->fakultas) &&
+               !empty($this->universitas) &&
+               !empty($this->npm);
+    }
+
+    /**
+     * Get missing profile fields
+     */
+    public function getMissingProfileFields(): array
+    {
+        $required = [
+            'nama' => 'Nama Lengkap',
+            'email' => 'Email',
+            'alamat' => 'Alamat',
+            'no_hp' => 'Nomor HP',
+            'prodi' => 'Program Studi',
+            'fakultas' => 'Fakultas',
+            'universitas' => 'Universitas',
+            'npm' => 'NPM'
+        ];
+
+        $missing = [];
+        foreach ($required as $field => $label) {
+            if (empty($this->$field)) {
+                $missing[] = $label;
+            }
+        }
+
+        return $missing;
+    }
 }

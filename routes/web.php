@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JadwalController;
+use App\Http\Controllers\JadwalPesertaController;
 use App\Http\Controllers\KategoriTesController;
 use App\Http\Controllers\KoreksiController;
 use App\Http\Controllers\PesertaTesController;
@@ -45,6 +46,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('save-answer', [PesertaTesController::class, 'saveAnswer'])->name('save');
         Route::post('submit', [PesertaTesController::class, 'submit'])->name('submit');
         Route::get('riwayat', [PesertaTesController::class, 'riwayat'])->name('riwayat');
+
+        // Pendaftaran tes
+        Route::post('daftar', [JadwalPesertaController::class, 'daftar'])->name('daftar');
     });
 
     // ADMIN & TEACHER ROUTES
@@ -69,6 +73,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('jadwal/bulk-destroy', [JadwalController::class, 'bulkDestroy'])
             ->name('jadwal.bulk-destroy')
             ->middleware('bulk.throttle');
+
+        // Jadwal Peserta Management (untuk teacher)
+        Route::prefix('jadwal/{jadwal}')->name('jadwal.peserta.')->group(function () {
+            Route::get('peserta', [JadwalPesertaController::class, 'index'])->name('index');
+            Route::post('peserta/daftarkan', [JadwalPesertaController::class, 'daftarkanPeserta'])->name('daftarkan');
+            Route::post('peserta/{registration}/approve', [JadwalPesertaController::class, 'approve'])->name('approve');
+            Route::post('peserta/{registration}/reject', [JadwalPesertaController::class, 'reject'])->name('reject');
+            Route::post('peserta/bulk-approve', [JadwalPesertaController::class, 'bulkApprove'])->name('bulk-approve');
+            Route::post('peserta/bulk-reject', [JadwalPesertaController::class, 'bulkReject'])->name('bulk-reject');
+            Route::post('peserta/bulk-delete', [JadwalPesertaController::class, 'bulkDelete'])->name('bulk-delete');
+            Route::delete('peserta/{registration}', [JadwalPesertaController::class, 'destroy'])->name('destroy');
+        });
 
         // Soal Management (nested under jadwal)
         Route::prefix('jadwal')->name('jadwal.soal.')->group(function () {

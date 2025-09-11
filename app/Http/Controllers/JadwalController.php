@@ -49,6 +49,7 @@ class JadwalController extends Controller
             ])
             ->where('user_id', $userId)
             ->with(['kategori:id,nama']) // Load hanya field yang dibutuhkan
+            ->withCount('pesertaTerdaftar') // Hitung jumlah peserta terdaftar
             ->orderBy('created_at', 'asc')
             ->get()
             ->map(function ($item) {
@@ -64,6 +65,7 @@ class JadwalController extends Controller
                     'durasi' => $item->durasi,
                     'kategori' => $item->kategori ? $item->kategori->nama : '-',
                     'kategori_tes_id' => $item->kategori_tes_id,
+                    'jumlah_peserta' => $item->peserta_terdaftar_count, // Tambahkan jumlah peserta
                     'created_at' => $item->created_at,
                     'updated_at' => $item->updated_at,
                 ];
