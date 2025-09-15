@@ -1,6 +1,5 @@
 import SoalFormModal from '@/components/modal/SoalFormModal';
 import SoalImportModal from '@/components/modal/SoalImportModal';
-import { FileSpreadsheet } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -16,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
@@ -25,7 +25,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import 'katex/dist/katex.min.css';
-import { Edit, Eye, Plus, Trash2 } from 'lucide-react';
+import { Edit, Eye, FileSpreadsheet, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { BlockMath } from 'react-katex';
 
@@ -102,6 +102,7 @@ interface JadwalData {
     nama_jadwal: string;
     tanggal_mulai: string;
     tanggal_berakhir: string;
+    is_shuffled: boolean;
 }
 
 interface SoalPageProps {
@@ -116,6 +117,38 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
     const [editSoal, setEditSoal] = useState<SoalData | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
+    const [isShuffled, setIsShuffled] = useState<boolean>(!!jadwal.is_shuffled);
+    const [loading, setLoading] = useState(false);
+
+    const handleRandom = (value: boolean, jadwal: JadwalData) => {
+        setIsShuffled(value);
+        setLoading(true);
+
+        router.put(
+            route('jadwal.shuffle', jadwal.id),
+            { is_randomized: value },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast({
+                        variant: 'success',
+                        title: 'Berhasil!',
+                        description: 'Pengaturan acak soal berhasil disimpan',
+                    });
+                    setLoading(false);
+                },
+                onError: (e) => {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Gagal!',
+                        description: 'Gagal mengacak soal, silakan coba lagi',
+                    });
+                    setLoading(false);
+                    setIsShuffled(!value);
+                },
+            },
+        );
+    };
 
     // Handler untuk menghapus satu soal
     const handleDeleteSingle = (soal: SoalData) => {
@@ -428,8 +461,8 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                 </svg>
                                 Pertanyaan
                             </h3>
-                            <div 
-                                className="prose rounded-md bg-gray-200 p-4 leading-relaxed text-black max-w-none"
+                            <div
+                                className="prose max-w-none rounded-md bg-gray-200 p-4 leading-relaxed text-black"
                                 dangerouslySetInnerHTML={{ __html: selectedSoal.pertanyaan }}
                             />
                         </div>
@@ -714,7 +747,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
         >
             <Head title={`Soal - ${jadwal.nama_jadwal}`} />
             <JadwalLayout>
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl">
+                <div className="flex h-full flex-1 flex-col gap-2 overflow-x-auto rounded-xl">
                     <div className="flex items-center justify-between">
                         <div>
                             <h2 className="mb-1 text-2xl font-bold">Soal untuk Jadwal: {jadwal.nama_jadwal}</h2>
@@ -753,6 +786,19 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                             />
                         </div>
                     </div>
+
+                    <div className="mt-1 flex items-center gap-4">
+                        <Checkbox
+                            checked={isShuffled}
+                            onCheckedChange={(value) => handleRandom(!!value, jadwal)}
+                            id={`acak-soal-${jadwal.id}`}
+                            disabled={loading}
+                        />
+                        <Label htmlFor={`acak-soal-${jadwal.id}`} className="font-bold text-muted-foreground hover:cursor-pointer">
+                            Acak Soal di Tampilan Peserta
+                        </Label>
+                    </div>
+
                     <DataTable
                         columns={columns}
                         data={soal}

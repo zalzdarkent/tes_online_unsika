@@ -43,10 +43,19 @@ class JadwalController extends Controller
 
         // Query yang lebih efisien dengan select specific columns
         $jadwal = Jadwal::select([
-                'id', 'nama_jadwal', 'tanggal_mulai', 'tanggal_berakhir',
-                'status', 'auto_close', 'user_id', 'id_jadwal_sebelumnya',
-                'durasi', 'kategori_tes_id', 'created_at', 'updated_at'
-            ])
+            'id',
+            'nama_jadwal',
+            'tanggal_mulai',
+            'tanggal_berakhir',
+            'status',
+            'auto_close',
+            'user_id',
+            'id_jadwal_sebelumnya',
+            'durasi',
+            'kategori_tes_id',
+            'created_at',
+            'updated_at'
+        ])
             ->where('user_id', $userId)
             ->with(['kategori:id,nama']) // Load hanya field yang dibutuhkan
             ->withCount('pesertaTerdaftar') // Hitung jumlah peserta terdaftar
@@ -443,5 +452,15 @@ class JadwalController extends Controller
                 'error' => 'Terjadi kesalahan saat menghapus jadwal. Silakan coba lagi.'
             ]);
         }
+    }
+
+    public function shuffle(Jadwal $jadwal)
+    {
+        $jadwal->is_shuffled = !$jadwal->is_shuffled;
+        $jadwal->save();
+
+        return redirect()->back()->with([
+            'is_shuffled' => $jadwal->is_shuffled,
+        ]);
     }
 }

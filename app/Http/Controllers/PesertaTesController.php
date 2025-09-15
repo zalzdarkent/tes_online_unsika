@@ -240,6 +240,7 @@ class PesertaTesController extends Controller
 
             $jadwal = Jadwal::with('soal')->findOrFail($id);
 
+
             $hasil = HasilTestPeserta::where('id_user', $user->id)
                 ->where('id_jadwal', $jadwal->id)
                 ->first();
@@ -255,6 +256,15 @@ class PesertaTesController extends Controller
                     'error' => 'Tes ini sudah pernah dikerjakan dan tidak dapat diakses kembali.'
                 ]);
             }
+
+            // acak soal
+            $soalQuery = $jadwal->soal();
+
+            if ($jadwal->is_shuffled) {
+                $soalQuery->inRandomOrder();
+            }
+
+            $soalData = $soalQuery->get();
 
             // prefill
             $jawaban = \App\Models\Jawaban::where('id_user', $user->id)
@@ -292,7 +302,7 @@ class PesertaTesController extends Controller
 
             return Inertia::render('peserta/soal/index', [
                 'jadwal' => $jadwal,
-                'soal' => $jadwal->soal->map(function ($s) {
+                'soal' => $soalData->map(function ($s) {
                     return [
                         'id' => $s->id,
                         'id_jadwal' => $s->id_jadwal,

@@ -1,9 +1,18 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
@@ -83,7 +92,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
         description: '',
         onConfirm: () => {},
         confirmText: 'Ya',
-        variant: 'default'
+        variant: 'default',
     });
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -97,7 +106,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
         description: string,
         onConfirm: () => void,
         confirmText: string = 'Ya',
-        variant: 'default' | 'destructive' = 'default'
+        variant: 'default' | 'destructive' = 'default',
     ) => {
         setAlertDialog({
             isOpen: true,
@@ -105,7 +114,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             description,
             onConfirm,
             confirmText,
-            variant
+            variant,
         });
     };
 
@@ -148,12 +157,12 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                 onFinish: () => {
                     setIsSubmitting(false);
                 },
-            }
+            },
         );
     };
 
     const handleBulkApprove = (selectedData: PesertaTerdaftarData[]) => {
-        const menungguIds = selectedData.filter(item => item.status === 'menunggu').map(item => item.id);
+        const menungguIds = selectedData.filter((item) => item.status === 'menunggu').map((item) => item.id);
 
         if (menungguIds.length === 0) {
             toast({
@@ -185,16 +194,16 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                 description: errors.error || 'Terjadi kesalahan.',
                             });
                         },
-                    }
+                    },
                 );
             },
             'Setujui',
-            'default'
+            'default',
         );
     };
 
     const handleBulkReject = (selectedData: PesertaTerdaftarData[]) => {
-        const menungguIds = selectedData.filter(item => item.status === 'menunggu').map(item => item.id);
+        const menungguIds = selectedData.filter((item) => item.status === 'menunggu').map((item) => item.id);
 
         if (menungguIds.length === 0) {
             toast({
@@ -226,11 +235,11 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                 description: errors.error || 'Terjadi kesalahan.',
                             });
                         },
-                    }
+                    },
                 );
             },
             'Tolak',
-            'destructive'
+            'destructive',
         );
     };
 
@@ -256,11 +265,11 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                 description: errors.error || 'Terjadi kesalahan.',
                             });
                         },
-                    }
+                    },
                 );
             },
             'Setujui',
-            'default'
+            'default',
         );
     };
 
@@ -286,11 +295,11 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                 description: errors.error || 'Terjadi kesalahan.',
                             });
                         },
-                    }
+                    },
                 );
             },
             'Tolak',
-            'destructive'
+            'destructive',
         );
     };
 
@@ -299,27 +308,24 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             'Konfirmasi Hapus',
             'Yakin ingin menghapus peserta ini dari jadwal?',
             () => {
-                router.delete(
-                    route('jadwal.peserta.destroy', [jadwal.id, registrationId]),
-                    {
-                        onSuccess: () => {
-                            toast({
-                                title: 'Berhasil!',
-                                description: 'Peserta berhasil dihapus dari jadwal.',
-                            });
-                        },
-                        onError: (errors) => {
-                            toast({
-                                variant: 'destructive',
-                                title: 'Error!',
-                                description: errors.error || 'Terjadi kesalahan.',
-                            });
-                        },
-                    }
-                );
+                router.delete(route('jadwal.peserta.destroy', [jadwal.id, registrationId]), {
+                    onSuccess: () => {
+                        toast({
+                            title: 'Berhasil!',
+                            description: 'Peserta berhasil dihapus dari jadwal.',
+                        });
+                    },
+                    onError: (errors) => {
+                        toast({
+                            variant: 'destructive',
+                            title: 'Error!',
+                            description: errors.error || 'Terjadi kesalahan.',
+                        });
+                    },
+                });
             },
             'Hapus',
-            'destructive'
+            'destructive',
         );
     };
 
@@ -334,11 +340,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                 />
             ),
             cell: ({ row }) => (
-                <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label="Select row"
-                />
+                <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label="Select row" />
             ),
             enableSorting: false,
             enableHiding: false,
@@ -383,17 +385,13 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             cell: ({ row }) => {
                 const status = row.getValue('status') as string;
                 const statusMap: Record<string, { text: string; color: string }> = {
-                    'menunggu': { text: 'Menunggu', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
-                    'disetujui': { text: 'Disetujui', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
-                    'ditolak': { text: 'Ditolak', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+                    menunggu: { text: 'Menunggu', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+                    disetujui: { text: 'Disetujui', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+                    ditolak: { text: 'Ditolak', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
                 };
                 const statusConfig = statusMap[status] || { text: status, color: 'bg-gray-100 text-gray-800' };
 
-                return (
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusConfig.color}`}>
-                        {statusConfig.text}
-                    </span>
-                );
+                return <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusConfig.color}`}>{statusConfig.text}</span>;
             },
         },
         {
@@ -430,17 +428,11 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                         <DropdownMenuContent align="end">
                             {registration.status === 'menunggu' && (
                                 <>
-                                    <DropdownMenuItem
-                                        className="cursor-pointer"
-                                        onClick={() => handleApprove(registration.id)}
-                                    >
+                                    <DropdownMenuItem className="cursor-pointer" onClick={() => handleApprove(registration.id)}>
                                         <Check className="mr-2 h-4 w-4" />
                                         Setujui
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        className="cursor-pointer text-orange-600"
-                                        onClick={() => handleReject(registration.id)}
-                                    >
+                                    <DropdownMenuItem className="cursor-pointer text-orange-600" onClick={() => handleReject(registration.id)}>
                                         <X className="mr-2 h-4 w-4" />
                                         Tolak
                                     </DropdownMenuItem>
@@ -478,7 +470,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                         Daftarkan Peserta
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+                                <DialogContent className="flex max-h-[90vh] w-[90vw] flex-col sm:w-[80vw] md:w-[70vw] lg:max-w-6xl">
                                     <DialogHeader className="flex-shrink-0">
                                         <DialogTitle>Daftarkan Peserta ke Jadwal</DialogTitle>
                                         <p className="text-sm text-muted-foreground">
@@ -488,103 +480,104 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
 
                                     <div className="flex-1 overflow-hidden">
                                         {allPeserta.length === 0 ? (
-                                            <div className="text-center py-8 text-muted-foreground">
-                                                Semua peserta sudah terdaftar di jadwal ini.
-                                            </div>
+                                            <div className="py-8 text-center text-muted-foreground">Semua peserta sudah terdaftar di jadwal ini.</div>
                                         ) : (
-                                            <div className="h-full flex flex-col space-y-4">
+                                            <div className="flex h-full flex-col space-y-4">
                                                 <div className="flex-1 overflow-hidden">
                                                     <DataTable
-                                                    columns={[
-                                                        {
-                                                            id: 'select',
-                                                            header: ({ table }) => (
-                                                                <Checkbox
-                                                                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
-                                                                    onCheckedChange={(value) => {
-                                                                        table.toggleAllPageRowsSelected(!!value);
-                                                                        if (value) {
-                                                                            setSelectedPeserta(allPeserta.map(p => p.id));
-                                                                        } else {
-                                                                            setSelectedPeserta([]);
+                                                        columns={[
+                                                            {
+                                                                id: 'select',
+                                                                header: ({ table }) => (
+                                                                    <Checkbox
+                                                                        checked={
+                                                                            table.getIsAllPageRowsSelected() ||
+                                                                            (table.getIsSomePageRowsSelected() && 'indeterminate')
                                                                         }
-                                                                    }}
-                                                                    aria-label="Select all"
-                                                                />
-                                                            ),
-                                                            cell: ({ row }) => (
-                                                                <Checkbox
-                                                                    checked={selectedPeserta.includes(row.original.id)}
-                                                                    onCheckedChange={(value) => {
-                                                                        if (value) {
-                                                                            setSelectedPeserta([...selectedPeserta, row.original.id]);
-                                                                        } else {
-                                                                            setSelectedPeserta(selectedPeserta.filter(id => id !== row.original.id));
-                                                                        }
-                                                                        row.toggleSelected(!!value);
-                                                                    }}
-                                                                    aria-label="Select row"
-                                                                />
-                                                            ),
-                                                            enableSorting: false,
-                                                            enableHiding: false,
-                                                        },
-                                                        {
-                                                            accessorKey: 'nama',
-                                                            header: 'Nama Peserta',
-                                                            enableSorting: true,
-                                                            cell: ({ row }) => (
-                                                                <div>
-                                                                    <div className="font-medium">{row.original.nama}</div>
-                                                                    <div className="text-sm text-muted-foreground">{row.original.npm}</div>
-                                                                </div>
-                                                            ),
-                                                        },
-                                                        {
-                                                            accessorKey: 'email',
-                                                            header: 'Email',
-                                                            enableSorting: true,
-                                                        },
-                                                        {
-                                                            accessorKey: 'prodi',
-                                                            header: 'Program Studi',
-                                                            enableSorting: true,
-                                                            cell: ({ row }) => (
-                                                                <div>
-                                                                    <div>{row.original.prodi}</div>
-                                                                    <div className="text-sm text-muted-foreground">{row.original.fakultas}</div>
-                                                                </div>
-                                                            ),
-                                                        },
-                                                    ]}
-                                                    data={allPeserta}
-                                                    searchColumn="nama"
-                                                    searchPlaceholder="Cari peserta..."
-                                                    customBulkActions={[
-                                                        {
-                                                            label: 'Daftarkan Terpilih',
-                                                            action: (selectedData: PesertaData[]) => {
-                                                                const ids = selectedData.map(p => p.id);
-                                                                setSelectedPeserta(ids);
-                                                                handleDaftarkanPeserta();
+                                                                        onCheckedChange={(value) => {
+                                                                            table.toggleAllPageRowsSelected(!!value);
+                                                                            if (value) {
+                                                                                setSelectedPeserta(allPeserta.map((p) => p.id));
+                                                                            } else {
+                                                                                setSelectedPeserta([]);
+                                                                            }
+                                                                        }}
+                                                                        aria-label="Select all"
+                                                                    />
+                                                                ),
+                                                                cell: ({ row }) => (
+                                                                    <Checkbox
+                                                                        checked={selectedPeserta.includes(row.original.id)}
+                                                                        onCheckedChange={(value) => {
+                                                                            if (value) {
+                                                                                setSelectedPeserta([...selectedPeserta, row.original.id]);
+                                                                            } else {
+                                                                                setSelectedPeserta(
+                                                                                    selectedPeserta.filter((id) => id !== row.original.id),
+                                                                                );
+                                                                            }
+                                                                            row.toggleSelected(!!value);
+                                                                        }}
+                                                                        aria-label="Select row"
+                                                                    />
+                                                                ),
+                                                                enableSorting: false,
+                                                                enableHiding: false,
                                                             },
-                                                            variant: 'default',
-                                                            icon: <UserPlus className="h-4 w-4" />,
-                                                            disabled: false,
+                                                            {
+                                                                accessorKey: 'nama',
+                                                                header: 'Nama Peserta',
+                                                                enableSorting: true,
+                                                                cell: ({ row }) => (
+                                                                    <div>
+                                                                        <div className="font-medium">{row.original.nama}</div>
+                                                                        <div className="text-sm text-muted-foreground">{row.original.npm}</div>
+                                                                    </div>
+                                                                ),
+                                                            },
+                                                            {
+                                                                accessorKey: 'email',
+                                                                header: 'Email',
+                                                                enableSorting: true,
+                                                            },
+                                                            {
+                                                                accessorKey: 'prodi',
+                                                                header: 'Program Studi',
+                                                                enableSorting: true,
+                                                                cell: ({ row }) => (
+                                                                    <div>
+                                                                        <div>{row.original.prodi}</div>
+                                                                        <div className="text-sm text-muted-foreground">{row.original.fakultas}</div>
+                                                                    </div>
+                                                                ),
+                                                            },
+                                                        ]}
+                                                        data={allPeserta}
+                                                        searchColumn="nama"
+                                                        searchPlaceholder="Cari peserta..."
+                                                        customBulkActions={[
+                                                            {
+                                                                label: 'Daftarkan Terpilih',
+                                                                action: (selectedData: PesertaData[]) => {
+                                                                    const ids = selectedData.map((p) => p.id);
+                                                                    setSelectedPeserta(ids);
+                                                                    handleDaftarkanPeserta();
+                                                                },
+                                                                variant: 'default',
+                                                                icon: <UserPlus className="h-4 w-4" />,
+                                                                disabled: false,
+                                                            },
+                                                        ]}
+                                                        emptyMessage={
+                                                            <div className="w-full py-8 text-center text-gray-500">
+                                                                Tidak ada peserta yang dapat didaftarkan.
+                                                            </div>
                                                         }
-                                                    ]}
-                                                    emptyMessage={
-                                                        <div className="w-full py-8 text-center text-gray-500">
-                                                            Tidak ada peserta yang dapat didaftarkan.
-                                                        </div>
-                                                    }
-                                                />
+                                                    />
                                                 </div>
 
-                                                <div className="flex-shrink-0 flex justify-between items-center pt-4 border-t bg-background">
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {selectedPeserta.length} peserta dipilih
-                                                    </div>
+                                                <div className="flex flex-shrink-0 items-center justify-between border-t bg-background pt-4">
+                                                    <div className="text-sm text-muted-foreground">{selectedPeserta.length} peserta dipilih</div>
                                                     <div className="flex gap-2">
                                                         <Button
                                                             variant="outline"
@@ -634,10 +627,10 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                 variant: 'destructive',
                                 icon: <X className="h-4 w-4" />,
                                 disabled: false,
-                            }
+                            },
                         ]}
                         onBulkDelete={(selectedData) => {
-                            const ids = selectedData.map(item => item.id);
+                            const ids = selectedData.map((item) => item.id);
                             showAlert(
                                 'Konfirmasi Hapus',
                                 `Yakin ingin menghapus ${ids.length} peserta terpilih dari jadwal ini?`,
@@ -659,41 +652,35 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                                     description: errors.error || 'Terjadi kesalahan.',
                                                 });
                                             },
-                                        }
+                                        },
                                     );
                                 },
                                 'Hapus',
-                                'destructive'
+                                'destructive',
                             );
                         }}
-                        emptyMessage={
-                            <div className="w-full py-8 text-center text-gray-500">
-                                Belum ada peserta yang terdaftar di jadwal ini.
-                            </div>
-                        }
+                        emptyMessage={<div className="w-full py-8 text-center text-gray-500">Belum ada peserta yang terdaftar di jadwal ini.</div>}
                     />
                 </div>
             </JadwalLayout>
 
             {/* Alert Dialog */}
-            <AlertDialog open={alertDialog.isOpen} onOpenChange={(open) => setAlertDialog(prev => ({ ...prev, isOpen: open }))}>
+            <AlertDialog open={alertDialog.isOpen} onOpenChange={(open) => setAlertDialog((prev) => ({ ...prev, isOpen: open }))}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>{alertDialog.title}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {alertDialog.description}
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>{alertDialog.description}</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setAlertDialog(prev => ({ ...prev, isOpen: false }))}>
-                            Batal
-                        </AlertDialogCancel>
+                        <AlertDialogCancel onClick={() => setAlertDialog((prev) => ({ ...prev, isOpen: false }))}>Batal</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={() => {
                                 alertDialog.onConfirm();
-                                setAlertDialog(prev => ({ ...prev, isOpen: false }));
+                                setAlertDialog((prev) => ({ ...prev, isOpen: false }));
                             }}
-                            className={alertDialog.variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+                            className={
+                                alertDialog.variant === 'destructive' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''
+                            }
                         >
                             {alertDialog.confirmText}
                         </AlertDialogAction>

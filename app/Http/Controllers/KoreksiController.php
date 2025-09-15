@@ -99,6 +99,7 @@ class KoreksiController extends Controller
                 'users.nama as nama_peserta',
                 'jadwal.nama_jadwal'
             )
+            ->orderBy('jawaban.id_soal', 'asc')
             ->get();
 
         // Jika tidak ada data jawaban, redirect ke halaman sebelumnya dengan pesan error
@@ -279,7 +280,6 @@ class KoreksiController extends Controller
 
             // Gunakan redirect dengan session flash message untuk Inertia
             return redirect()->route('koreksi.index')->with('success', $message);
-
         } catch (\Exception $e) {
             DB::rollback();
             return redirect()->route('koreksi.index')->with('error', 'Gagal melakukan batch submit: ' . $e->getMessage());
