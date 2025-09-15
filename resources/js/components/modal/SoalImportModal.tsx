@@ -1,12 +1,18 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DataTable } from '@/components/ui/data-table';
-import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileSpreadsheet } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import type { Progress as InertiaProgress } from '@inertiajs/core';
 import { router } from '@inertiajs/react';
+import { ColumnDef, Row } from '@tanstack/react-table';
+import { Download, FileSpreadsheet, Upload } from 'lucide-react';
+import { useState } from 'react';
+import * as XLSX from 'xlsx';
+import { Input } from '../ui/input';
+import { Separator } from '../ui/separator';
+import { Textarea } from '../ui/textarea';
 
 interface SoalImportModalProps {
     trigger?: React.ReactNode;
@@ -31,6 +37,13 @@ interface ExcelSoal {
     skala_label_maks?: string;
     equation?: string;
 }
+
+const soalTypes = [
+    { label: 'Pilihan Ganda (1 jawaban)', value: 'pilihan_ganda' },
+    { label: 'Pilihan Ganda (Lebih dari 1 jawaban)', value: 'multi_choice' },
+    { label: 'Esai', value: 'esai' },
+    { label: 'Skala', value: 'skala' },
+];
 
 export default function SoalImportModal({ trigger, open = false, onOpenChange, idJadwal, onSuccess }: SoalImportModalProps) {
     const [soalData, setSoalData] = useState<ExcelSoal[]>([]);
@@ -108,39 +121,41 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
             let uploaded = 0;
 
             // Kirim semua data sekaligus
-            await router.post(route('soal.import'), {
-                soal: soalData.map(soal => ({
-                    ...soal,
-                    id_jadwal: idJadwal
-                }))
-            }, {
-                onProgress: (event: { percentage?: number }) => {
-                    // Update progress based on upload progress
-                    if (event && event.percentage) {
-                        setProgress(event.percentage);
-                    }
+            router.post(
+                route('soal.import'),
+                {
+                    soal: soalData.map((soal) => ({
+                        ...soal,
+                        id_jadwal: idJadwal,
+                    })),
                 },
-                onSuccess: () => {
-                    toast({
-                        title: 'Berhasil!',
-                        description: `${totalSoal} soal berhasil diupload.`,
-                    });
-                    handleOpenChange(false);
-                    onSuccess?.();
+                {
+                    onProgress: (event?: InertiaProgress) => {
+                        if (event && event.percentage !== undefined) {
+                            setProgress(event.percentage);
+                        }
+                    },
+                    onSuccess: () => {
+                        toast({
+                            title: 'Berhasil!',
+                            description: `${totalSoal} soal berhasil diupload.`,
+                        });
+                        handleOpenChange(false);
+                        onSuccess?.();
+                    },
+                    onError: (errors) => {
+                        console.error('Error uploading soal:', errors);
+                        toast({
+                            variant: 'destructive',
+                            title: 'Error!',
+                            description: errors.message || 'Terjadi kesalahan saat mengupload soal.',
+                        });
+                    },
+                    onFinish: () => {
+                        setUploading(false);
+                    },
                 },
-                onError: (errors) => {
-                    console.error('Error uploading soal:', errors);
-                    toast({
-                        variant: 'destructive',
-                        title: 'Error!',
-                        description: errors.message || 'Terjadi kesalahan saat mengupload soal.',
-                    });
-                },
-                onFinish: () => {
-                    setUploading(false);
-                }
-            });
-
+            );
         } catch (error) {
             console.error('Error uploading soal:', error);
             toast({
@@ -152,42 +167,55 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
         }
     };
 
-    const columns = [
+    const columns: ColumnDef<ExcelSoal>[] = [
+        {
+            accessorKey: 'no',
+            header: 'No',
+            size: 15,
+            maxSize: 20,
+            enableHiding: true,
+            cell: ({ row }) => <div className="font-medium">{row.index + 1}</div>,
+        },
         {
             accessorKey: 'jenis_soal',
             header: 'Jenis',
             size: 140,
-            cell: ({ row, getValue }) => (
-                <select
-                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={getValue() as string}
-                    onChange={(e) => {
-                        const newData = [...soalData];
-                        newData[row.index].jenis_soal = e.target.value;
-                        setSoalData(newData);
-                    }}
-                >
-                    <option value="pilihan_ganda">Pilihan Ganda</option>
-                    <option value="multi_choice">Multi Pilihan</option>
-                    <option value="esai">Esai</option>
-                    <option value="skala">Skala</option>
-                    <option value="equation">Equation</option>
-                </select>
-            ),
+            cell: ({ row, getValue }) => {
+                const value = (getValue() as string) || '';
+                return (
+                    <Select
+                        value={value}
+                        onValueChange={(val) => {
+                            const newData = [...soalData];
+                            newData[row.index].jenis_soal = val;
+                            setSoalData(newData);
+                        }}
+                    >
+                        <SelectTrigger className="h-8 w-full text-xs">
+                            <SelectValue placeholder="Pilih jenis soal" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {soalTypes.map((soal) => (
+                                <SelectItem key={soal.value} value={soal.value} className="text-sm">
+                                    {soal.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                );
+            },
         },
         {
             accessorKey: 'pertanyaan',
             header: 'Pertanyaan',
             size: 250,
             cell: ({ row, getValue }) => (
-                <input
-                    type="text"
-                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={getValue() as string}
+                <Textarea
+                    className="block max-h-40 min-h-[2rem] max-w-96 min-w-[16rem] resize rounded border border-input bg-background px-2 py-1 text-xs"
+                    value={(getValue() as string) || ''}
                     onChange={(e) => {
-                        const newData = [...soalData];
-                        newData[row.index].pertanyaan = e.target.value;
-                        setSoalData(newData);
+                        const value = e.target.value;
+                        setSoalData((prev) => prev.map((item, idx) => (idx === row.index ? { ...item, opsi_a: value } : item)));
                     }}
                     placeholder="Masukkan pertanyaan..."
                 />
@@ -198,100 +226,52 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
             header: 'Skor',
             size: 70,
             cell: ({ row, getValue }) => (
-                <input
+                <Input
                     type="number"
                     className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={getValue() as number}
+                    value={(getValue() as number) ?? 0}
                     onChange={(e) => {
                         const newData = [...soalData];
-                        newData[row.index].skor = Number(e.target.value);
+                        newData[row.index].skor = Number(e.target.value) || 0;
                         setSoalData(newData);
                     }}
-                    min="0"
+                    min={0}
                 />
             ),
         },
-        {
-            accessorKey: 'opsi_a',
-            header: 'A',
+        ...['opsi_a', 'opsi_b', 'opsi_c', 'opsi_d'].map((opsiKey) => ({
+            accessorKey: opsiKey,
+            header: opsiKey
+                .split('_')
+                .map((w) => w[0].toUpperCase() + w.slice(1))
+                .join(' '),
             size: 120,
-            cell: ({ row, getValue }) => (
-                <input
-                    type="text"
-                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={getValue() as string || ''}
-                    onChange={(e) => {
-                        const newData = [...soalData];
-                        newData[row.index].opsi_a = e.target.value;
-                        setSoalData(newData);
-                    }}
-                    placeholder="Opsi A"
-                />
-            ),
-        },
-        {
-            accessorKey: 'opsi_b',
-            header: 'B',
-            size: 120,
-            cell: ({ row, getValue }) => (
-                <input
-                    type="text"
-                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={getValue() as string || ''}
-                    onChange={(e) => {
-                        const newData = [...soalData];
-                        newData[row.index].opsi_b = e.target.value;
-                        setSoalData(newData);
-                    }}
-                    placeholder="Opsi B"
-                />
-            ),
-        },
-        {
-            accessorKey: 'opsi_c',
-            header: 'C',
-            size: 120,
-            cell: ({ row, getValue }) => (
-                <input
-                    type="text"
-                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={getValue() as string || ''}
-                    onChange={(e) => {
-                        const newData = [...soalData];
-                        newData[row.index].opsi_c = e.target.value;
-                        setSoalData(newData);
-                    }}
-                    placeholder="Opsi C"
-                />
-            ),
-        },
-        {
-            accessorKey: 'opsi_d',
-            header: 'D',
-            size: 120,
-            cell: ({ row, getValue }) => (
-                <input
-                    type="text"
-                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={getValue() as string || ''}
-                    onChange={(e) => {
-                        const newData = [...soalData];
-                        newData[row.index].opsi_d = e.target.value;
-                        setSoalData(newData);
-                    }}
-                    placeholder="Opsi D"
-                />
-            ),
-        },
+            enableSorting: false,
+            cell: ({ row, getValue }: { row: Row<ExcelSoal>; getValue: () => unknown }) => {
+                const jenis = row.original.jenis_soal || '';
+                return (
+                    <Textarea
+                        className="block max-h-40 min-h-[2rem] max-w-64 min-w-[8rem] resize rounded border border-input bg-background px-2 py-1 text-xs"
+                        value={(getValue() as string) || ''}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            setSoalData((prev) => prev.map((item, idx) => (idx === row.index ? { ...item, [opsiKey]: value } : item)));
+                        }}
+                        placeholder={`Opsi ${opsiKey.split('_')[1].toUpperCase()}`}
+                        disabled={!(jenis === 'pilihan_ganda' || jenis === 'multi_choice')}
+                    />
+                );
+            },
+        })),
         {
             accessorKey: 'jawaban_benar',
-            header: 'Jawaban',
+            header: 'Jawaban Benar',
             size: 90,
+            enableSorting: false,
             cell: ({ row, getValue }) => (
-                <input
-                    type="text"
-                    className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={getValue() as string || ''}
+                <Textarea
+                    className="block max-h-40 min-h-[2rem] max-w-64 min-w-[8rem] resize rounded border border-input bg-background px-2 py-1 text-xs"
+                    value={(getValue() as string) || ''}
                     onChange={(e) => {
                         const newData = [...soalData];
                         newData[row.index].jawaban_benar = e.target.value;
@@ -305,103 +285,87 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-                {trigger}
-            </DialogTrigger>
-            <DialogContent className="max-h-[90vh] w-[95vw] max-w-7xl">
-                <DialogHeader className="border-b pb-4">
+            <DialogTrigger asChild>{trigger}</DialogTrigger>
+            <DialogContent className="w-full sm:max-w-5xl">
+                <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl">
                         <FileSpreadsheet className="h-5 w-5" />
                         Import Soal dari Excel
                     </DialogTitle>
+                    <DialogDescription>Upload file Excel (.xlsx, .xls) atau CSV yang berisi daftar soal.</DialogDescription>
                 </DialogHeader>
-
-                <div className="max-h-[75vh] space-y-6 overflow-y-auto p-1">
+                <div className="max-h-[75vh] space-y-4 overflow-y-auto p-1">
                     {/* File Upload Section */}
-                    <div className="rounded-lg border bg-card p-6">
+                    <div className="">
                         <div className="mb-4">
-                            <h3 className="mb-2 text-lg font-medium">Upload File Excel</h3>
-                            <p className="text-sm text-muted-foreground mb-3">
-                                Upload file Excel (.xlsx, .xls) atau CSV yang berisi daftar soal. Pastikan format sesuai dengan template.
-                            </p>
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                                <h4 className="font-medium text-blue-900 mb-2">Format yang Didukung:</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-blue-800">
-                                    <div>• <strong>Pilihan Ganda:</strong> jenis_soal = "pilihan_ganda"</div>
-                                    <div>• <strong>Multi Pilihan:</strong> jenis_soal = "multi_choice"</div>
-                                    <div>• <strong>Esai:</strong> jenis_soal = "esai"</div>
-                                    <div>• <strong>Skala:</strong> jenis_soal = "skala"</div>
+                            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                <h4 className="mb-2 font-medium text-blue-900">Format yang Didukung:</h4>
+                                <div className="text-sm text-blue-800">
+                                    <ul className="flex flex-wrap gap-4 text-sm text-blue-800">
+                                        {soalTypes.map((soal) => (
+                                            <li key={soal.value} className="flex min-w-[45%] flex-1 flex-col gap-1">
+                                                <strong>{soal.label}:</strong>
+                                                <code className="rounded bg-blue-100 px-2 py-1">{`jenis_soal = "${soal.value}"`}</code>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                            <div className="flex-1">
-                                <input
-                                    type="file"
-                                    accept=".xlsx,.xls,.csv"
-                                    onChange={handleFileUpload}
-                                    className="w-full cursor-pointer rounded-lg border p-2 text-sm file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-secondary/80"
-                                    disabled={uploading}
-                                />
-                            </div>
-                            <Button variant="outline" asChild className="w-full sm:w-auto">
-                                <a href={route('soal.template')} download>
-                                    Download Template
-                                </a>
-                            </Button>
-                        </div>
-                    </div>
 
-                    {/* Preview Table */}
-                    {soalData.length > 0 && (
-                        <div className="rounded-lg border bg-card p-6">
-                            <div className="mb-4 flex items-center justify-between">
-                                <h3 className="text-lg font-medium">Preview & Edit Data ({soalData.length} soal)</h3>
-                                <div className="text-xs text-muted-foreground">
-                                    💡 Scroll horizontal untuk melihat semua kolom
-                                </div>
-                            </div>
-                            <div className="overflow-auto rounded-md border">
-                                <div className="min-w-[1000px]">
-                                    <DataTable
-                                        columns={columns}
-                                        data={soalData}
-                                        searchColumn="pertanyaan"
-                                        searchPlaceholder="Cari pertanyaan..."
+                            {/* upload and download template */}
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                                <div className="flex-1">
+                                    <input
+                                        type="file"
+                                        accept=".xlsx,.xls,.csv"
+                                        onChange={handleFileUpload}
+                                        className="w-full cursor-pointer rounded-lg border p-2 text-sm file:mr-4 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-secondary/80"
+                                        disabled={uploading}
                                     />
                                 </div>
+                                <Button asChild className="w-full sm:w-auto">
+                                    <div>
+                                        <Download />
+                                        <a href={route('soal.template')} download>
+                                            Download Template
+                                        </a>
+                                    </div>
+                                </Button>
                             </div>
                         </div>
-                    )}
 
-                    {/* Upload Progress */}
-                    {uploading && (
-                        <div className="space-y-2 rounded-lg border bg-card p-4">
-                            <Progress value={progress} className="h-2 w-full" />
-                            <p className="text-sm text-muted-foreground">
-                                Mengupload soal... ({Math.round(progress)}%)
-                            </p>
+                        <Separator />
+                        {/* Preview Table */}
+                        {soalData.length > 0 && (
+                            <div className="py-4">
+                                <div className="items-center justify-between md:flex">
+                                    <h3 className="text-lg font-medium">Preview & Edit Soal ({soalData.length} soal)</h3>
+                                    <div className="text-xs text-muted-foreground">💡 Scroll horizontal untuk melihat semua kolom</div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <DataTable columns={columns} data={soalData} searchColumn="pertanyaan" searchPlaceholder="Cari pertanyaan..." />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Upload Progress */}
+                        {uploading && (
+                            <div className="space-y-2 rounded-lg border bg-card p-4">
+                                <Progress value={progress} className="h-2 w-full" />
+                                <p className="text-sm text-muted-foreground">Mengupload soal... ({Math.round(progress)}%)</p>
+                            </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-end gap-3 border-t pt-6">
+                            <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={uploading} className="min-w-[100px]">
+                                Batal
+                            </Button>
+                            <Button onClick={handleUpload} disabled={soalData.length === 0 || uploading} className="min-w-[140px]">
+                                <Upload className="mr-2 h-4 w-4" />
+                                {uploading ? 'Mengupload...' : 'Upload Soal'}
+                            </Button>
                         </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center justify-end gap-3 border-t pt-6">
-                        <Button
-                            variant="outline"
-                            onClick={() => handleOpenChange(false)}
-                            disabled={uploading}
-                            className="min-w-[100px]"
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            onClick={handleUpload}
-                            disabled={soalData.length === 0 || uploading}
-                            className="min-w-[140px]"
-                        >
-                            <Upload className="mr-2 h-4 w-4" />
-                            {uploading ? 'Mengupload...' : 'Upload Soal'}
-                        </Button>
                     </div>
                 </div>
             </DialogContent>
