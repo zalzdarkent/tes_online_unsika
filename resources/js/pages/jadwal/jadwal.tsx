@@ -22,7 +22,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Edit, Eye, MoreHorizontal, Plus, Trash2, Users } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 // Helper function untuk format tanggal tanpa timezone conversion
 const formatDateTime = (dateTimeString: string): string => {
@@ -172,27 +172,30 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
     console.log('Jadwal component rendered with:', jadwal?.length || 0, 'items');
 
     // Define filter configurations
-    const filterConfigs: FilterConfig[] = useMemo(() => [
-        {
-            id: 'status',
-            label: 'Status',
-            type: 'checkbox',
-            options: [
-                { id: 'buka', label: 'Buka', value: 'Buka' },
-                { id: 'tutup', label: 'Tutup', value: 'Tutup' }
-            ]
-        },
-        {
-            id: 'kategori',
-            label: 'Kategori',
-            type: 'checkbox',
-            options: kategoriTes.map(kat => ({
-                id: kat.id.toString(),
-                label: kat.nama,
-                value: kat.nama
-            }))
-        }
-    ], [kategoriTes]);
+    const filterConfigs: FilterConfig[] = useMemo(
+        () => [
+            {
+                id: 'status',
+                label: 'Status',
+                type: 'checkbox',
+                options: [
+                    { id: 'buka', label: 'Buka', value: 'Buka' },
+                    { id: 'tutup', label: 'Tutup', value: 'Tutup' },
+                ],
+            },
+            {
+                id: 'kategori',
+                label: 'Kategori',
+                type: 'checkbox',
+                options: kategoriTes.map((kat) => ({
+                    id: kat.id.toString(),
+                    label: kat.nama,
+                    value: kat.nama,
+                })),
+            },
+        ],
+        [kategoriTes],
+    );
 
     // Filter data based on active filters
     const filteredJadwal = useMemo(() => {
@@ -200,7 +203,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
             return jadwal;
         }
 
-        return jadwal.filter(item => {
+        return jadwal.filter((item) => {
             // Check status filter
             if (activeFilters.status && activeFilters.status.length > 0) {
                 if (!activeFilters.status.includes(item.status)) {
@@ -220,9 +223,9 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
     }, [jadwal, activeFilters]);
 
     const handleFilterChange = (filterId: string, selectedValues: (string | number | boolean)[]) => {
-        setActiveFilters(prev => ({
+        setActiveFilters((prev) => ({
             ...prev,
-            [filterId]: selectedValues
+            [filterId]: selectedValues,
         }));
     };
 
@@ -535,6 +538,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                         }}
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}
                         showExportButton
+                        exportFilename="jadwal-data"
                         filters={filterConfigs}
                         onFilterChange={handleFilterChange}
                         activeFilters={activeFilters}

@@ -443,7 +443,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih kategori tes" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-60 overflow-y-auto">
                                         <SelectItem value="0">Tidak ada</SelectItem>
                                         {kategoriTes && kategoriTes.length > 0
                                             ? kategoriTes.map((kategori) => (
@@ -485,7 +485,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih jadwal sebelumnya" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-60 overflow-y-auto">
                                         <SelectItem value="0">Tidak ada</SelectItem>
                                         {allJadwal && allJadwal.length > 0
                                             ? allJadwal

@@ -1,5 +1,6 @@
 import SoalFormModal from '@/components/modal/SoalFormModal';
 import SoalImportModal from '@/components/modal/SoalImportModal';
+import RichTextViewer from '@/components/rich-text-viewer';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -285,28 +286,53 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                 return <span className="text-sm font-medium">{label}</span>;
             },
         },
-        // {
-        //     accessorKey: 'pertanyaan',
-        //     header: 'Pertanyaan',
-        //     cell: ({ row }) => <div className="max-w-[300px] truncate">{row.getValue('pertanyaan')}</div>,
-        // },
         {
             accessorKey: 'pertanyaan',
             header: 'Pertanyaan',
             cell: ({ row }) => {
                 const html = row.getValue('pertanyaan') as string;
-                return (
-                    <div
-                        className="prose line-clamp-4 max-w-[300px] overflow-hidden whitespace-pre-wrap"
-                        dangerouslySetInnerHTML={{ __html: html }}
-                    />
-                );
+                return <RichTextViewer content={html} className="line-clamp-3 overflow-hidden" />;
             },
         },
         {
             accessorKey: 'skor',
             header: 'Skor',
             cell: ({ row }) => row.getValue('skor') + ' poin',
+        },
+        ...['opsi_a', 'opsi_b', 'opsi_c', 'opsi_d'].map((opsiKey) => ({
+            accessorKey: opsiKey,
+            header: opsiKey
+                .split('_')
+                .map((w) => w[0].toUpperCase() + w.slice(1))
+                .join(' '),
+            enableSorting: false,
+            enableHiding: true,
+            cell: ({ row }) => {
+                const jenisSoal = row.getValue('jenis_soal') as string;
+                const jawaban = row.getValue(opsiKey) as string;
+
+                if (jenisSoal === 'pilihan_ganda' || jenisSoal === 'multi_choice') {
+                    return jawaban || '-';
+                }
+
+                return <span className="text-muted-foreground">-</span>;
+            },
+        })),
+        {
+            accessorKey: 'jawaban_benar',
+            header: 'Jawaban Benar',
+            enableSorting: false,
+            enableHiding: true,
+            cell: ({ row }) => {
+                const jenisSoal = row.getValue('jenis_soal') as string;
+                const jawaban = row.getValue('jawaban_benar') as string;
+
+                if (jenisSoal === 'pilihan_ganda' || jenisSoal === 'multi_choice') {
+                    return jawaban || '-';
+                }
+
+                return <span className="text-muted-foreground">-</span>;
+            },
         },
         {
             id: 'aksi',
@@ -461,10 +487,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                 </svg>
                                 Pertanyaan
                             </h3>
-                            <div
-                                className="prose max-w-none rounded-md bg-gray-200 p-4 leading-relaxed text-black"
-                                dangerouslySetInnerHTML={{ __html: selectedSoal.pertanyaan }}
-                            />
+                            <RichTextViewer content={selectedSoal.pertanyaan} />
                         </div>
 
                         {/* Opsi Jawaban */}
@@ -748,7 +771,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
             <Head title={`Soal - ${jadwal.nama_jadwal}`} />
             <JadwalLayout>
                 <div className="flex h-full flex-1 flex-col gap-2 overflow-x-auto rounded-xl">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-4">
                         <div>
                             <h2 className="mb-1 text-2xl font-bold">Soal untuk Jadwal: {jadwal.nama_jadwal}</h2>
                             <div className="text-sm text-muted-foreground">
@@ -807,6 +830,14 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Belum ada soal untuk jadwal ini.</div>}
                         showExportButton
                         onBulkDelete={handleBulkDelete}
+                        exportFilename={`soal-${jadwal.nama_jadwal}`}
+                        initialColumnVisibility={{
+                            opsi_a: false,
+                            opsi_b: false,
+                            opsi_c: false,
+                            opsi_d: false,
+                            jawaban_benar: false,
+                        }}
                     />
                     {renderSoalDetailModal()}
 

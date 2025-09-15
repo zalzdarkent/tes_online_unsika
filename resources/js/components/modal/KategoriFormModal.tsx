@@ -1,21 +1,13 @@
-import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { router } from "@inertiajs/react";
-import { ReactNode, useState } from "react";
-import { useForm } from "@inertiajs/react";
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { router, useForm } from '@inertiajs/react';
+import { ReactNode, useState } from 'react';
 
 interface KategoriFormModalProps {
-    mode: "create" | "edit";
+    mode: 'create' | 'edit';
     trigger: ReactNode;
     kategori?: {
         id: number;
@@ -29,15 +21,14 @@ export default function KategoriFormModal({ mode, trigger, kategori, onSuccess }
     const { toast } = useToast();
 
     const { data, setData, processing, errors, reset } = useForm({
-        nama: kategori?.nama || "",
+        nama: kategori?.nama || '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        const submitHandler = mode === "create"
-            ? () => router.post(route("kategori.store"), data)
-            : () => router.put(route("kategori.update", kategori?.id), data);
+        const submitHandler =
+            mode === 'create' ? () => router.post(route('kategori.store'), data) : () => router.put(route('kategori.update', kategori?.id), data);
 
         submitHandler();
 
@@ -46,17 +37,18 @@ export default function KategoriFormModal({ mode, trigger, kategori, onSuccess }
             reset();
             if (onSuccess) onSuccess();
             toast({
-                title: "Berhasil",
-                description: `Kategori berhasil ${mode === "create" ? "ditambahkan" : "diperbarui"}`,
+                variant: 'success',
+                title: 'Berhasil',
+                description: `Kategori berhasil ${mode === 'create' ? 'ditambahkan' : 'diperbarui'}`,
             });
         });
 
         router.on('error', (event: { detail: { errors: { nama?: string } } }) => {
             const errors = event.detail.errors;
             toast({
-                variant: "destructive",
-                title: "Gagal",
-                description: errors?.nama || `Gagal ${mode === "create" ? "menambahkan" : "memperbarui"} kategori`,
+                variant: 'destructive',
+                title: 'Gagal',
+                description: errors?.nama || `Gagal ${mode === 'create' ? 'menambahkan' : 'memperbarui'} kategori`,
             });
         });
     };
@@ -68,13 +60,9 @@ export default function KategoriFormModal({ mode, trigger, kategori, onSuccess }
 
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>
-                        {mode === "create" ? "Tambah Kategori Baru" : "Edit Kategori"}
-                    </DialogTitle>
+                    <DialogTitle>{mode === 'create' ? 'Tambah Kategori Baru' : 'Edit Kategori'}</DialogTitle>
                     <DialogDescription>
-                        {mode === "create"
-                            ? "Tambahkan kategori baru untuk tes."
-                            : "Ubah informasi kategori yang sudah ada."}
+                        {mode === 'create' ? 'Tambahkan kategori baru untuk tes.' : 'Ubah informasi kategori yang sudah ada.'}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -86,11 +74,9 @@ export default function KategoriFormModal({ mode, trigger, kategori, onSuccess }
                             type="text"
                             placeholder="Masukkan nama kategori"
                             value={data.nama}
-                            onChange={e => setData('nama', e.target.value)}
+                            onChange={(e) => setData('nama', e.target.value)}
                         />
-                        {errors.nama && (
-                            <p className="text-sm text-destructive">{errors.nama}</p>
-                        )}
+                        {errors.nama && <p className="text-sm text-destructive">{errors.nama}</p>}
                     </div>
 
                     <DialogFooter>
@@ -106,7 +92,7 @@ export default function KategoriFormModal({ mode, trigger, kategori, onSuccess }
                             Batal
                         </Button>
                         <Button type="submit" disabled={processing} className="cursor-pointer">
-                            {processing ? "Menyimpan..." : (mode === "create" ? "Simpan" : "Perbarui")}
+                            {processing ? 'Menyimpan...' : mode === 'create' ? 'Simpan' : 'Perbarui'}
                         </Button>
                     </DialogFooter>
                 </form>

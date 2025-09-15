@@ -170,4 +170,7 @@ input[type='time']::-webkit-calendar-picker-indicator {
 
 .ProseMirror {
     @apply rounded-none border-none outline-none;
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
 }

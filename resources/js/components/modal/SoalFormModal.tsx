@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import RichTextEditor from '@/components/rich-text-editor';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { router } from '@inertiajs/react';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import 'katex/dist/katex.min.css';
+import React, { useState } from 'react';
 import { BlockMath } from 'react-katex';
 
 // Tipe data soal
@@ -63,7 +63,7 @@ export default function SoalFormModal({
     onSuccess,
     idJadwal,
     mode = 'create',
-    soal
+    soal,
 }: SoalFormModalProps) {
     const { toast } = useToast();
     const [internalOpen, setInternalOpen] = useState(false);
@@ -126,12 +126,7 @@ export default function SoalFormModal({
 
             // Load opsi jika ada
             if (soal.opsi_a || soal.opsi_b || soal.opsi_c || soal.opsi_d) {
-                setOpsi([
-                    soal.opsi_a || '',
-                    soal.opsi_b || '',
-                    soal.opsi_c || '',
-                    soal.opsi_d || ''
-                ]);
+                setOpsi([soal.opsi_a || '', soal.opsi_b || '', soal.opsi_c || '', soal.opsi_d || '']);
             }
 
             // Load jawaban benar
@@ -184,8 +179,11 @@ export default function SoalFormModal({
             if (!skalaLabelMaks.trim()) newErrors.skalaLabelMaks = 'Label maksimum wajib diisi.';
             if (!jawabanBenar.trim()) newErrors.jawabanBenar = 'Jawaban benar (nilai target) wajib diisi.';
             const jawabanBenarNum = Number(jawabanBenar);
-            if (skalaMin !== undefined && skalaMaks !== undefined &&
-                (isNaN(jawabanBenarNum) || jawabanBenarNum < skalaMin || jawabanBenarNum > skalaMaks)) {
+            if (
+                skalaMin !== undefined &&
+                skalaMaks !== undefined &&
+                (isNaN(jawabanBenarNum) || jawabanBenarNum < skalaMin || jawabanBenarNum > skalaMaks)
+            ) {
                 newErrors.jawabanBenar = `Jawaban benar harus berupa angka antara ${skalaMin} dan ${skalaMaks}.`;
             }
         }
@@ -624,11 +622,9 @@ export default function SoalFormModal({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{trigger}</DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-background text-foreground shadow-xl sm:max-w-[700px]">
+            <DialogContent className="max-h-[90vh] w-full overflow-y-auto rounded-lg border bg-background text-foreground shadow-xl sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>
-                        {mode === 'edit' ? 'Edit Soal' : 'Tambah Soal'}
-                    </DialogTitle>
+                    <DialogTitle>{mode === 'edit' ? 'Edit Soal' : 'Tambah Soal'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>

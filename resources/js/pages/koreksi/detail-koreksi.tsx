@@ -1,4 +1,4 @@
-// Imports
+import RichTextViewer from '@/components/rich-text-viewer';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -112,12 +112,10 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
             {
                 accessorKey: 'pertanyaan',
                 header: 'Soal',
-                cell: ({ row }) => (
-                    <div
-                        className="prose line-clamp-4 max-w-[300px] overflow-hidden whitespace-pre-wrap"
-                        dangerouslySetInnerHTML={{ __html: row.getValue('pertanyaan') }}
-                    />
-                ),
+                cell: ({ row }) => {
+                    const html = row.getValue('pertanyaan') as string;
+                    return <RichTextViewer content={html} className="line-clamp-3 overflow-hidden" />;
+                },
             },
             { accessorKey: 'jawaban_benar', header: 'Jawaban Benar' },
             {

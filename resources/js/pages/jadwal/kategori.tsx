@@ -52,6 +52,7 @@ export default function KategoriTes({ kategori }: KategoriProps) {
         router.delete(route('kategori.destroy', selectedKategori.id), {
             onSuccess: () => {
                 toast({
+                    variant: 'success',
                     title: 'Berhasil',
                     description: `Kategori "${selectedKategori.nama}" berhasil dihapus`,
                 });
@@ -79,6 +80,7 @@ export default function KategoriTes({ kategori }: KategoriProps) {
             {
                 onSuccess: () => {
                     toast({
+                        variant: 'success',
                         title: 'Berhasil',
                         description: `${selectedIds.length} kategori berhasil dihapus`,
                     });

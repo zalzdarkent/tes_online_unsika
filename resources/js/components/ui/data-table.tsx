@@ -66,7 +66,7 @@ interface DataTableProps<TData, TValue> {
   onAddNew?: () => void
   addButtonLabel?: string
   onBulkDelete?: (selectedRows: TData[]) => void
-  customBulkActions?: BulkAction<TData>[]
+    customBulkActions?: BulkAction<TData>[]
   searchColumn?: string
   searchPlaceholder?: string
   emptyMessage?: React.ReactNode
@@ -84,7 +84,7 @@ export function DataTable<TData, TValue>({
   onAddNew,
   addButtonLabel = "Tambah Data",
   onBulkDelete,
-  customBulkActions = [],
+    customBulkActions = [],
   searchColumn,
   searchPlaceholder = "Cari data...",
   emptyMessage,
@@ -123,7 +123,7 @@ export function DataTable<TData, TValue>({
   const handleExport = () => {
     const excludedIds = ["select", "actions", "aksi", "action"]
     const visibleColumns = table.getAllColumns().filter(col =>
-      col.getIsVisible() && !excludedIds.includes(col.id)
+      !excludedIds.includes(col.id)
     )
 
     const exportData = table.getFilteredRowModel().rows.map(row => {
@@ -137,7 +137,15 @@ export function DataTable<TData, TValue>({
         } else {
           const cell = row.getAllCells().find(c => c.column.id === columnId)
           if (cell) {
-            const value = cell.renderValue() || cell.getValue()
+            const rawValue = cell.renderValue() ?? cell.getValue()
+            let value = rawValue === null || rawValue === undefined || rawValue === "" ? "-" : rawValue
+
+            // html
+            if (typeof value === "string") {
+              const doc = new DOMParser().parseFromString(value, "text/html");
+              value = doc.body.textContent || "";
+            }
+            
             const header = col.columnDef.header
             const headerText = typeof header === "string"
               ? header
@@ -183,7 +191,7 @@ export function DataTable<TData, TValue>({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {/* Custom Bulk Actions */}
+                        {/* Custom Bulk Actions */}
             {customBulkActions.map((action, index) => (
               <Button
                 key={index}
