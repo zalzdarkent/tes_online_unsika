@@ -1,4 +1,3 @@
-// components/SoalSidebar.tsx
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Soal } from '@/types/soal';
@@ -30,7 +29,7 @@ const SoalSidebar: FC<SoalSidebarProps> = ({
     return (
         <>
             {/* Desktop Sidebar */}
-            <div className="hidden w-64 border-r p-4 md:block">
+            <div className="hidden h-screen w-64 overflow-y-auto border-r p-4 md:block">
                 <h2 className="mb-2 text-xl font-semibold">{jadwalNama}</h2>
                 <div className="space-y-2">
                     <p className="font-semibold">Navigasi Soal</p>
@@ -57,7 +56,7 @@ const SoalSidebar: FC<SoalSidebarProps> = ({
                         </Button>
                     </SheetTrigger>
                 </div>
-                <SheetContent side="left" className="p-4">
+                <SheetContent side="left" className="h-screen overflow-y-auto p-4">
                     <SheetHeader>
                         <SheetTitle className="text-2xl">{jadwalNama}</SheetTitle>
                     </SheetHeader>

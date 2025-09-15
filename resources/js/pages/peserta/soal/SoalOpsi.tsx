@@ -61,24 +61,24 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
 
     if (s.jenis_soal === 'multi_choice') {
         return (
-            <div className="mt-4 space-y-4">
+            <div className="mt-4 space-y-3">
                 {s.media && <Media url={s.media} />}
 
                 {opsi.map((o, i) => {
                     const selected = jawaban[s.id] || [];
-                    return (
-                        <div key={i} className="flex items-center space-x-2">
-                            <Checkbox
-                                id={`soal_${s.id}_${o.label}`}
-                                checked={selected.includes(o.label)}
-                                onCheckedChange={(checked) => {
-                                    const selected = jawaban[s.id] || [];
-                                    const next = checked ? [...selected, o.label] : selected.filter((item) => item !== o.label);
+                    const isSelected = selected.includes(o.label);
 
-                                    onJawabanChange(s.id, next);
-                                }}
-                            />
-                            <Label htmlFor={`soal_${s.id}_${o.label}`}>
+                    return (
+                        <div
+                            key={i}
+                            onClick={() => {
+                                const next = isSelected ? selected.filter((item) => item !== o.label) : [...selected, o.label];
+                                onJawabanChange(s.id, next);
+                            }}
+                            className={`flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3 transition-all hover:bg-muted/70 ${isSelected ? 'border-primary bg-muted' : 'border-muted'}`}
+                        >
+                            <Checkbox id={`soal_${s.id}_${o.label}`} checked={isSelected} className="pointer-events-none" />
+                            <Label htmlFor={`soal_${s.id}_${o.label}`} className="cursor-pointer text-foreground select-none">
                                 {o.label}. {o.text}
                             </Label>
                         </div>

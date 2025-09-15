@@ -194,37 +194,36 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                 />
 
                 {/* Main Content */}
-                <div className="relative mx-auto mt-4 flex-1 space-y-4 overflow-x-auto p-8 md:mt-0 md:max-w-4xl">
-                    <SoalHeader currentIndex={currentIndex} totalSoal={soal.length} timeLeft={timeLeft} />
+                <div className="mx-auto mt-4 flex-1 space-y-4 overflow-y-hidden p-8 md:mt-0 md:max-w-4xl">
+                    <div className="max-h-[calc(100vh-120px)] overflow-y-auto pr-2">
+                        <SoalHeader currentIndex={currentIndex} totalSoal={soal.length} timeLeft={timeLeft} />
 
-                    {/* <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p> */}
-                    <RichTextViewer content={currentSoal.pertanyaan} />
+                        {/* <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p> */}
+                        <RichTextViewer content={currentSoal.pertanyaan} />
 
-                    <SoalOpsi soal={currentSoal} jawaban={jawaban} onJawabanChange={handleJawabanChange} />
+                        <SoalOpsi soal={currentSoal} jawaban={jawaban} onJawabanChange={handleJawabanChange} />
 
-                    {/* spacer */}
-                    <div className="h-16"></div>
-
-                    <div className="fixed right-0 bottom-5 left-[var(--sidebar-width)] px-8 py-4 md:left-64">
-                        <div className="mx-auto max-w-4xl">
-                            <PrevFlagNextButtons
-                                currentIndex={currentIndex}
-                                soal={soal}
-                                tandaiSoal={tandaiSoal}
-                                onPrev={handlePrev}
-                                onNext={handleNext}
-                                onToggleFlag={() =>
-                                    setTandaiSoal((prev) => ({
-                                        ...prev,
-                                        [soal[currentIndex].id]: !prev[soal[currentIndex].id],
-                                    }))
-                                }
-                                onSubmit={() => {
-                                    handleSubmit(true);
-                                }}
-                            />
-                        </div>
+                        {/* spacer */}
+                        <div className="h-20"></div>
                     </div>
+
+                    {/* buttons */}
+                    <PrevFlagNextButtons
+                        currentIndex={currentIndex}
+                        soal={soal}
+                        tandaiSoal={tandaiSoal}
+                        onPrev={handlePrev}
+                        onNext={handleNext}
+                        onToggleFlag={() =>
+                            setTandaiSoal((prev) => ({
+                                ...prev,
+                                [soal[currentIndex].id]: !prev[soal[currentIndex].id],
+                            }))
+                        }
+                        onSubmit={() => {
+                            handleSubmit(true);
+                        }}
+                    />
                 </div>
             </div>
 
