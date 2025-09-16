@@ -19,10 +19,10 @@ const PrevFlagNextButtons: FC<PrevFlagNextButtonsProps> = ({ currentIndex, soal,
     const currentSoal = soal[currentIndex];
 
     return (
-        <div className="fixed right-0 bottom-5 left-[var(--sidebar-width)] mx-auto px-4 py-2 md:left-64 md:max-w-4xl md:px-8 md:py-4">
+        <div className="fixed right-0 bottom-5 mx-auto w-full bg-white px-4 py-2 md:left-64 md:max-w-4xl md:px-8 md:py-4 dark:bg-neutral-950">
             <Separator />
             <div className="flex items-center justify-between gap-2 pt-6">
-                <Button onClick={onPrev} disabled={currentIndex === 0} variant="outline" className="" title="Sebelumnya">
+                <Button onClick={onPrev} disabled={currentIndex === 0} variant="outline" title="Sebelumnya">
                     <ChevronLeft />
                     <span className="hidden sm:inline">Sebelumnya</span>
                 </Button>
@@ -37,7 +37,7 @@ const PrevFlagNextButtons: FC<PrevFlagNextButtonsProps> = ({ currentIndex, soal,
                     title={`${tandaiSoal[currentSoal.id] ? 'Hapus Tanda' : 'Tandai Soal'}`}
                 >
                     <Flag />
-                    <span className="hidden sm:inline">{tandaiSoal[currentSoal.id] ? 'Hapus Tanda' : 'Tandai Soal'}</span>
+                    <span>{tandaiSoal[currentSoal.id] ? 'Hapus Tanda' : 'Tandai Soal'}</span>
                 </Button>
 
                 {currentIndex === soal.length - 1 ? (

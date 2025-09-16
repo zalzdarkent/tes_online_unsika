@@ -138,25 +138,25 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     }, [end_time_timestamp]);
 
     // open other tab
-    useEffect(() => {
-        let submitted = false;
+    // useEffect(() => {
+    //     let submitted = false;
 
-        const handleVisibilityChange = () => {
-            if (!submitted && document.visibilityState === 'hidden') {
-                submitted = true;
-                setAlertTitle('Anda terdeteksi meninggalkan tab ujian');
-                setAlertDescription('Anda tidak dapat melanjutkan tes ini. Semua jawaban telah dikumpulkan');
+    //     const handleVisibilityChange = () => {
+    //         if (!submitted && document.visibilityState === 'hidden') {
+    //             submitted = true;
+    //             setAlertTitle('Anda terdeteksi meninggalkan tab ujian');
+    //             setAlertDescription('Anda tidak dapat melanjutkan tes ini. Semua jawaban telah dikumpulkan');
 
-                handleSubmit();
-                setShowTabLeaveDialog(true);
-            }
-        };
+    //             handleSubmit();
+    //             setShowTabLeaveDialog(true);
+    //         }
+    //     };
 
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
-    }, []);
+    //     document.addEventListener('visibilitychange', handleVisibilityChange);
+    //     return () => {
+    //         document.removeEventListener('visibilitychange', handleVisibilityChange);
+    //     };
+    // }, []);
 
     const handleJawabanChange = (soalId: number, newJawaban: string[]) => {
         setJawaban((prev) => ({
@@ -199,12 +199,12 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                         <SoalHeader currentIndex={currentIndex} totalSoal={soal.length} timeLeft={timeLeft} />
 
                         {/* <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p> */}
-                        <RichTextViewer content={currentSoal.pertanyaan} />
+                        <RichTextViewer content={currentSoal.pertanyaan} className="max-w-full break-words" />
 
                         <SoalOpsi soal={currentSoal} jawaban={jawaban} onJawabanChange={handleJawabanChange} />
 
                         {/* spacer */}
-                        <div className="h-20"></div>
+                        <div className="h-12"></div>
                     </div>
 
                     {/* buttons */}

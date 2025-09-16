@@ -27,7 +27,7 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
                 {s.media && <Media url={s.media} />}
 
                 <RadioGroup
-                    className="mt-4 space-y-2"
+                    className="mt-4 w-full space-y-2"
                     value={jawaban[s.id]?.[0] || ''}
                     onValueChange={(val) => {
                         if (val) {
@@ -43,12 +43,15 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
                                 onClick={() => {
                                     onJawabanChange(s.id, [o.label]);
                                 }}
-                                className={`flex cursor-pointer items-center space-x-2 rounded-md border p-3 transition-all hover:bg-muted/70 ${
+                                className={`flex cursor-pointer items-start gap-4 rounded-md border px-4 py-3 transition-all hover:bg-muted/70 ${
                                     isSelected ? 'border-primary' : 'border-muted'
                                 }`}
                             >
-                                <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} className="pointer-events-none" />
-                                <Label htmlFor={`soal_${s.id}_${o.label}`} className="cursor-pointer select-none">
+                                <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} className="pointer-events-none flex-none" />
+                                <Label
+                                    htmlFor={`soal_${s.id}_${o.label}`}
+                                    className="min-w-0 flex-1 cursor-pointer text-base break-words break-all text-foreground select-none"
+                                >
                                     {o.label}. {o.text}
                                 </Label>
                             </div>
@@ -61,7 +64,7 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
 
     if (s.jenis_soal === 'multi_choice') {
         return (
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-4">
                 {s.media && <Media url={s.media} />}
 
                 {opsi.map((o, i) => {
@@ -71,14 +74,22 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
                     return (
                         <div
                             key={i}
-                            onClick={() => {
-                                const next = isSelected ? selected.filter((item) => item !== o.label) : [...selected, o.label];
-                                onJawabanChange(s.id, next);
-                            }}
-                            className={`flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3 transition-all hover:bg-muted/70 ${isSelected ? 'border-primary bg-muted' : 'border-muted'}`}
+                            className={`flex cursor-pointer items-start gap-4 rounded-md border px-4 py-3 transition-all hover:bg-muted/70 ${
+                                isSelected ? 'border-primary bg-muted' : 'border-muted'
+                            }`}
                         >
-                            <Checkbox id={`soal_${s.id}_${o.label}`} checked={isSelected} className="pointer-events-none" />
-                            <Label htmlFor={`soal_${s.id}_${o.label}`} className="cursor-pointer text-foreground select-none">
+                            <Checkbox
+                                id={`soal_${s.id}_${o.label}`}
+                                checked={isSelected}
+                                onCheckedChange={(checked) => {
+                                    const next = checked ? [...selected, o.label] : selected.filter((item) => item !== o.label);
+                                    onJawabanChange(s.id, next);
+                                }}
+                            />
+                            <Label
+                                htmlFor={`soal_${s.id}_${o.label}`}
+                                className="min-w-0 flex-1 cursor-pointer text-base break-words text-foreground select-none"
+                            >
                                 {o.label}. {o.text}
                             </Label>
                         </div>

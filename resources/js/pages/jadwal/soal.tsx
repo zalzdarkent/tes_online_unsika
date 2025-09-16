@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
 import { Head, router } from '@inertiajs/react';
-import { ColumnDef } from '@tanstack/react-table';
+import { ColumnDef, Row } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import 'katex/dist/katex.min.css';
@@ -291,7 +291,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
             header: 'Pertanyaan',
             cell: ({ row }) => {
                 const html = row.getValue('pertanyaan') as string;
-                return <RichTextViewer content={html} className="line-clamp-3 overflow-hidden" />;
+                return <RichTextViewer content={html} className="line-clamp-3 w-64 max-w-64 overflow-hidden" />;
             },
         },
         {
@@ -307,7 +307,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                 .join(' '),
             enableSorting: false,
             enableHiding: true,
-            cell: ({ row }) => {
+            cell: ({ row }: { row: Row<SoalData> }) => {
                 const jenisSoal = row.getValue('jenis_soal') as string;
                 const jawaban = row.getValue(opsiKey) as string;
 
@@ -387,7 +387,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
     // Modal detail soal yang diperbaiki
     const renderSoalDetailModal = () => (
         <Dialog open={showDetail} onOpenChange={setShowDetail}>
-            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+            <DialogContent className="max-h-[90vh] w-[90vw] max-w-2xl overflow-y-auto lg:max-w-6xl">
                 <DialogHeader className="border-b pb-4">
                     <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
                         <Eye className="text-white-600 h-5 w-5" />
@@ -487,7 +487,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                 </svg>
                                 Pertanyaan
                             </h3>
-                            <RichTextViewer content={selectedSoal.pertanyaan} />
+                            <RichTextViewer content={selectedSoal.pertanyaan} className="max-w-full break-words" />
                         </div>
 
                         {/* Opsi Jawaban */}

@@ -114,7 +114,7 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 header: 'Soal',
                 cell: ({ row }) => {
                     const html = row.getValue('pertanyaan') as string;
-                    return <RichTextViewer content={html} className="line-clamp-3 overflow-hidden" />;
+                    return <RichTextViewer content={html} className="line-clamp-3 w-64 max-w-64 overflow-hidden" />;
                 },
             },
             { accessorKey: 'jawaban_benar', header: 'Jawaban Benar' },
