@@ -82,7 +82,7 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                     opsi_b: item.opsi_b ? String(item.opsi_b) : '',
                     opsi_c: item.opsi_c ? String(item.opsi_c) : '',
                     opsi_d: item.opsi_d ? String(item.opsi_d) : '',
-                    jawaban_benar: String(item.jawaban_benar || ''),
+                    jawaban_benar: String(item.jawaban_benar || '').toUpperCase(),
                     skala_min: item.skala_min ? Number(item.skala_min) : undefined,
                     skala_maks: item.skala_maks ? Number(item.skala_maks) : undefined,
                     skala_label_min: item.skala_label_min ? String(item.skala_label_min) : '',
@@ -137,6 +137,7 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                     },
                     onSuccess: () => {
                         toast({
+                            variant: 'success',
                             title: 'Berhasil!',
                             description: `${totalSoal} soal berhasil diupload.`,
                         });

@@ -131,9 +131,9 @@ export default function SoalFormModal({
 
             // Load jawaban benar
             if (soal.jenis_soal === 'multi_choice') {
-                setJawabanBenarMulti(soal.jawaban_benar.split(','));
+                setJawabanBenarMulti(soal.jawaban_benar.split(',').map((j) => j.trim().toUpperCase()));
             } else {
-                setJawabanBenar(soal.jawaban_benar);
+                setJawabanBenar(soal.jawaban_benar.toUpperCase());
             }
 
             // Load data skala
@@ -291,6 +291,7 @@ export default function SoalFormModal({
                     setOpen(false);
                     resetForm();
                     toast({
+                        variant: 'success',
                         title: 'Berhasil',
                         description: mode === 'edit' ? 'Soal berhasil diperbarui!' : 'Soal berhasil ditambahkan!',
                     });
