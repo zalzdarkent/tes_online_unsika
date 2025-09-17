@@ -220,9 +220,72 @@ class KoreksiController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(string $userId, string $jadwalId)
     {
-        //
+        try {
+            DB::beginTransaction();
+
+            // Hapus semua jawaban untuk user dan jadwal tertentu
+            Jawaban::where('id_user', $userId)
+                ->where('id_jadwal', $jadwalId)
+                ->delete();
+
+            // Hapus hasil test peserta
+            HasilTestPeserta::where('id_user', $userId)
+                ->where('id_jadwal', $jadwalId)
+                ->delete();
+
+            DB::commit();
+
+            return redirect()->route('koreksi.index')->with('success', 'Data koreksi berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->route('koreksi.index')->with('error', 'Gagal menghapus data koreksi: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Bulk delete multiple koreksi data
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.id_user' => 'required|integer',
+            'items.*.id_jadwal' => 'required|integer',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $deletedCount = 0;
+
+            foreach ($request->items as $item) {
+                $userId = $item['id_user'];
+                $jadwalId = $item['id_jadwal'];
+
+                // Hapus jawaban
+                $jawabanDeleted = Jawaban::where('id_user', $userId)
+                    ->where('id_jadwal', $jadwalId)
+                    ->delete();
+
+                // Hapus hasil test peserta
+                $hasilDeleted = HasilTestPeserta::where('id_user', $userId)
+                    ->where('id_jadwal', $jadwalId)
+                    ->delete();
+
+                if ($jawabanDeleted || $hasilDeleted) {
+                    $deletedCount++;
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('koreksi.index')->with('success', "Berhasil menghapus {$deletedCount} data koreksi.");
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->route('koreksi.index')->with('error', 'Gagal menghapus data koreksi: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -246,25 +309,65 @@ class KoreksiController extends Controller
                 $userId = $item['id_user'];
                 $jadwalId = $item['id_jadwal'];
 
-                // Cek apakah hasil test peserta sudah ada
+                // Cek atau buat hasil test peserta
                 $hasilTest = HasilTestPeserta::where('id_user', $userId)
                     ->where('id_jadwal', $jadwalId)
                     ->first();
 
-                // Skip jika sudah submitted
-                if ($hasilTest && $hasilTest->status_koreksi === 'submitted') {
-                    $errorMessages[] = "Peserta {$item['nama_peserta']} sudah dalam status final.";
-                    continue;
-                }
-
-                // Skip jika belum ada data koreksi
+                // Jika belum ada hasil test, buat baru
                 if (!$hasilTest) {
-                    $errorMessages[] = "Peserta {$item['nama_peserta']} belum memiliki data koreksi.";
-                    continue;
+                    $hasilTest = HasilTestPeserta::create([
+                        'id_user' => $userId,
+                        'id_jadwal' => $jadwalId,
+                        'total_skor' => 0,
+                        'total_nilai' => 0,
+                        'status_koreksi' => 'submitted',
+                    ]);
                 }
 
-                // Update status ke submitted
-                $hasilTest->update(['status_koreksi' => 'submitted']);
+                // Auto-koreksi soal pilihan ganda yang belum dikoreksi
+                $jawaban = Jawaban::where('id_user', $userId)
+                    ->where('id_jadwal', $jadwalId)
+                    ->with('soal')
+                    ->get();
+
+                $totalSkor = 0;
+                foreach ($jawaban as $jawab) {
+                    $soal = $jawab->soal;
+                    
+                    // Jika belum ada skor dan soal adalah pilihan ganda, auto-koreksi
+                    if ($jawab->skor_didapat === null && in_array($soal->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
+                        $jawabanPeserta = strtolower(trim($jawab->jawaban ?? ''));
+                        $jawabanBenar = strtolower(trim($soal->jawaban_benar ?? ''));
+                        $skorDidapat = ($jawabanPeserta === $jawabanBenar) ? $soal->skor : 0;
+                        
+                        // Update skor jawaban
+                        $jawab->update(['skor_didapat' => $skorDidapat]);
+                        $totalSkor += $skorDidapat;
+                    } elseif ($jawab->skor_didapat !== null) {
+                        // Jika sudah ada skor, tambahkan ke total
+                        $totalSkor += $jawab->skor_didapat;
+                    } else {
+                        // Untuk soal esai yang belum dikoreksi, berikan skor 0
+                        $jawab->update(['skor_didapat' => 0]);
+                    }
+                }
+
+                // Hitung total skor maksimal
+                $totalSkorMaksimal = $jawaban->sum(function($jawab) {
+                    return $jawab->soal->skor;
+                });
+
+                // Hitung nilai persentase
+                $totalNilai = $totalSkorMaksimal > 0 ? ($totalSkor / $totalSkorMaksimal) * 100 : 0;
+
+                // Update hasil test dengan status submitted
+                $hasilTest->update([
+                    'total_skor' => $totalSkor,
+                    'total_nilai' => round($totalNilai, 2),
+                    'status_koreksi' => 'submitted',
+                ]);
+
                 $successCount++;
             }
 

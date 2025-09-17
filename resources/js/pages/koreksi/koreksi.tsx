@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
 import { FilterConfig } from '@/components/ui/data-table-filter';
+import ConfirmDialogWrapper from '@/components/modal/ConfirmDialogWrapper';
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
@@ -110,6 +111,25 @@ export default function Koreksi({ data, jadwalList }: Props) {
             [filterId]: selectedValues
         }));
     };
+
+    const handleDelete = (data: DataKoreksi) => {
+        router.delete(`/koreksi/${data.id_user}/${data.id_jadwal}`, {
+            onSuccess: () => {
+                toast({
+                    title: 'Berhasil!',
+                    description: 'Data koreksi berhasil dihapus.',
+                });
+            },
+            onError: (errors) => {
+                console.log('Delete errors:', errors);
+                toast({
+                    variant: 'destructive',
+                    title: 'Gagal!',
+                    description: errors.message || 'Terjadi kesalahan saat menghapus data.',
+                });
+            },
+        });
+    };
     const columns: ColumnDef<DataKoreksi>[] = [
         {
             id: 'select',
@@ -212,16 +232,22 @@ export default function Koreksi({ data, jadwalList }: Props) {
                                 </>
                             )}
                         </Button>
-                        <Button
-                            variant="outline"
-                            className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
-                            onClick={() => {
-                                console.log('Hapus:', data);
-                            }}
-                        >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Hapus
-                        </Button>
+                        <ConfirmDialogWrapper
+                            title="Hapus Data Koreksi?"
+                            description={`Apakah Anda yakin ingin menghapus data koreksi untuk ${data.nama_peserta}? Tindakan ini tidak dapat dibatalkan.`}
+                            confirmLabel="Hapus"
+                            cancelLabel="Batal"
+                            onConfirm={() => handleDelete(data)}
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
+                                >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Hapus
+                                </Button>
+                            }
+                        />
                     </div>
                 );
             },
@@ -229,58 +255,55 @@ export default function Koreksi({ data, jadwalList }: Props) {
     ];
 
     const handleBulkDelete = (selectedData: DataKoreksi[]) => {
-        const selectedIds = selectedData.map((item) => item.id_jadwal);
-        console.log('Bulk delete for IDs:', selectedIds);
+        if (selectedData.length === 0) {
+            toast({
+                variant: 'destructive',
+                title: 'Tidak ada data yang dipilih',
+                description: 'Pilih data yang ingin dihapus terlebih dahulu.',
+            });
+            return;
+        }
 
-        // router.post(
-        //     route('koreksi.bulk-destroy'),
-        //     { ids: selectedIds },
-        //     {
-        //         onSuccess: () => {
-        //             toast({
-        //                 variant: 'success',
-        //                 title: 'Berhasil!',
-        //                 description: `${selectedData.length} data jawaban berhasil dihapus.`,
-        //             });
-        //         },
-        //         onError: (errors: Record<string, string>) => {
-        //             console.log('Delete errors:', errors);
-        //             if (errors.error) {
-        //                 toast({
-        //                     variant: 'destructive',
-        //                     title: 'Error!',
-        //                     description: errors.error,
-        //                 });
-        //             } else {
-        //                 toast({
-        //                     variant: 'destructive',
-        //                     title: 'Error!',
-        //                     description: 'Terjadi kesalahan saat menghapus jawaban.',
-        //                 });
-        //             }
-        //         },
-        //     },
-        // );
+        const deleteData = selectedData.map(item => ({
+            id_user: item.id_user,
+            id_jadwal: item.id_jadwal,
+            nama_peserta: item.nama_peserta,
+        }));
+
+        router.post('/koreksi/bulk-destroy',
+            { items: deleteData },
+            {
+                onSuccess: () => {
+                    toast({
+                        title: 'Berhasil!',
+                        description: `${selectedData.length} data koreksi berhasil dihapus.`,
+                    });
+                },
+                onError: (errors) => {
+                    console.log('Bulk delete errors:', errors);
+                    toast({
+                        variant: 'destructive',
+                        title: 'Gagal!',
+                        description: errors.message || 'Terjadi kesalahan saat menghapus data.',
+                    });
+                },
+            },
+        );
     };
 
     const handleBatchSubmit = (selectedData: DataKoreksi[]) => {
-        // Filter hanya yang bisa di-submit (sudah dikoreksi tapi belum final)
-        const eligibleData = selectedData.filter(item =>
-            item.total_skor !== null && item.status_koreksi !== 'submitted'
-        );
-
-        if (eligibleData.length === 0) {
+        if (selectedData.length === 0) {
             toast({
                 variant: 'destructive',
-                title: 'Tidak ada data yang bisa disubmit',
-                description: 'Pilih peserta yang sudah dikoreksi dan belum final.',
+                title: 'Tidak ada data yang dipilih',
+                description: 'Pilih peserta yang ingin disubmit final.',
             });
             return;
         }
 
         setIsSubmitting(true);
 
-        const submitData = eligibleData.map(item => ({
+        const submitData = selectedData.map(item => ({
             id_user: item.id_user,
             id_jadwal: item.id_jadwal,
             nama_peserta: item.nama_peserta,
