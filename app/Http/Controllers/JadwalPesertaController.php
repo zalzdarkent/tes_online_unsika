@@ -64,14 +64,6 @@ class JadwalPesertaController extends Controller
             return redirect()->back()->withErrors(['error' => 'Hanya peserta yang dapat mendaftar tes.']);
         }
 
-        // Check apakah profil lengkap
-        if (!$user->isProfileComplete()) {
-            $missingFields = $user->getMissingProfileFields();
-            return redirect()->back()->withErrors([
-                'error' => 'Profil Anda belum lengkap. Harap lengkapi: ' . implode(', ', $missingFields)
-            ]);
-        }
-
         $jadwal = Jadwal::findOrFail($request->id_jadwal);
 
         // Check apakah jadwal masih buka untuk pendaftaran

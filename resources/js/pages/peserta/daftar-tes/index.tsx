@@ -80,16 +80,6 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
     };
 
     const handleDaftar = (id_jadwal: number) => {
-        // Check profil lengkap dulu
-        if (!isProfileComplete) {
-            toast({
-                variant: 'destructive',
-                title: 'Profil Belum Lengkap',
-                description: `Harap lengkapi profil Anda terlebih dahulu: ${missingProfileFields.join(', ')}`,
-            });
-            return;
-        }
-
         router.post(
             route('peserta.daftar'),
             { id_jadwal },
@@ -231,31 +221,6 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
 
                 // Jika belum daftar
                 if (!sudah_daftar) {
-                    if (!isProfileComplete) {
-                        return (
-                            <div className="flex items-center gap-2">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="inline-block">
-                                            <Button disabled>Daftar</Button>
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Profil belum lengkap. Harap lengkapi: {missingProfileFields.join(', ')}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => router.visit('/settings')}
-                                    className="text-xs"
-                                >
-                                    Lengkapi Profil & Info Akademik
-                                </Button>
-                            </div>
-                        );
-                    }
-
                     return (
                         <ConfirmDialogWrapper
                             title="Daftar Tes?"
