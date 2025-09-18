@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 
 const sidebarNavItems: NavItem[] = [
@@ -27,6 +27,9 @@ const sidebarNavItems: NavItem[] = [
         href: '/settings/appearance',
         icon: null,
     },
+];
+
+const adminOnlyNavItems: NavItem[] = [
     {
         title: 'System Settings',
         href: '/settings/system',
@@ -35,12 +38,21 @@ const sidebarNavItems: NavItem[] = [
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
+    const page = usePage();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const auth = (page.props as any)?.auth;
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    
     // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
         return null;
     }
-
-    const currentPath = window.location.pathname;
+    
+    // Combine nav items - add admin items only if user is admin
+    const allNavItems = [...sidebarNavItems];
+    if (auth?.user?.role === 'admin') {
+        allNavItems.push(...adminOnlyNavItems);
+    }
 
     return (
         <div className="px-4 py-6">
@@ -49,7 +61,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav className="flex flex-col space-y-1 space-x-0">
-                        {sidebarNavItems.map((item, index) => (
+                        {allNavItems.map((item, index) => (
                             <Button
                                 key={`${item.href}-${index}`}
                                 size="sm"

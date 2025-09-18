@@ -85,13 +85,13 @@ try {
     if (file_exists($envFile)) {
         echo "<p>✓ .env file found</p>";
         $envContent = file_get_contents($envFile);
-        
+
         // Extract database config
         $dbHost = 'localhost';
         $dbName = 'tes_online_unsika';
         $dbUser = 'root';
         $dbPass = '';
-        
+
         if (preg_match('/DB_HOST=(.*)/', $envContent, $matches)) {
             $dbHost = trim($matches[1]);
         }
@@ -104,9 +104,9 @@ try {
         if (preg_match('/DB_PASSWORD=(.*)/', $envContent, $matches)) {
             $dbPass = trim($matches[1]);
         }
-        
+
         echo "<p>DB Config: Host={$dbHost}, DB={$dbName}, User={$dbUser}</p>";
-        
+
         // Try to connect
         $pdo = new PDO(
             "mysql:host={$dbHost};dbname={$dbName}",
@@ -114,17 +114,17 @@ try {
             $dbPass,
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
         );
-        
+
         echo "<p style='color: green;'>✓ Database connection successful</p>";
-        
+
         // Check system_settings table
         $tableExists = $pdo->query("SHOW TABLES LIKE 'system_settings'")->rowCount() > 0;
         if ($tableExists) {
             echo "<p>✓ system_settings table exists</p>";
-            
+
             $stmt = $pdo->query("SELECT * FROM system_settings ORDER BY id DESC LIMIT 1");
             $setting = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if ($setting) {
                 echo "<p>Current setting: <strong>" . $setting['access'] . "</strong></p>";
                 echo "<p>Full record: " . json_encode($setting) . "</p>";
@@ -134,11 +134,11 @@ try {
         } else {
             echo "<p style='color: red;'>✗ system_settings table does not exist</p>";
         }
-        
+
     } else {
         echo "<p style='color: orange;'>⚠ .env file not found, using defaults</p>";
     }
-    
+
 } catch (Exception $e) {
     echo "<p style='color: red;'>✗ Database error: " . $e->getMessage() . "</p>";
 }
