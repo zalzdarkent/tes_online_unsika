@@ -7,12 +7,29 @@ define('LARAVEL_START', microtime(true));
 
 // System Access Control
 try {
-    // Simple approach - use hardcoded database config or skip if not available
-    // This will be overridden by Laravel's proper DB config once the app loads
+    // Get database config from .env file
+    $envFile = __DIR__.'/../.env';
     $dbHost = 'localhost';
     $dbName = 'tes_online_unsika';
     $dbUser = 'root';
     $dbPass = '';
+
+    // Try to read .env for database config
+    if (file_exists($envFile)) {
+        $envContent = file_get_contents($envFile);
+        if (preg_match('/DB_HOST=(.*)/', $envContent, $matches)) {
+            $dbHost = trim($matches[1]);
+        }
+        if (preg_match('/DB_DATABASE=(.*)/', $envContent, $matches)) {
+            $dbName = trim($matches[1]);
+        }
+        if (preg_match('/DB_USERNAME=(.*)/', $envContent, $matches)) {
+            $dbUser = trim($matches[1]);
+        }
+        if (preg_match('/DB_PASSWORD=(.*)/', $envContent, $matches)) {
+            $dbPass = trim($matches[1]);
+        }
+    }
 
     // Try to connect and check system settings
     $pdo = new PDO(
@@ -29,6 +46,44 @@ try {
         $stmt = $pdo->query("SELECT access FROM system_settings ORDER BY id DESC LIMIT 1");
         $systemSetting = $stmt->fetch(PDO::FETCH_ASSOC);
         $accessMode = $systemSetting ? $systemSetting['access'] : 'public';
+
+        // Get client IP address with better detection
+        $clientIP = 'unknown';
+        $ipSources = [
+            'HTTP_CF_CONNECTING_IP',     // Cloudflare
+            'HTTP_CLIENT_IP',            // Proxy
+            'HTTP_X_FORWARDED_FOR',      // Load balancer/proxy
+            'HTTP_X_FORWARDED',          // Proxy
+            'HTTP_X_CLUSTER_CLIENT_IP',  // Cluster
+            'HTTP_FORWARDED_FOR',        // Proxy
+            'HTTP_FORWARDED',            // Proxy
+            'REMOTE_ADDR'                // Standard
+        ];
+
+        foreach ($ipSources as $source) {
+            if (!empty($_SERVER[$source])) {
+                $clientIP = $_SERVER[$source];
+                break;
+            }
+        }
+
+        // Handle comma-separated IPs (from proxies) - take the first one
+        if (strpos($clientIP, ',') !== false) {
+            $ips = explode(',', $clientIP);
+            $clientIP = trim($ips[0]);
+        }
+
+        // Remove port if present
+        if (strpos($clientIP, ':') !== false && substr_count($clientIP, ':') == 1) {
+            $clientIP = explode(':', $clientIP)[0];
+        }
+
+        // Debug logging - write to a log file for debugging
+        $debugLog = __DIR__.'/../storage/logs/ip_access.log';
+        $logEntry = date('Y-m-d H:i:s') . " - Access Mode: {$accessMode}, Client IP: {$clientIP}" . PHP_EOL;
+        if (is_writable(dirname($debugLog))) {
+            file_put_contents($debugLog, $logEntry, FILE_APPEND | LOCK_EX);
+        }
 
         // If system is set to private, check IP access
         if ($accessMode === 'private') {
@@ -121,20 +176,15 @@ try {
                 '103.121.197.253','36.50.94.253','103.121.197.254','36.50.94.254'
             );
 
-            // Get client IP address
-            $clientIP = $_SERVER['HTTP_CF_CONNECTING_IP'] ??
-                       $_SERVER['HTTP_CLIENT_IP'] ??
-                       $_SERVER['HTTP_X_FORWARDED_FOR'] ??
-                       $_SERVER['REMOTE_ADDR'] ??
-                       'unknown';
-
-            // Handle comma-separated IPs (from proxies)
-            if (strpos($clientIP, ',') !== false) {
-                $clientIP = trim(explode(',', $clientIP)[0]);
+            // Log IP check result
+            $isAllowed = in_array($clientIP, $allowedIPs);
+            $logEntry = date('Y-m-d H:i:s') . " - IP Check: {$clientIP} " . ($isAllowed ? 'ALLOWED' : 'DENIED') . PHP_EOL;
+            if (is_writable(dirname($debugLog))) {
+                file_put_contents($debugLog, $logEntry, FILE_APPEND | LOCK_EX);
             }
 
             // Check if client IP is allowed
-            if (!in_array($clientIP, $allowedIPs)) {
+            if (!$isAllowed) {
                 http_response_code(403);
                 echo '<!DOCTYPE html>
 <html lang="en">
@@ -148,6 +198,7 @@ try {
         h1 { color: #dc3545; margin-bottom: 20px; }
         p { color: #6c757d; line-height: 1.6; margin-bottom: 15px; }
         .ip-info { background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        .debug { background: #fff3cd; padding: 10px; border-radius: 4px; margin: 20px 0; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -160,6 +211,12 @@ try {
             • 103.121.197.1 - 103.121.197.254<br>
             • 36.50.94.1 - 36.50.94.254
         </div>
+        <div class="debug">
+            <strong>Debug Info:</strong><br>
+            Access Mode: ' . $accessMode . '<br>
+            Detected IP: ' . htmlspecialchars($clientIP) . '<br>
+            Headers: ' . htmlspecialchars(json_encode($_SERVER)) . '
+        </div>
         <p>Please contact the system administrator if you believe this is an error.</p>
     </div>
 </body>
@@ -169,6 +226,12 @@ try {
         }
     }
 } catch (Exception $e) {
+    // Log the exception for debugging
+    $errorLog = __DIR__.'/../storage/logs/ip_access_error.log';
+    $logEntry = date('Y-m-d H:i:s') . " - ERROR: " . $e->getMessage() . PHP_EOL;
+    if (is_writable(dirname($errorLog))) {
+        file_put_contents($errorLog, $logEntry, FILE_APPEND | LOCK_EX);
+    }
     // If there's any error accessing the database, default to public access
     // This ensures the system remains accessible during initial setup or database issues
 }
