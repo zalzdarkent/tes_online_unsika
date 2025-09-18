@@ -211,12 +211,6 @@ try {
             • 103.121.197.1 - 103.121.197.254<br>
             • 36.50.94.1 - 36.50.94.254
         </div>
-        <div class="debug">
-            <strong>Debug Info:</strong><br>
-            Access Mode: ' . $accessMode . '<br>
-            Detected IP: ' . htmlspecialchars($clientIP) . '<br>
-            Headers: ' . htmlspecialchars(json_encode($_SERVER)) . '
-        </div>
         <p>Please contact the system administrator if you believe this is an error.</p>
     </div>
 </body>
