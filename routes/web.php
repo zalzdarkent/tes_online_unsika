@@ -131,6 +131,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('users/bulk-destroy', [UserController::class, 'bulkDestroy'])
             ->name('users.bulk-destroy')
             ->middleware('bulk.throttle');
+        Route::post('users/import', [UserController::class, 'import'])->name('users.import');
+        Route::get('template-user', [UserController::class, 'downloadTemplate'])->name('users.template');
     });
 });
 
