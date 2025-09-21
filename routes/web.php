@@ -5,6 +5,7 @@ use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\JadwalPesertaController;
 use App\Http\Controllers\KategoriTesController;
 use App\Http\Controllers\KoreksiController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\PesertaTesController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\UserController;
@@ -139,3 +140,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Include additional route files
 require __DIR__ . '/auth.php';
 require __DIR__ . '/settings.php';
+
+// Catchall route for 404 - MUST be at the very end
+Route::any('{catchall}', [PageController::class, 'notfound'])->where('catchall', '.*');

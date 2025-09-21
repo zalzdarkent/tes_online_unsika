@@ -18,12 +18,13 @@ export default function NotFound() {
             <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
                 <div className="w-full max-w-2xl text-center space-y-8">
                     {/* 404 Number with Animation */}
-                    <div className="relative">
-                        <div className="text-[12rem] md:text-[16rem] font-bold text-muted/20 leading-none select-none">
-                            404
+                    <div className="flex items-center justify-center">
+                        <div className="text-[12rem] md:text-[16rem] font-bold text-muted-foreground/60 leading-none select-none">
+                            4
                         </div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <AlertTriangle className="h-24 w-24 md:h-32 md:w-32 text-destructive animate-pulse" />
+                        <AlertTriangle className="h-24 w-24 md:h-32 md:w-32 text-destructive animate-pulse mx-4 md:mx-8" />
+                        <div className="text-[12rem] md:text-[16rem] font-bold text-muted-foreground/60 leading-none select-none">
+                            4
                         </div>
                     </div>
 
