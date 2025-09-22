@@ -1,5 +1,6 @@
 import UserDetailModal from '@/components/modal/UserDetailModal';
 import UserFormModal from '@/components/modal/UserFormModal';
+import UserImportModal from '@/components/modal/UserImportModal';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/ui/data-table';
@@ -10,7 +11,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Eye, Pencil, PlusIcon, Trash2, User } from 'lucide-react';
+import { Eye, FileSpreadsheet, Pencil, PlusIcon, Trash2, User } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -57,6 +58,7 @@ export default function UsersIndex({ users }: UserProps) {
     const { toast } = useToast();
     const [deleteDialog, setDeleteDialog] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+    const [showImportModal, setShowImportModal] = useState(false);
 
     // Debug: Log data yang diterima
     console.log('Users data received:', users);
@@ -256,12 +258,28 @@ export default function UsersIndex({ users }: UserProps) {
                         <h1 className="text-2xl font-bold">Kelola User</h1>
                         <p className="text-muted-foreground">Kelola data pengguna sistem</p>
                     </div>
-                    <UserFormModal mode="create">
-                        <Button>
-                            <PlusIcon className="mr-2 h-4 w-4" />
-                            Tambah User
-                        </Button>
-                    </UserFormModal>
+                    <div className="flex gap-2">
+                        <UserImportModal
+                            trigger={
+                                <Button variant="outline">
+                                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                    Import Excel
+                                </Button>
+                            }
+                            open={showImportModal}
+                            onOpenChange={setShowImportModal}
+                            onSuccess={() => {
+                                // Refresh page after successful import
+                                router.reload();
+                            }}
+                        />
+                        <UserFormModal mode="create">
+                            <Button>
+                                <PlusIcon className="mr-2 h-4 w-4" />
+                                Tambah User
+                            </Button>
+                        </UserFormModal>
+                    </div>
                 </div>
 
                 <div className="rounded-lg border bg-background p-6">
