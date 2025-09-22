@@ -42,12 +42,12 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const auth = (page.props as any)?.auth;
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-    
+
     // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
         return null;
     }
-    
+
     // Combine nav items - add admin items only if user is admin
     const allNavItems = [...sidebarNavItems];
     if (auth?.user?.role === 'admin') {

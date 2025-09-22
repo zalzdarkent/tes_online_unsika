@@ -27,10 +27,10 @@ export default function DevPage() {
 
     const teamMembers = [
         {
-            name: 'Alif - Testing',
+            name: 'Alif Fadillah Ummar',
             role: 'Lead Developer',
-            description: 'Full Stack Developer yang fokus pada pengembangan backend dan frontend aplikasi',
-            photo: '/team/alif-fadillah-ummar.jpg', // Foto akan disimpan di public/team/
+            description: 'Full Stack Developer yang fokus menyuruh AI untuk membuat frontnd dan backend aplikasi',
+            photo: '/team/foto-kucing-oren.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-indigo-500 to-purple-600',
             contact: '2210631170004@student.unsika.ac.id'
         },
@@ -115,7 +115,12 @@ export default function DevPage() {
                                         </p>
                                         <div className="flex items-center justify-center gap-2">
                                             <Mail className="h-4 w-4 text-muted-foreground" />
-                                            <span className="text-xs">{member.contact}</span>
+                                            <a 
+                                                href={`mailto:${member.contact}`}
+                                                className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline transition-colors cursor-pointer"
+                                            >
+                                                {member.contact}
+                                            </a>
                                         </div>
                                     </CardContent>
                                 </Card>
