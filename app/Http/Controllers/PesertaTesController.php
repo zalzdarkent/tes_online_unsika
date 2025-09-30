@@ -11,8 +11,8 @@ use App\Models\Jawaban;
 use App\Models\Soal;
 use App\Models\JadwalPeserta;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class PesertaTesController extends Controller
 {
@@ -48,20 +48,25 @@ class PesertaTesController extends Controller
             // ->where('tanggal_mulai', '<=', $now) // DIHAPUS
             // ->where('tanggal_berakhir', '>=', $now) // DIHAPUS - akan difilter di map()
 
-            // bisa jadi case device bermasalah yang mengharukan keluar
-            ->whereDoesntHave('jawaban', function ($query) use ($userId) {
-                $query->where('id_user', $userId);
+            // Filter untuk jadwal yang bisa diakses:
+            // 1. Belum pernah dikerjakan ATAU
+            // 2. Sudah mulai tapi belum submit ATAU
+            // 3. Terputus dan bisa dilanjutkan
+            ->where(function ($query) use ($userId) {
+                $query->whereDoesntHave('jawaban', function ($q) use ($userId) {
+                    $q->where('id_user', $userId);
+                })
+                ->orWhereHas('hasil', function ($q) use ($userId) {
+                    $q->where('id_user', $userId)
+                      ->where(function($subQuery) {
+                          $subQuery->where('is_submitted_test', false)
+                                   ->orWhere(function($terputusQuery) {
+                                       $terputusQuery->where('status_tes', 'terputus')
+                                                    ->where('boleh_dilanjutkan', true);
+                                   });
+                      });
+                });
             })
-
-            // ->where(function ($query) use ($userId) {
-            //     $query->whereDoesntHave('hasil', function ($q) use ($userId) {
-            //         $q->where('id_user', $userId);
-            //     })
-            //         ->orWhereHas('hasil', function ($q) use ($userId) {
-            //             $q->where('id_user', $userId)
-            //                 ->where('is_submitted_test_test', false);
-            //         });
-            // })
             ->get()
             ->map(function ($item) use ($userId, $now) {
                 // Hitung status seperti di JadwalController
@@ -91,6 +96,37 @@ class PesertaTesController extends Controller
                 $item->status_pendaftaran = $registration ? $registration->status : null;
                 $item->sudah_daftar = $registration !== null;
                 $item->bisa_mulai_tes = $registration && $registration->status === 'disetujui';
+
+                // Tambahan: Cek apakah waktu mulai tes sudah tiba
+                $item->dapat_mulai_tes_sekarang = false;
+                $item->menit_menuju_mulai_tes = null;
+
+                if ($item->bisa_mulai_tes) {
+                    // Jika ada waktu_mulai_tes yang diset, gunakan itu
+                    // Jika tidak, gunakan tanggal_mulai
+                    $waktuMulaiTes = $item->waktu_mulai_tes
+                        ? Carbon::parse($item->waktu_mulai_tes)
+                        : Carbon::parse($item->tanggal_mulai);
+
+                    if ($now->gte($waktuMulaiTes)) {
+                        $item->dapat_mulai_tes_sekarang = true;
+                    } else {
+                        $item->dapat_mulai_tes_sekarang = false;
+                        $item->menit_menuju_mulai_tes = $now->diffInMinutes($waktuMulaiTes);
+                    }
+                }
+
+                // Tambahkan informasi hasil tes jika ada
+                $hasilTest = \App\Models\HasilTestPeserta::where('id_jadwal', $item->id)
+                    ->where('id_user', $userId)
+                    ->first();
+
+                // Jika ada hasil test, hitung sisa waktu real-time
+                if ($hasilTest) {
+                    $hasilTest->sisa_waktu_detik_realtime = $hasilTest->getSisaWaktuRealTime();
+                }
+
+                $item->hasil_test = $hasilTest;
 
                 return $item;
             })
@@ -201,7 +237,7 @@ class PesertaTesController extends Controller
                 ])->withInput();
             }
 
-            // Cek apakah user sudah pernah mengerjakan
+            // cek apakah user sudah pernah mengerjakan
             $hasil = \App\Models\HasilTestPeserta::where('id_user', $user->id)
                 ->where('id_jadwal', $jadwalId)
                 ->first();
@@ -212,7 +248,14 @@ class PesertaTesController extends Controller
                 ]);
             }
 
-            HasilTestPeserta::firstOrCreate(
+            // Jika tes terputus dan belum diizinkan lanjut, redirect dengan pesan
+            if ($hasil && $hasil->status_tes === 'terputus' && !$hasil->boleh_dilanjutkan) {
+                return redirect()->route('peserta.daftar-tes')->withErrors([
+                    'error' => 'Tes Anda terputus. Silakan hubungi pengawas untuk mengizinkan melanjutkan tes.'
+                ]);
+            }
+
+            $hasil = HasilTestPeserta::firstOrCreate(
                 [
                     'id_user' => $user->id,
                     'id_jadwal' => $jadwalId,
@@ -223,6 +266,14 @@ class PesertaTesController extends Controller
                     'total_nilai' => null,
                 ]
             );
+
+            // Update status tes menjadi sedang mengerjakan dan set waktu mulai
+            $hasil->update([
+                'status_tes' => 'sedang_mengerjakan',
+                'waktu_mulai_tes' => now(),
+                'waktu_terakhir_aktif' => now(),
+                'sisa_waktu_detik' => $jadwal->durasi * 60, // convert menit ke detik
+            ]);
 
             return redirect()->route('peserta.soal', ['id' => $jadwalId]);
         } catch (\Exception $e) {
@@ -252,9 +303,19 @@ class PesertaTesController extends Controller
             };
 
             if ($hasil->is_submitted_test) {
-                return redirect()->route('peserta.daftar-tes')->withErrors([
-                    'error' => 'Tes ini sudah pernah dikerjakan dan tidak dapat diakses kembali.'
-                ]);
+                // Jika tes terputus dan diizinkan dilanjutkan, reset is_submitted_test
+                if ($hasil->status_tes === 'terputus' && $hasil->boleh_dilanjutkan) {
+                    $hasil->update([
+                        'is_submitted_test' => false,
+                        'status_tes' => 'sedang_mengerjakan',
+                        'waktu_terakhir_aktif' => now(),
+                        'boleh_dilanjutkan' => false, // reset flag izin
+                    ]);
+                } else {
+                    return redirect()->route('peserta.daftar-tes')->withErrors([
+                        'error' => 'Tes ini sudah pernah dikerjakan dan tidak dapat diakses kembali.'
+                    ]);
+                }
             }
 
             // acak soal
@@ -272,17 +333,30 @@ class PesertaTesController extends Controller
                 ->pluck('jawaban', 'id_soal');
 
 
-            // hitung durasi
+            // hitung durasi berdasarkan sisa waktu real-time
             $startTime = Carbon::parse($hasil->start_time);
-            $durasi = $jadwal->durasi;
             $jadwalSelesai = Carbon::parse($jadwal->tanggal_berakhir);
-            $endTime = $startTime->copy()->addMinutes($durasi);
+            
+            // Gunakan sisa waktu real-time (dengan logic pause/resume)
+            $sisaWaktuDetik = $hasil->getSisaWaktuRealTime();
+            
+            Log::info('Perhitungan end_time:', [
+                'sisa_waktu_real_time' => $sisaWaktuDetik,
+                'status_tes' => $hasil->status_tes,
+                'waktu_sekarang' => now()->format('Y-m-d H:i:s')
+            ]);
+            
+            if ($sisaWaktuDetik > 0) {
+                $endTime = now()->addSeconds($sisaWaktuDetik);
+            } else {
+                // Jika tidak ada sisa waktu, gunakan durasi penuh (first time)
+                $durasi = $jadwal->durasi;
+                $endTime = $startTime->copy()->addMinutes($durasi);
+            }
 
             if ($endTime->gt($jadwalSelesai)) {
                 $endTime = $jadwalSelesai->copy();
-            }
-
-            if (now()->gt($endTime)) {
+            }            if (now()->gt($endTime)) {
                 return redirect()->route('peserta.daftar-tes')->withErrors([
                     'error' => 'Waktu tes sudah habis dan tidak dapat diakses kembali.'
                 ]);
@@ -377,10 +451,12 @@ class PesertaTesController extends Controller
     {
         $request->validate([
             'jadwal_id' => 'required|exists:jadwal,id',
+            'reason' => 'nullable|string|in:tab_switch,time_up,manual', // tambah parameter reason
         ]);
 
         $user = Auth::user();
         $jadwalId = $request->jadwal_id;
+        $reason = $request->reason ?? 'manual';
 
         try {
             $hasil = \App\Models\HasilTestPeserta::where('id_user', $user->id)
@@ -418,15 +494,63 @@ class PesertaTesController extends Controller
                 ]);
             }
 
-            // update status submit
-            $hasil->update([
+            // Tentukan status dan alasan berdasarkan reason
+            $statusTes = 'selesai';
+            $alasanTerputus = null;
+            $sisaWaktu = null;
+
+            if ($reason === 'tab_switch') {
+                $statusTes = 'terputus';
+                $alasanTerputus = 'Terdeteksi pindah tab atau window';
+
+                // Hitung sisa waktu jika tes terputus
+                if ($hasil && $hasil->waktu_mulai_tes) {
+                    $jadwal = \App\Models\Jadwal::find($jadwalId);
+                    $waktuMulai = \Carbon\Carbon::parse($hasil->waktu_mulai_tes);
+                    $waktuSekarang = now();
+                    $waktuTerpakai = $waktuMulai->diffInSeconds($waktuSekarang);
+                    $totalWaktu = $jadwal->durasi * 60; // convert menit ke detik
+                    
+                    // Debug: log perhitungan
+                Log::info('Perhitungan sisa waktu:', [
+                        'waktu_mulai' => $waktuMulai->toDateTimeString(),
+                        'waktu_sekarang' => $waktuSekarang->toDateTimeString(),
+                        'waktu_terpakai_detik' => $waktuTerpakai,
+                        'total_waktu_detik' => $totalWaktu,
+                        'sisa_waktu_hitung' => max(0, $totalWaktu - $waktuTerpakai)
+                    ]);
+                    
+                    $sisaWaktu = max(0, $totalWaktu - $waktuTerpakai);
+                }
+            } elseif ($reason === 'time_up') {
+                $statusTes = 'selesai';
+                $alasanTerputus = 'Waktu habis';
+                $sisaWaktu = 0;
+            }
+
+            // update status submit dan status tes
+            $updateData = [
                 'is_submitted_test' => true,
-            ]);
+                'status_tes' => $statusTes,
+                'waktu_terakhir_aktif' => now(),
+            ];
+
+            if ($alasanTerputus) {
+                $updateData['alasan_terputus'] = $alasanTerputus;
+            }
+
+            if ($sisaWaktu !== null) {
+                $updateData['sisa_waktu_detik'] = $sisaWaktu;
+            }
+
+            $hasil->update($updateData);
 
             // Return success response untuk Inertia
             return response()->json([
                 'success' => true,
-                'message' => 'Jawaban berhasil dikumpulkan'
+                'message' => 'Jawaban berhasil dikumpulkan',
+                'status' => $statusTes,
+                'reason' => $alasanTerputus
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -452,6 +576,53 @@ class PesertaTesController extends Controller
         } catch (\Exception $e) {
             return back()->withErrors([
                 'error' => 'Gagal memuat riwayat. Silakan coba lagi nanti.'
+            ]);
+        }
+    }
+
+    /**
+     * Method untuk melanjutkan tes yang terputus (jika diizinkan)
+     */
+    public function lanjutkanTes(Request $request)
+    {
+        $request->validate([
+            'id_jadwal' => 'required|exists:jadwal,id',
+        ]);
+
+        try {
+            $user = Auth::user();
+            $jadwalId = $request->id_jadwal;
+
+            $hasil = HasilTestPeserta::where('id_user', $user->id)
+                ->where('id_jadwal', $jadwalId)
+                ->first();
+
+            if (!$hasil) {
+                return redirect()->route('peserta.daftar-tes')->withErrors([
+                    'error' => 'Data tes tidak ditemukan.'
+                ]);
+            }
+
+            if (!$hasil->bisaDilanjutkan()) {
+                return redirect()->route('peserta.daftar-tes')->withErrors([
+                    'error' => 'Tes ini tidak dapat dilanjutkan.'
+                ]);
+            }
+
+            // Update status tes menjadi sedang mengerjakan lagi
+            $hasil->update([
+                'status_tes' => 'sedang_mengerjakan',
+                'waktu_terakhir_aktif' => now(),
+                'waktu_resume_tes' => now(), // SET WAKTU RESUME
+                'boleh_dilanjutkan' => false, // reset flag izin
+                'is_submitted_test' => false, // allow to continue
+                'sisa_waktu_detik' => $hasil->getSisaWaktuRealTime(), // update dengan sisa waktu real-time
+            ]);
+
+            return redirect()->route('peserta.soal', ['id' => $jadwalId]);
+        } catch (\Exception $e) {
+            return redirect()->route('peserta.daftar-tes')->withErrors([
+                'error' => 'Terjadi kesalahan saat melanjutkan tes.'
             ]);
         }
     }

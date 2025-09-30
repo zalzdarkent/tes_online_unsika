@@ -35,6 +35,7 @@ type JadwalData = {
     nama_jadwal: string;
     tanggal_mulai: string;
     tanggal_berakhir: string;
+    waktu_mulai_tes: string | null;
     status: string;
     auto_close?: boolean;
     id_jadwal_sebelumnya: number | null;
@@ -74,6 +75,7 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
         nama_jadwal: jadwal.nama_jadwal || '',
         tanggal_mulai: jadwal.tanggal_mulai || '',
         tanggal_berakhir: jadwal.tanggal_berakhir || '',
+        waktu_mulai_tes: jadwal.waktu_mulai_tes || '',
         auto_close: jadwal.auto_close ?? true,
         id_jadwal_sebelumnya: jadwal.id_jadwal_sebelumnya || null,
         kategori_tes_id: jadwal.kategori_tes_id || null,
@@ -86,6 +88,8 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
         tanggal_mulai_time: '',
         tanggal_berakhir_date: '',
         tanggal_berakhir_time: '',
+        waktu_mulai_tes_date: '',
+        waktu_mulai_tes_time: '',
     });
 
     // Load data saat komponen dimount
@@ -93,6 +97,7 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
         // Parse tanggal mulai dan berakhir
         const tanggalMulaiParsed = parseDateTime(jadwal.tanggal_mulai);
         const tanggalBerakhirParsed = parseDateTime(jadwal.tanggal_berakhir);
+        const waktuMulaiTesParsed = jadwal.waktu_mulai_tes ? parseDateTime(jadwal.waktu_mulai_tes) : { date: '', time: '' };
 
         // Set date time inputs
         setDateTimeInputs({
@@ -100,6 +105,8 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
             tanggal_mulai_time: tanggalMulaiParsed.time,
             tanggal_berakhir_date: tanggalBerakhirParsed.date,
             tanggal_berakhir_time: tanggalBerakhirParsed.time,
+            waktu_mulai_tes_date: waktuMulaiTesParsed.date,
+            waktu_mulai_tes_time: waktuMulaiTesParsed.time,
         });
     }, [jadwal]);
 
@@ -139,6 +146,24 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
             setData('tanggal_berakhir', '');
         }
     };
+
+    const updateWaktuMulaiTes = (date: string, time: string) => {
+        const newDate = date ?? dateTimeInputs.waktu_mulai_tes_date;
+        const newTime = time ?? dateTimeInputs.waktu_mulai_tes_time;
+
+        const updatedInputs = {
+            ...dateTimeInputs,
+            waktu_mulai_tes_date: newDate,
+            waktu_mulai_tes_time: newTime,
+        };
+        setDateTimeInputs(updatedInputs);
+
+        if (newDate && newTime) {
+            setData('waktu_mulai_tes', `${newDate}T${newTime}:00`);
+        } else {
+            setData('waktu_mulai_tes', '');
+        }
+    };
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -163,6 +188,11 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
         const tanggal_mulai = `${dateTimeInputs.tanggal_mulai_date}T${dateTimeInputs.tanggal_mulai_time}:00`;
         const tanggal_berakhir = `${dateTimeInputs.tanggal_berakhir_date}T${dateTimeInputs.tanggal_berakhir_time}:00`;
 
+        let waktu_mulai_tes = '';
+        if (dateTimeInputs.waktu_mulai_tes_date && dateTimeInputs.waktu_mulai_tes_time) {
+            waktu_mulai_tes = `${dateTimeInputs.waktu_mulai_tes_date}T${dateTimeInputs.waktu_mulai_tes_time}:00`;
+        }
+
         // Validasi tanggal
         const startDate = new Date(tanggal_mulai);
         const endDate = new Date(tanggal_berakhir);
@@ -174,6 +204,29 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                 description: 'Tanggal berakhir harus setelah tanggal mulai.',
             });
             return;
+        }
+
+        // Validasi waktu mulai tes jika diisi
+        if (waktu_mulai_tes) {
+            const testStartDate = new Date(waktu_mulai_tes);
+
+            if (testStartDate < startDate) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Error!',
+                    description: 'Waktu mulai tes tidak boleh sebelum tanggal mulai jadwal.',
+                });
+                return;
+            }
+
+            if (testStartDate > endDate) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Error!',
+                    description: 'Waktu mulai tes tidak boleh setelah tanggal berakhir jadwal.',
+                });
+                return;
+            }
         }
 
         const diffInMilliseconds = endDate.getTime() - startDate.getTime();
@@ -295,6 +348,29 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                             className="text-sm"
                                         />
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Waktu Mulai Tes (Opsional)</label>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                    Waktu spesifik kapan peserta yang sudah disetujui bisa mulai mengerjakan tes. Jika tidak diisi, peserta bisa mulai kapan saja dalam rentang jadwal.
+                                </p>
+                                <div className="grid gap-2 md:grid-cols-2">
+                                    <Input
+                                        type="date"
+                                        value={dateTimeInputs.waktu_mulai_tes_date}
+                                        onChange={(e) => updateWaktuMulaiTes(e.target.value, dateTimeInputs.waktu_mulai_tes_time)}
+                                        className="text-sm"
+                                        placeholder="Pilih tanggal"
+                                    />
+                                    <Input
+                                        type="time"
+                                        value={dateTimeInputs.waktu_mulai_tes_time}
+                                        onChange={(e) => updateWaktuMulaiTes(dateTimeInputs.waktu_mulai_tes_date, e.target.value)}
+                                        className="text-sm"
+                                        placeholder="Pilih waktu"
+                                    />
                                 </div>
                             </div>
 

@@ -95,6 +95,7 @@ type JadwalData = {
     nama_jadwal: string;
     tanggal_mulai: string;
     tanggal_berakhir: string;
+    waktu_mulai_tes: string | null;
     status: string;
     auto_close?: boolean;
     id_jadwal_sebelumnya: number | null;
@@ -376,6 +377,22 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
             },
         },
         {
+            accessorKey: 'waktu_mulai_tes',
+            header: 'Waktu Mulai Tes',
+            enableSorting: true,
+            enableHiding: true,
+            meta: {
+                defaultHidden: true,
+            },
+            cell: ({ row }) => {
+                const waktuMulai = row.getValue('waktu_mulai_tes') as string | null;
+                if (!waktuMulai) {
+                    return <div className="text-muted-foreground">Menggunakan tanggal mulai</div>;
+                }
+                return <div className="text-sm">{formatDateTime(waktuMulai)}</div>;
+            },
+        },
+        {
             accessorKey: 'status',
             header: 'Status',
             enableSorting: true,
@@ -535,6 +552,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                         onBulkDelete={handleBulkDelete}
                         initialColumnVisibility={{
                             id_jadwal_sebelumnya: false,
+                            waktu_mulai_tes: false,
                         }}
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}
                         showExportButton

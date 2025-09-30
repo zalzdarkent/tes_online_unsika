@@ -14,6 +14,7 @@ type JadwalData = {
     nama_jadwal: string;
     tanggal_mulai: string;
     tanggal_berakhir: string;
+    waktu_mulai_tes: string | null;
     // status: string; // status tidak perlu diinput manual
     auto_close?: boolean;
     id_jadwal_sebelumnya: number | null;
@@ -70,6 +71,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
         nama_jadwal: '',
         tanggal_mulai: '',
         tanggal_berakhir: '',
+        waktu_mulai_tes: '',
         auto_close: true as boolean,
         id_jadwal_sebelumnya: null as number | null,
         kategori_tes_id: null as number | null,
@@ -84,6 +86,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
         tanggal_mulai_time: '',
         tanggal_berakhir_date: '',
         tanggal_berakhir_time: '',
+        waktu_mulai_tes_date: '',
+        waktu_mulai_tes_time: '',
     });
 
     // Helper untuk update data.tanggal_mulai dan data.tanggal_berakhir setiap kali input berubah
@@ -113,6 +117,22 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
             return next;
         });
     };
+
+    const updateWaktuMulaiTes = (date: string, time: string) => {
+        setDateTimeInputs((prev) => {
+            const next = {
+                ...prev,
+                waktu_mulai_tes_date: date ?? prev.waktu_mulai_tes_date,
+                waktu_mulai_tes_time: time ?? prev.waktu_mulai_tes_time,
+            };
+            if (next.waktu_mulai_tes_date && next.waktu_mulai_tes_time) {
+                setData('waktu_mulai_tes', `${next.waktu_mulai_tes_date}T${next.waktu_mulai_tes_time}:00`);
+            } else {
+                setData('waktu_mulai_tes', '');
+            }
+            return next;
+        });
+    };
     // Function untuk load data edit
     const loadEditData = () => {
         if (mode === 'edit' && jadwal) {
@@ -121,13 +141,15 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
             // Parse tanggal mulai dan berakhir
             const tanggalMulaiParsed = parseDateTime(jadwal.tanggal_mulai);
             const tanggalBerakhirParsed = parseDateTime(jadwal.tanggal_berakhir);
+            const waktuMulaiTesParsed = jadwal.waktu_mulai_tes ? parseDateTime(jadwal.waktu_mulai_tes) : { date: '', time: '' };
 
-            console.log('Parsed dates:', { tanggalMulaiParsed, tanggalBerakhirParsed });
+            console.log('Parsed dates:', { tanggalMulaiParsed, tanggalBerakhirParsed, waktuMulaiTesParsed });
 
             // Use individual setData calls to avoid issues
             setData('nama_jadwal', jadwal.nama_jadwal || '');
             setData('tanggal_mulai', jadwal.tanggal_mulai || '');
             setData('tanggal_berakhir', jadwal.tanggal_berakhir || '');
+            setData('waktu_mulai_tes', jadwal.waktu_mulai_tes || '');
             // status tidak perlu di-set manual
             setData('auto_close', jadwal.auto_close ?? true);
             setData('id_jadwal_sebelumnya', jadwal.id_jadwal_sebelumnya || null);
@@ -140,6 +162,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                 tanggal_mulai_time: tanggalMulaiParsed.time,
                 tanggal_berakhir_date: tanggalBerakhirParsed.date,
                 tanggal_berakhir_time: tanggalBerakhirParsed.time,
+                waktu_mulai_tes_date: waktuMulaiTesParsed.date,
+                waktu_mulai_tes_time: waktuMulaiTesParsed.time,
             });
 
             console.log('Form data loaded:', {
@@ -149,6 +173,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                     tanggal_mulai_time: tanggalMulaiParsed.time,
                     tanggal_berakhir_date: tanggalBerakhirParsed.date,
                     tanggal_berakhir_time: tanggalBerakhirParsed.time,
+                    waktu_mulai_tes_date: waktuMulaiTesParsed.date,
+                    waktu_mulai_tes_time: waktuMulaiTesParsed.time,
                 },
             });
         }
@@ -169,6 +195,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                     tanggal_mulai_time: '',
                     tanggal_berakhir_date: '',
                     tanggal_berakhir_time: '',
+                    waktu_mulai_tes_date: '',
+                    waktu_mulai_tes_time: '',
                 });
             }
         }
@@ -182,6 +210,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                 tanggal_mulai_time: '',
                 tanggal_berakhir_date: '',
                 tanggal_berakhir_time: '',
+                waktu_mulai_tes_date: '',
+                waktu_mulai_tes_time: '',
             });
             clearErrors();
         }
@@ -194,6 +224,8 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                 tanggal_mulai_time: '',
                 tanggal_berakhir_date: '',
                 tanggal_berakhir_time: '',
+                waktu_mulai_tes_date: '',
+                waktu_mulai_tes_time: '',
             });
             clearErrors();
         }
@@ -429,6 +461,40 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                                     </div>
                                 </div>
                                 {errors.tanggal_berakhir && <InputError message={errors.tanggal_berakhir} />}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor={`${mode}_waktu_mulai_tes`}>Waktu Mulai Tes (Opsional)</Label>
+                                <div className="text-sm text-muted-foreground mb-2 space-y-1">
+                                    {/* <p>• <strong>Rentang Jadwal:</strong> Tanggal mulai - berakhir adalah rentang waktu kapan jadwal tersedia untuk pendaftaran</p>
+                                    <p>• <strong>Waktu Mulai Tes:</strong> Waktu spesifik kapan peserta yang sudah disetujui bisa mulai mengerjakan tes</p>
+                                    <p>• <strong>Durasi:</strong> Waktu pengerjaan soal (misal 90 menit), tidak terkait dengan rentang jadwal</p>
+                                    <p className="text-amber-600 dark:text-amber-400">Jika kosong, peserta bisa mulai tes sejak tanggal mulai jadwal</p> */}
+                                </div>
+                                <div className="grid grid-cols-1 space-y-2 md:grid-cols-2 md:gap-2 md:space-y-0">
+                                    <div>
+                                        <Input
+                                            id={`${mode}_waktu_mulai_tes_date`}
+                                            type="date"
+                                            value={dateTimeInputs.waktu_mulai_tes_date}
+                                            onChange={(e) => updateWaktuMulaiTes(e.target.value, dateTimeInputs.waktu_mulai_tes_time)}
+                                            disabled={processing}
+                                            readOnly={false}
+                                            className="flex justify-center"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Input
+                                            id={`${mode}_waktu_mulai_tes_time`}
+                                            type="time"
+                                            value={dateTimeInputs.waktu_mulai_tes_time}
+                                            onChange={(e) => updateWaktuMulaiTes(dateTimeInputs.waktu_mulai_tes_date, e.target.value)}
+                                            disabled={processing}
+                                            readOnly={false}
+                                            className="flex justify-center"
+                                        />
+                                    </div>
+                                </div>
+                                {errors.waktu_mulai_tes && <InputError message={errors.waktu_mulai_tes} />}
                             </div>
                         </div>
 

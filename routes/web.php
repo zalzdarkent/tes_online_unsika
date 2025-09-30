@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('tes/{id}/soal', [PesertaTesController::class, 'soal'])->name('soal');
         Route::post('save-answer', [PesertaTesController::class, 'saveAnswer'])->name('save');
         Route::post('submit', [PesertaTesController::class, 'submit'])->name('submit');
+        Route::post('lanjutkan-tes', [PesertaTesController::class, 'lanjutkanTes'])->name('lanjutkan-tes');
         Route::get('riwayat', [PesertaTesController::class, 'riwayat'])->name('riwayat');
 
         // Pendaftaran tes
@@ -83,6 +84,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('peserta/daftarkan', [JadwalPesertaController::class, 'daftarkanPeserta'])->name('daftarkan');
             Route::post('peserta/{registration}/approve', [JadwalPesertaController::class, 'approve'])->name('approve');
             Route::post('peserta/{registration}/reject', [JadwalPesertaController::class, 'reject'])->name('reject');
+            Route::post('peserta/{registration}/izinkan-lanjut', [JadwalPesertaController::class, 'izinkanLanjut'])->name('izinkan-lanjut');
             Route::post('peserta/bulk-approve', [JadwalPesertaController::class, 'bulkApprove'])->name('bulk-approve');
             Route::post('peserta/bulk-reject', [JadwalPesertaController::class, 'bulkReject'])->name('bulk-reject');
             Route::post('peserta/bulk-delete', [JadwalPesertaController::class, 'bulkDelete'])->name('bulk-delete');

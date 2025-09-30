@@ -20,7 +20,7 @@ import { formatDateTime } from '@/lib/format-date';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Check, MoreHorizontal, Trash2, UserPlus, X } from 'lucide-react';
+import { Check, MoreHorizontal, Play, Trash2, UserPlus, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface JadwalData {
@@ -64,6 +64,17 @@ interface PesertaTerdaftarData {
         id: number;
         nama: string;
     };
+    hasil_test?: {
+        id: number;
+        status_tes: 'sedang_mengerjakan' | 'terputus' | 'selesai' | 'tidak_dimulai';
+        boleh_dilanjutkan: boolean;
+        sisa_waktu_detik?: number;
+        alasan_terputus?: string;
+        diizinkan_lanjut_pada?: string;
+        diizinkan_oleh?: number;
+        total_skor?: number;
+        total_nilai?: number;
+    } | null;
 }
 
 interface Props {
@@ -303,6 +314,36 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
         );
     };
 
+    const handleIzinkanLanjut = (registrationId: number) => {
+        showAlert(
+            'Izinkan Melanjutkan Tes',
+            'Yakin ingin mengizinkan peserta ini melanjutkan tes dengan sisa waktu yang tersisa?',
+            () => {
+                router.post(
+                    route('jadwal.peserta.izinkan-lanjut', [jadwal.id, registrationId]),
+                    {},
+                    {
+                        onSuccess: () => {
+                            toast({
+                                title: 'Berhasil!',
+                                description: 'Peserta diizinkan melanjutkan tes.',
+                            });
+                        },
+                        onError: (errors) => {
+                            toast({
+                                variant: 'destructive',
+                                title: 'Error!',
+                                description: errors.error || 'Terjadi kesalahan.',
+                            });
+                        },
+                    },
+                );
+            },
+            'Izinkan',
+            'default',
+        );
+    };
+
     const handleDelete = (registrationId: number) => {
         showAlert(
             'Konfirmasi Hapus',
@@ -413,6 +454,44 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             },
         },
         {
+            accessorKey: 'hasil_test.status_tes',
+            header: 'Status Tes',
+            enableSorting: true,
+            cell: ({ row }) => {
+                const hasilTest = row.original.hasil_test;
+                if (!hasilTest) {
+                    return <span className="text-xs text-muted-foreground">Belum Mulai</span>;
+                }
+
+                const statusMap: Record<string, { text: string; color: string }> = {
+                    tidak_dimulai: { text: 'Belum Mulai', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200' },
+                    sedang_mengerjakan: { text: 'Sedang Mengerjakan', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
+                    terputus: { text: 'Terputus', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
+                    selesai: { text: 'Selesai', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
+                };
+
+                const statusConfig = statusMap[hasilTest.status_tes] || statusMap.tidak_dimulai;
+
+                return (
+                    <div className="space-y-1">
+                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${statusConfig.color}`}>
+                            {statusConfig.text}
+                        </span>
+                        {hasilTest.status_tes === 'terputus' && hasilTest.alasan_terputus && (
+                            <div className="text-xs text-muted-foreground">
+                                {hasilTest.alasan_terputus}
+                            </div>
+                        )}
+                        {hasilTest.status_tes === 'selesai' && hasilTest.total_nilai !== undefined && (
+                            <div className="text-xs text-muted-foreground">
+                                Nilai: {hasilTest.total_nilai}
+                            </div>
+                        )}
+                    </div>
+                );
+            },
+        },
+        {
             id: 'actions',
             header: 'Aksi',
             cell: ({ row }) => {
@@ -437,6 +516,12 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                         Tolak
                                     </DropdownMenuItem>
                                 </>
+                            )}
+                            {registration.hasil_test?.status_tes === 'terputus' && !registration.hasil_test.boleh_dilanjutkan && (
+                                <DropdownMenuItem className="cursor-pointer text-blue-600" onClick={() => handleIzinkanLanjut(registration.id)}>
+                                    <Play className="mr-2 h-4 w-4" />
+                                    Izinkan Melanjutkan
+                                </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
                                 className="cursor-pointer text-destructive hover:text-destructive/90 dark:text-red-400 dark:hover:text-red-300"

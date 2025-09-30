@@ -47,6 +47,7 @@ class JadwalController extends Controller
             'nama_jadwal',
             'tanggal_mulai',
             'tanggal_berakhir',
+            'waktu_mulai_tes',
             'status',
             'auto_close',
             'user_id',
@@ -67,6 +68,7 @@ class JadwalController extends Controller
                     'nama_jadwal' => $item->nama_jadwal,
                     'tanggal_mulai' => $item->tanggal_mulai,
                     'tanggal_berakhir' => $item->tanggal_berakhir,
+                    'waktu_mulai_tes' => $item->waktu_mulai_tes,
                     'status' => $item->status,
                     'auto_close' => $item->auto_close,
                     'user_id' => $item->user_id,
@@ -136,6 +138,7 @@ class JadwalController extends Controller
             'nama_jadwal' => 'required|string|max:255',
             'tanggal_mulai' => 'required|date',
             'tanggal_berakhir' => 'required|date|after:tanggal_mulai',
+            'waktu_mulai_tes' => 'nullable|date|after_or_equal:tanggal_mulai|before_or_equal:tanggal_berakhir',
             'auto_close' => 'boolean',
             'id_jadwal_sebelumnya' => 'nullable|exists:jadwal,id',
             'kategori_tes_id' => 'nullable|exists:kategori_tes,id',
@@ -147,6 +150,9 @@ class JadwalController extends Controller
             'tanggal_berakhir.required' => 'Tanggal berakhir wajib diisi.',
             'tanggal_berakhir.date' => 'Format tanggal berakhir tidak valid.',
             'tanggal_berakhir.after' => 'Tanggal berakhir harus setelah tanggal mulai.',
+            'waktu_mulai_tes.date' => 'Format waktu mulai tes tidak valid.',
+            'waktu_mulai_tes.after_or_equal' => 'Waktu mulai tes harus setelah atau sama dengan tanggal mulai.',
+            'waktu_mulai_tes.before_or_equal' => 'Waktu mulai tes harus sebelum atau sama dengan tanggal berakhir.',
             'id_jadwal_sebelumnya.exists' => 'Jadwal sebelumnya tidak valid.',
             'kategori_tes_id.exists' => 'Kategori tes tidak valid.',
             'durasi.required' => 'Durasi wajib diisi.',
@@ -206,6 +212,13 @@ class JadwalController extends Controller
             $validated['tanggal_mulai'] = \Carbon\Carbon::parse($validated['tanggal_mulai'])->format('Y-m-d H:i:s');
             $validated['tanggal_berakhir'] = \Carbon\Carbon::parse($validated['tanggal_berakhir'])->format('Y-m-d H:i:s');
 
+            // Konversi waktu_mulai_tes jika ada
+            if (!empty($validated['waktu_mulai_tes'])) {
+                $validated['waktu_mulai_tes'] = \Carbon\Carbon::parse($validated['waktu_mulai_tes'])->format('Y-m-d H:i:s');
+            } else {
+                $validated['waktu_mulai_tes'] = null;
+            }
+
             // Generate dan set kode jadwal
             $validated['kode_jadwal'] = $this->generateKodeJadwal($validated['nama_jadwal']);
 
@@ -263,6 +276,7 @@ class JadwalController extends Controller
             'nama_jadwal' => 'required|string|max:255',
             'tanggal_mulai' => 'required|date',
             'tanggal_berakhir' => 'required|date|after:tanggal_mulai',
+            'waktu_mulai_tes' => 'nullable|date|after_or_equal:tanggal_mulai|before_or_equal:tanggal_berakhir',
             'auto_close' => 'boolean',
             'id_jadwal_sebelumnya' => 'nullable|exists:jadwal,id',
             'kategori_tes_id' => 'nullable|exists:kategori_tes,id',
@@ -274,6 +288,9 @@ class JadwalController extends Controller
             'tanggal_berakhir.required' => 'Tanggal berakhir wajib diisi.',
             'tanggal_berakhir.date' => 'Format tanggal berakhir tidak valid.',
             'tanggal_berakhir.after' => 'Tanggal berakhir harus setelah tanggal mulai.',
+            'waktu_mulai_tes.date' => 'Format waktu mulai tes tidak valid.',
+            'waktu_mulai_tes.after_or_equal' => 'Waktu mulai tes harus setelah atau sama dengan tanggal mulai.',
+            'waktu_mulai_tes.before_or_equal' => 'Waktu mulai tes harus sebelum atau sama dengan tanggal berakhir.',
             'id_jadwal_sebelumnya.exists' => 'Jadwal sebelumnya tidak valid.',
             'kategori_tes_id.exists' => 'Kategori tes tidak valid.',
             'durasi.integer' => 'Durasi harus berupa angka.',
@@ -334,6 +351,13 @@ class JadwalController extends Controller
             // Konversi tanggal ke format database yang benar
             $validated['tanggal_mulai'] = \Carbon\Carbon::parse($validated['tanggal_mulai'])->format('Y-m-d H:i:s');
             $validated['tanggal_berakhir'] = \Carbon\Carbon::parse($validated['tanggal_berakhir'])->format('Y-m-d H:i:s');
+
+            // Konversi waktu_mulai_tes jika ada
+            if (!empty($validated['waktu_mulai_tes'])) {
+                $validated['waktu_mulai_tes'] = \Carbon\Carbon::parse($validated['waktu_mulai_tes'])->format('Y-m-d H:i:s');
+            } else {
+                $validated['waktu_mulai_tes'] = null;
+            }
 
             // Jika nama jadwal berubah, generate kode baru
             if ($jadwal->nama_jadwal !== $validated['nama_jadwal']) {

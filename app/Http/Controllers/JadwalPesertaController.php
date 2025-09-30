@@ -29,7 +29,16 @@ class JadwalPesertaController extends Controller
         $pesertaTerdaftar = JadwalPeserta::with(['peserta', 'approver'])
             ->where('id_jadwal', $jadwalId)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($item) use ($jadwalId) {
+                // Tambahkan informasi hasil tes jika ada
+                $hasilTest = \App\Models\HasilTestPeserta::where('id_jadwal', $jadwalId)
+                    ->where('id_user', $item->id_peserta)
+                    ->first();
+
+                $item->hasil_test = $hasilTest;
+                return $item;
+            });
 
         // Ambil semua peserta (untuk bisa didaftarkan manual oleh teacher)
         $allPeserta = User::where('role', 'peserta')
@@ -297,5 +306,44 @@ class JadwalPesertaController extends Controller
         $deletedCount = JadwalPeserta::whereIn('id', $request->ids)->delete();
 
         return redirect()->back()->with('success', "{$deletedCount} peserta berhasil dihapus dari jadwal.");
+    }
+
+    /**
+     * Izinkan peserta melanjutkan tes yang terputus
+     */
+    public function izinkanLanjut($jadwalId, $registrationId)
+    {
+        $user = Auth::user();
+
+        // Pastikan user adalah admin atau teacher
+        if (!in_array($user->role, ['admin', 'teacher'])) {
+            return redirect()->back()->withErrors(['error' => 'Anda tidak memiliki akses untuk mengizinkan melanjutkan tes.']);
+        }
+
+        $registration = JadwalPeserta::findOrFail($registrationId);
+
+        // Pastikan registrasi ini milik jadwal yang benar
+        if ($registration->id_jadwal != $jadwalId) {
+            return redirect()->back()->withErrors(['error' => 'Data tidak valid.']);
+        }
+
+        // Cari hasil tes peserta yang terputus
+        $hasilTest = \App\Models\HasilTestPeserta::where('id_jadwal', $jadwalId)
+            ->where('id_user', $registration->id_peserta)
+            ->where('status_tes', 'terputus')
+            ->first();
+
+        if (!$hasilTest) {
+            return redirect()->back()->withErrors(['error' => 'Tidak ada tes yang terputus untuk peserta ini.']);
+        }
+
+        // Update izin melanjutkan
+        $hasilTest->update([
+            'boleh_dilanjutkan' => true,
+            'diizinkan_lanjut_pada' => now(),
+            'diizinkan_oleh' => $user->id
+        ]);
+
+        return redirect()->back()->with('success', 'Peserta diizinkan melanjutkan tes.');
     }
 }

@@ -1,4 +1,13 @@
-import { AlertDialogWrapper } from '@/components/modal/AlertDialogWrapper';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import RichTextViewer from '@/components/rich-text-viewer';
 import { toast } from '@/hooks/use-toast';
 import { PesertaTesPageProps } from '@/types/page-props/peserta-tes';
@@ -26,6 +35,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     const [showTabLeaveDialog, setShowTabLeaveDialog] = useState(false);
     const [alertTitle, setAlertTitle] = useState('');
     const [alertDescription, setAlertDescription] = useState('');
+    const [submitReason, setSubmitReason] = useState<'manual' | 'tab_switch' | 'time_up'>('manual');
 
     const lastSavedAnswersRef = useRef<Record<number, string>>({});
 
@@ -76,7 +86,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
 
     const debouncedSaveAnswer = useMemo(() => debounce(saveAnswer, 500), [saveAnswer]);
 
-    const handleSubmit = async (redirect = false) => {
+    const handleSubmit = async (redirect = false, reason = 'manual') => {
         if (isSubmitting) return;
         setIsSubmitting(true);
 
@@ -94,6 +104,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                 body: JSON.stringify({
                     jadwal_id: jadwal.id,
                     redirect,
+                    reason,
                 }),
                 credentials: 'same-origin',
             });
@@ -127,8 +138,9 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
             if (remainingSeconds <= 0) {
                 setAlertTitle('Waktu Habis');
                 setAlertDescription('Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim otomatis.');
+                setSubmitReason('time_up');
 
-                handleSubmit();
+                handleSubmit(false, 'time_up');
                 setShowTabLeaveDialog(true);
                 clearInterval(interval);
             }
@@ -145,9 +157,10 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
             if (!submitted && document.visibilityState === 'hidden') {
                 submitted = true;
                 setAlertTitle('Anda terdeteksi meninggalkan tab ujian');
-                setAlertDescription('Anda tidak dapat melanjutkan tes ini. Semua jawaban telah dikumpulkan');
+                setAlertDescription('Tes Anda telah dihentikan karena keluar dari tab ujian. Hubungi pengawas untuk melanjutkan tes.');
+                setSubmitReason('tab_switch');
 
-                handleSubmit();
+                handleSubmit(false, 'tab_switch');
                 setShowTabLeaveDialog(true);
             }
         };
@@ -228,13 +241,32 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
             </div>
 
             {showTabLeaveDialog && (
-                <AlertDialogWrapper
-                    open={showTabLeaveDialog}
-                    title={alertTitle}
-                    description={alertDescription}
-                    actionLabel="Keluar"
-                    onAction={() => router.visit('/peserta/riwayat')}
-                />
+                <AlertDialog open={showTabLeaveDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{alertTitle}</AlertDialogTitle>
+                            <AlertDialogDescription>{alertDescription}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            {submitReason === 'tab_switch' && (
+                                <AlertDialogCancel onClick={() => setShowTabLeaveDialog(false)}>
+                                    Tutup
+                                </AlertDialogCancel>
+                            )}
+                            <AlertDialogAction
+                                onClick={() => {
+                                    if (submitReason === 'tab_switch') {
+                                        router.visit('/peserta/daftar-tes');
+                                    } else {
+                                        router.visit('/peserta/riwayat');
+                                    }
+                                }}
+                            >
+                                {submitReason === 'tab_switch' ? 'Kembali ke Daftar Tes' : 'Lihat Riwayat'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             )}
         </>
     );

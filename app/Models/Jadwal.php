@@ -13,6 +13,7 @@ class Jadwal extends Model
         'nama_jadwal',
         'tanggal_mulai',
         'tanggal_berakhir',
+        'waktu_mulai_tes',
         'status',
         'auto_close',
         'durasi',
@@ -150,5 +151,48 @@ class Jadwal extends Model
         }
 
         return $updatedCount;
+    }
+
+    /**
+     * Check apakah peserta bisa mulai tes (waktu mulai tes sudah tiba)
+     */
+    public function canStartTest()
+    {
+        if (!$this->waktu_mulai_tes) {
+            // Jika waktu_mulai_tes tidak diset, gunakan tanggal_mulai sebagai fallback
+            $waktuMulai = $this->tanggal_mulai instanceof \Carbon\Carbon
+                ? $this->tanggal_mulai
+                : \Carbon\Carbon::parse($this->tanggal_mulai);
+        } else {
+            $waktuMulai = $this->waktu_mulai_tes instanceof \Carbon\Carbon
+                ? $this->waktu_mulai_tes
+                : \Carbon\Carbon::parse($this->waktu_mulai_tes);
+        }
+
+        $now = \Carbon\Carbon::now();
+        return $now->gte($waktuMulai);
+    }
+
+    /**
+     * Get waktu yang tersisa sebelum tes bisa dimulai (dalam menit)
+     */
+    public function getMinutesUntilTestStart()
+    {
+        if (!$this->waktu_mulai_tes) {
+            $waktuMulai = $this->tanggal_mulai instanceof \Carbon\Carbon
+                ? $this->tanggal_mulai
+                : \Carbon\Carbon::parse($this->tanggal_mulai);
+        } else {
+            $waktuMulai = $this->waktu_mulai_tes instanceof \Carbon\Carbon
+                ? $this->waktu_mulai_tes
+                : \Carbon\Carbon::parse($this->waktu_mulai_tes);
+        }
+
+        $now = \Carbon\Carbon::now();
+        if ($now->gte($waktuMulai)) {
+            return 0; // Sudah bisa mulai
+        }
+
+        return $now->diffInMinutes($waktuMulai);
     }
 }
