@@ -313,7 +313,7 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
                         // Gunakan sisa waktu real-time jika tersedia, fallback ke sisa_waktu_detik
                         const sisaWaktuDetik = hasilTest.sisa_waktu_detik_realtime ?? hasilTest.sisa_waktu_detik ?? 0;
                         const sisaWaktuMenit = Math.ceil(sisaWaktuDetik / 60);
-                        
+
                         // Jika waktu sudah habis, jangan tampilkan tombol lanjutkan
                         if (sisaWaktuDetik <= 0) {
                             return (

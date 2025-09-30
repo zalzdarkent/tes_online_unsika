@@ -81,7 +81,7 @@ class HasilTestPeserta extends Model
             $waktuResume = \Carbon\Carbon::parse($this->waktu_resume_tes);
             $waktuSekarang = now();
             $detikSejakResume = $waktuSekarang->diffInSeconds($waktuResume);
-            
+
             // Kurangi sisa waktu dengan waktu sejak resume
             $sisaWaktuSekarang = max(0, $this->sisa_waktu_detik - $detikSejakResume);
             return $sisaWaktuSekarang;
@@ -91,12 +91,12 @@ class HasilTestPeserta extends Model
         if ($this->status_tes === 'sedang_mengerjakan' && !$this->waktu_resume_tes) {
             $jadwal = $this->jadwal;
             if (!$jadwal) return 0;
-            
+
             $waktuMulai = \Carbon\Carbon::parse($this->waktu_mulai_tes);
             $waktuSekarang = now();
             $waktuTerpakai = $waktuMulai->diffInSeconds($waktuSekarang);
             $totalWaktu = $jadwal->durasi * 60;
-            
+
             return max(0, $totalWaktu - $waktuTerpakai);
         }
 
@@ -110,7 +110,7 @@ class HasilTestPeserta extends Model
     public function getSisaWaktuFormatted()
     {
         $sisaWaktuDetik = $this->getSisaWaktuRealTime();
-        
+
         if (!$sisaWaktuDetik) {
             return '0 menit';
         }

@@ -336,16 +336,16 @@ class PesertaTesController extends Controller
             // hitung durasi berdasarkan sisa waktu real-time
             $startTime = Carbon::parse($hasil->start_time);
             $jadwalSelesai = Carbon::parse($jadwal->tanggal_berakhir);
-            
+
             // Gunakan sisa waktu real-time (dengan logic pause/resume)
             $sisaWaktuDetik = $hasil->getSisaWaktuRealTime();
-            
+
             Log::info('Perhitungan end_time:', [
                 'sisa_waktu_real_time' => $sisaWaktuDetik,
                 'status_tes' => $hasil->status_tes,
                 'waktu_sekarang' => now()->format('Y-m-d H:i:s')
             ]);
-            
+
             if ($sisaWaktuDetik > 0) {
                 $endTime = now()->addSeconds($sisaWaktuDetik);
             } else {
@@ -510,7 +510,7 @@ class PesertaTesController extends Controller
                     $waktuSekarang = now();
                     $waktuTerpakai = $waktuMulai->diffInSeconds($waktuSekarang);
                     $totalWaktu = $jadwal->durasi * 60; // convert menit ke detik
-                    
+
                     // Debug: log perhitungan
                 Log::info('Perhitungan sisa waktu:', [
                         'waktu_mulai' => $waktuMulai->toDateTimeString(),
@@ -519,7 +519,7 @@ class PesertaTesController extends Controller
                         'total_waktu_detik' => $totalWaktu,
                         'sisa_waktu_hitung' => max(0, $totalWaktu - $waktuTerpakai)
                     ]);
-                    
+
                     $sisaWaktu = max(0, $totalWaktu - $waktuTerpakai);
                 }
             } elseif ($reason === 'time_up') {
