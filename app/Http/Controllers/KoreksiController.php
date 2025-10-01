@@ -7,6 +7,7 @@ use App\Models\HasilTestPeserta;
 use App\Models\Jadwal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class KoreksiController extends Controller
@@ -16,7 +17,10 @@ class KoreksiController extends Controller
      */
     public function index()
     {
-        $data = Jawaban::select(
+        $currentUser = Auth::user();
+        
+        // Build query dasar
+        $query = Jawaban::select(
             'id_user',
             'id_jadwal',
             DB::raw('COUNT(DISTINCT id_soal) as total_soal'),
@@ -24,8 +28,18 @@ class KoreksiController extends Controller
             DB::raw('SUM(skor_didapat) as total_skor')
         )
             ->with(['user:id,nama', 'jadwal:id,nama_jadwal'])
-            ->groupBy('id_user', 'id_jadwal')
-            ->get()
+            ->groupBy('id_user', 'id_jadwal');
+        
+        // Filter berdasarkan role
+        if ($currentUser->role === 'teacher') {
+            // Teacher hanya bisa melihat data dari jadwal yang mereka buat
+            $query->whereHas('jadwal', function ($q) use ($currentUser) {
+                $q->where('user_id', $currentUser->id);
+            });
+        }
+        // Admin bisa melihat semua data (tidak perlu filter tambahan)
+        
+        $data = $query->get()
             ->map(function ($item) {
                 // Cek status koreksi dari tabel hasil_test_peserta
                 $hasilTest = HasilTestPeserta::where('id_user', $item->id_user)
@@ -50,10 +64,17 @@ class KoreksiController extends Controller
                 ];
             });
 
-        // Ambil semua jadwal untuk dropdown filter
-        $jadwalList = Jadwal::select('id', 'nama_jadwal')
-            ->orderBy('nama_jadwal')
-            ->get();
+        // Ambil jadwal untuk dropdown filter berdasarkan role
+        $jadwalQuery = Jadwal::select('id', 'nama_jadwal')
+            ->orderBy('nama_jadwal');
+        
+        if ($currentUser->role === 'teacher') {
+            // Teacher hanya bisa melihat jadwal yang mereka buat
+            $jadwalQuery->where('user_id', $currentUser->id);
+        }
+        // Admin bisa melihat semua jadwal
+        
+        $jadwalList = $jadwalQuery->get();
 
         return Inertia::render('koreksi/koreksi', [
             'data' => $data,
@@ -82,6 +103,19 @@ class KoreksiController extends Controller
      */
     public function show(string $userId, string $jadwalId)
     {
+        $currentUser = Auth::user();
+        
+        // Validasi akses: teacher hanya bisa melihat detail dari jadwal yang mereka buat
+        if ($currentUser->role === 'teacher') {
+            $jadwal = Jadwal::where('id', $jadwalId)
+                ->where('user_id', $currentUser->id)
+                ->first();
+            
+            if (!$jadwal) {
+                return back()->with('error', 'Anda tidak memiliki akses untuk melihat koreksi ini.');
+            }
+        }
+        
         // Ambil semua jawaban dari tabel jawaban dengan join ke soal, user, dan jadwal
         $jawabanData = Jawaban::where('jawaban.id_user', $userId)
             ->where('jawaban.id_jadwal', $jadwalId)
@@ -157,6 +191,19 @@ class KoreksiController extends Controller
     {
         try {
             DB::beginTransaction();
+            
+            $currentUser = Auth::user();
+            
+            // Validasi akses: teacher hanya bisa update koreksi dari jadwal yang mereka buat
+            if ($currentUser->role === 'teacher') {
+                $jadwal = Jadwal::where('id', $jadwalId)
+                    ->where('user_id', $currentUser->id)
+                    ->first();
+                
+                if (!$jadwal) {
+                    return back()->with('error', 'Anda tidak memiliki akses untuk mengoreksi jadwal ini.');
+                }
+            }
 
             $totalSkor = collect($request->skor_data)->sum('skor_didapat');
             $totalNilai = $request->total_nilai;
@@ -224,6 +271,19 @@ class KoreksiController extends Controller
     {
         try {
             DB::beginTransaction();
+            
+            $currentUser = Auth::user();
+            
+            // Validasi akses: teacher hanya bisa hapus koreksi dari jadwal yang mereka buat
+            if ($currentUser->role === 'teacher') {
+                $jadwal = Jadwal::where('id', $jadwalId)
+                    ->where('user_id', $currentUser->id)
+                    ->first();
+                
+                if (!$jadwal) {
+                    return redirect()->route('koreksi.index')->with('error', 'Anda tidak memiliki akses untuk menghapus koreksi ini.');
+                }
+            }
 
             // Hapus semua jawaban untuk user dan jadwal tertentu
             Jawaban::where('id_user', $userId)
@@ -257,12 +317,24 @@ class KoreksiController extends Controller
 
         try {
             DB::beginTransaction();
-
+            
+            $currentUser = Auth::user();
             $deletedCount = 0;
 
             foreach ($request->items as $item) {
                 $userId = $item['id_user'];
                 $jadwalId = $item['id_jadwal'];
+                
+                // Validasi akses: teacher hanya bisa hapus koreksi dari jadwal yang mereka buat
+                if ($currentUser->role === 'teacher') {
+                    $jadwal = Jadwal::where('id', $jadwalId)
+                        ->where('user_id', $currentUser->id)
+                        ->first();
+                    
+                    if (!$jadwal) {
+                        continue; // Skip item ini jika tidak punya akses
+                    }
+                }
 
                 // Hapus jawaban
                 $jawabanDeleted = Jawaban::where('id_user', $userId)
@@ -301,13 +373,25 @@ class KoreksiController extends Controller
 
         try {
             DB::beginTransaction();
-
+            
+            $currentUser = Auth::user();
             $successCount = 0;
             $errorMessages = [];
 
             foreach ($request->items as $item) {
                 $userId = $item['id_user'];
                 $jadwalId = $item['id_jadwal'];
+                
+                // Validasi akses: teacher hanya bisa submit koreksi dari jadwal yang mereka buat
+                if ($currentUser->role === 'teacher') {
+                    $jadwal = Jadwal::where('id', $jadwalId)
+                        ->where('user_id', $currentUser->id)
+                        ->first();
+                    
+                    if (!$jadwal) {
+                        continue; // Skip item ini jika tidak punya akses
+                    }
+                }
 
                 // Cek atau buat hasil test peserta
                 $hasilTest = HasilTestPeserta::where('id_user', $userId)
