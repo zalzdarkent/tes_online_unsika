@@ -6,12 +6,14 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Jadwal;
+use App\Models\JadwalPeserta;
 use App\Models\Soal;
 use App\Models\Jawaban;
 use App\Models\HasilTestPeserta;
 use App\Models\KategoriTes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -26,37 +28,39 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         // Stats Cards - berbeda berdasarkan role
-        if ($user->role === 'teacher') {
-            // Teacher hanya hitung peserta yang ikut tes mereka
-            $totalPeserta = DB::table('jawaban')
-                ->join('jadwal', 'jawaban.id_jadwal', '=', 'jadwal.id')
+        if ($user->role === 'teacher' || $user->role === 'admin') {
+            // Teacher dan Admin hitung peserta yang terdaftar di tes mereka (menunggu atau disetujui)
+            $totalPeserta = DB::table('jadwal_peserta')
+                ->join('jadwal', 'jadwal_peserta.id_jadwal', '=', 'jadwal.id')
                 ->where('jadwal.user_id', $user->id)
-                ->distinct('jawaban.id_user')
+                ->whereIn('jadwal_peserta.status', ['menunggu', 'disetujui'])
+                ->distinct('jadwal_peserta.id_peserta')
                 ->count();
         } else {
-            // Admin hitung semua peserta
+            // Fallback: hitung semua peserta di sistem
             $totalPeserta = User::where('role', 'peserta')->count();
         }
-        
+
         $totalSoal = Soal::count();
 
         // Peserta online (tracking dari tabel sessions, last_activity dalam 5 menit terakhir)
         $fiveMinutesAgo = now()->subMinutes(5)->timestamp;
-        if ($user->role === 'teacher') {
-            // Teacher hanya hitung peserta online yang pernah ikut tes mereka
+        if ($user->role === 'teacher' || $user->role === 'admin') {
+            // Teacher dan Admin hitung peserta online yang terdaftar di tes mereka
             $pesertaOnline = DB::table('sessions')
                 ->join('users', 'sessions.user_id', '=', 'users.id')
-                ->join('jawaban', 'users.id', '=', 'jawaban.id_user')
-                ->join('jadwal', 'jawaban.id_jadwal', '=', 'jadwal.id')
+                ->join('jadwal_peserta', 'users.id', '=', 'jadwal_peserta.id_peserta')
+                ->join('jadwal', 'jadwal_peserta.id_jadwal', '=', 'jadwal.id')
                 ->where('sessions.last_activity', '>=', $fiveMinutesAgo)
                 ->whereNotNull('sessions.user_id')
                 ->where('users.role', 'peserta')
                 ->where('jadwal.user_id', $user->id)
+                ->whereIn('jadwal_peserta.status', ['menunggu', 'disetujui'])
                 ->select('sessions.user_id')
                 ->distinct()
                 ->count();
         } else {
-            // Admin hitung semua peserta online
+            // Fallback: hitung semua peserta online
             $pesertaOnline = DB::table('sessions')
                 ->join('users', 'sessions.user_id', '=', 'users.id')
                 ->where('last_activity', '>=', $fiveMinutesAgo)
@@ -68,13 +72,13 @@ class DashboardController extends Controller
         }
 
         // Tes aktif (status Buka)
-        if ($user->role === 'teacher') {
-            // Teacher hanya hitung tes mereka yang aktif
+        if ($user->role === 'teacher' || $user->role === 'admin') {
+            // Teacher dan Admin hanya hitung tes mereka yang aktif
             $tesAktif = Jadwal::where('status', 'Buka')
                 ->where('user_id', $user->id)
                 ->count();
         } else {
-            // Admin hitung semua tes aktif
+            // Fallback: hitung semua tes aktif
             $tesAktif = Jadwal::where('status', 'Buka')->count();
         }
 
@@ -85,7 +89,7 @@ class DashboardController extends Controller
             ->limit(3);
 
         // Filter berdasarkan role
-        if ($user->role === 'teacher') {
+        if ($user->role === 'teacher' || $user->role === 'admin') {
             $aktivitasQuery->where('user_id', $user->id);
         }
 
@@ -133,25 +137,24 @@ class DashboardController extends Controller
             });
 
         // Ringkasan hari ini
-        if ($user->role === 'teacher') {
-            // Teacher hanya hitung tes mereka
+        if ($user->role === 'teacher' || $user->role === 'admin') {
+            // Teacher dan Admin hanya hitung tes mereka
             $tesDimulaiHariIni = Jadwal::whereDate('tanggal_mulai', $today)
                 ->where('user_id', $user->id)
                 ->count();
             $tesSelesaiHariIni = Jadwal::whereDate('tanggal_berakhir', $today)
                 ->where('user_id', $user->id)
                 ->count();
-            // Peserta baru yang ikut tes teacher hari ini
-            $pesertaBaruHariIni = DB::table('jawaban')
-                ->join('jadwal', 'jawaban.id_jadwal', '=', 'jadwal.id')
-                ->join('users', 'jawaban.id_user', '=', 'users.id')
+            // Peserta baru yang daftar tes mereka hari ini
+            $pesertaBaruHariIni = DB::table('jadwal_peserta')
+                ->join('jadwal', 'jadwal_peserta.id_jadwal', '=', 'jadwal.id')
                 ->where('jadwal.user_id', $user->id)
-                ->whereDate('jawaban.created_at', $today)
-                ->where('users.role', 'peserta')
-                ->distinct('jawaban.id_user')
+                ->whereDate('jadwal_peserta.tanggal_daftar', $today)
+                ->whereIn('jadwal_peserta.status', ['menunggu', 'disetujui'])
+                ->distinct('jadwal_peserta.id_peserta')
                 ->count();
         } else {
-            // Admin hitung semua
+            // Fallback: hitung semua
             $tesDimulaiHariIni = Jadwal::whereDate('tanggal_mulai', $today)->count();
             $tesSelesaiHariIni = Jadwal::whereDate('tanggal_berakhir', $today)->count();
             $pesertaBaruHariIni = User::where('role', 'peserta')
@@ -162,26 +165,28 @@ class DashboardController extends Controller
         // Total login hari ini (simulasi berdasarkan updated_at)
         $totalLoginHariIni = User::whereDate('updated_at', $today)->count();
 
-        // Growth calculation (bulan ini vs bulan lalu)
-        if ($user->role === 'teacher') {
-            // Teacher hitung growth peserta yang ikut tes mereka
-            $pesertaBulanIni = DB::table('jawaban')
-                ->join('jadwal', 'jawaban.id_jadwal', '=', 'jadwal.id')
+                // Growth calculation (bulan ini vs bulan lalu)
+        if ($user->role === 'teacher' || $user->role === 'admin') {
+            // Teacher dan Admin hitung growth peserta yang daftar di tes mereka
+            $pesertaBulanIni = DB::table('jadwal_peserta')
+                ->join('jadwal', 'jadwal_peserta.id_jadwal', '=', 'jadwal.id')
                 ->where('jadwal.user_id', $user->id)
-                ->whereMonth('jawaban.created_at', $now->month)
-                ->whereYear('jawaban.created_at', $now->year)
-                ->distinct('jawaban.id_user')
+                ->whereMonth('jadwal_peserta.tanggal_daftar', $now->month)
+                ->whereYear('jadwal_peserta.tanggal_daftar', $now->year)
+                ->whereIn('jadwal_peserta.status', ['menunggu', 'disetujui'])
+                ->distinct('jadwal_peserta.id_peserta')
                 ->count();
 
-            $pesertaBulanLalu = DB::table('jawaban')
-                ->join('jadwal', 'jawaban.id_jadwal', '=', 'jadwal.id')
+            $pesertaBulanLalu = DB::table('jadwal_peserta')
+                ->join('jadwal', 'jadwal_peserta.id_jadwal', '=', 'jadwal.id')
                 ->where('jadwal.user_id', $user->id)
-                ->whereMonth('jawaban.created_at', $now->copy()->subMonth()->month)
-                ->whereYear('jawaban.created_at', $now->copy()->subMonth()->year)
-                ->distinct('jawaban.id_user')
+                ->whereMonth('jadwal_peserta.tanggal_daftar', $now->copy()->subMonth()->month)
+                ->whereYear('jadwal_peserta.tanggal_daftar', $now->copy()->subMonth()->year)
+                ->whereIn('jadwal_peserta.status', ['menunggu', 'disetujui'])
+                ->distinct('jadwal_peserta.id_peserta')
                 ->count();
         } else {
-            // Admin hitung growth semua peserta
+            // Fallback: hitung growth semua peserta
             $pesertaBulanIni = User::where('role', 'peserta')
                 ->whereMonth('created_at', $now->month)
                 ->whereYear('created_at', $now->year)
