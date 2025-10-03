@@ -123,7 +123,7 @@
         </div>
 
         <div class="info">
-            <strong>Notice:</strong> This system is in private mode and restricted to university IP addresses. 
+            <strong>Notice:</strong> This system is in private mode and restricted to university IP addresses.
             As an administrator, you can bypass this restriction by providing your admin credentials and bypass code.
         </div>
 
@@ -143,7 +143,7 @@
 
         <form method="POST" action="{{ route('admin.bypass.handle') }}">
             @csrf
-            
+
             <div class="form-group">
                 <label for="email">Admin Email</label>
                 <input type="email" id="email" name="email" value="{{ old('email') }}" required>
@@ -156,7 +156,7 @@
 
             <div class="form-group">
                 <label for="bypass_code">Bypass Code</label>
-                <input type="password" id="bypass_code" name="bypass_code" required 
+                <input type="password" id="bypass_code" name="bypass_code" required
                        placeholder="Contact technical team for bypass code">
             </div>
 

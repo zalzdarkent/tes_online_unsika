@@ -14,9 +14,9 @@ class SystemSettingController extends Controller
     public function index()
     {
         $currentAccess = SystemSetting::getCurrentAccess();
-        
+
         // Check if admin bypass is currently active
-        $adminBypassActive = session('admin_ip_bypass', false) && 
+        $adminBypassActive = session('admin_ip_bypass', false) &&
                            session('admin_bypass_timestamp', 0) > (time() - 24 * 60 * 60);
 
         return Inertia::render('settings/SystemSettings', [

@@ -29,7 +29,7 @@ class AdminBypassController extends Controller
 
         // Check bypass code
         $validBypassCode = config('app.admin_bypass_code', 'unsika_admin_2024');
-        
+
         if ($request->bypass_code !== $validBypassCode) {
             return back()->withErrors([
                 'bypass_code' => 'Invalid bypass code.'
@@ -39,14 +39,14 @@ class AdminBypassController extends Controller
         // Attempt to authenticate admin
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $user = Auth::user();
-            
+
             // Check if user is admin
             if ($user->role === 'admin') {
                 // Set bypass session
                 Session::put('admin_ip_bypass', true);
                 Session::put('admin_bypass_user_id', $user->id);
                 Session::put('admin_bypass_timestamp', time());
-                
+
                 return redirect()->route('dashboard')->with('success', 'Admin bypass activated successfully.');
             } else {
                 Auth::logout();
@@ -69,7 +69,7 @@ class AdminBypassController extends Controller
         Session::forget('admin_ip_bypass');
         Session::forget('admin_bypass_user_id');
         Session::forget('admin_bypass_timestamp');
-        
+
         return redirect()->route('login')->with('success', 'Admin bypass deactivated.');
     }
 }
