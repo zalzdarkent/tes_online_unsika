@@ -87,6 +87,29 @@ try {
 
         // If system is set to private, check IP access
         if ($accessMode === 'private') {
+            // Check if admin bypass is active
+            $isAdminLoggedIn = false;
+            
+            // Start session to check for admin bypass
+            session_start();
+            
+            // Check for admin bypass session
+            if (isset($_SESSION['admin_ip_bypass']) && $_SESSION['admin_ip_bypass'] === true) {
+                // Verify bypass session is still valid (24 hours)
+                $bypassTimestamp = $_SESSION['admin_bypass_timestamp'] ?? 0;
+                $currentTime = time();
+                $bypassDuration = 24 * 60 * 60; // 24 hours
+                
+                if (($currentTime - $bypassTimestamp) < $bypassDuration) {
+                    $isAdminLoggedIn = true;
+                } else {
+                    // Bypass expired, clear session
+                    unset($_SESSION['admin_ip_bypass']);
+                    unset($_SESSION['admin_bypass_user_id']);
+                    unset($_SESSION['admin_bypass_timestamp']);
+                }
+            }
+            
             $allowedIPs = array(
                 '::1','127.0.0.1',
                 '103.121.197.1','36.50.94.1','103.121.197.2','36.50.94.2','103.121.197.3','36.50.94.3',
@@ -177,13 +200,14 @@ try {
             );
 
             // Log IP check result
-            $isAllowed = in_array($clientIP, $allowedIPs);
-            $logEntry = date('Y-m-d H:i:s') . " - IP Check: {$clientIP} " . ($isAllowed ? 'ALLOWED' : 'DENIED') . PHP_EOL;
+            $isAllowed = in_array($clientIP, $allowedIPs) || $isAdminLoggedIn;
+            $logEntry = date('Y-m-d H:i:s') . " - IP Check: {$clientIP} " . ($isAllowed ? 'ALLOWED' : 'DENIED') . 
+                       ($isAdminLoggedIn ? ' (ADMIN BYPASS)' : '') . PHP_EOL;
             if (is_writable(dirname($debugLog))) {
                 file_put_contents($debugLog, $logEntry, FILE_APPEND | LOCK_EX);
             }
 
-            // Check if client IP is allowed
+            // Check if client IP is allowed OR if admin bypass is active
             if (!$isAllowed) {
                 http_response_code(403);
                 echo '<!DOCTYPE html>
@@ -198,6 +222,7 @@ try {
         h1 { color: #dc3545; margin-bottom: 20px; }
         p { color: #6c757d; line-height: 1.6; margin-bottom: 15px; }
         .ip-info { background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        .admin-info { background: #e7f3ff; padding: 15px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #0066cc; }
         .debug { background: #fff3cd; padding: 10px; border-radius: 4px; margin: 20px 0; font-size: 12px; }
     </style>
 </head>
@@ -210,6 +235,11 @@ try {
             <strong>Authorized IP Ranges:</strong><br>
             • 103.121.197.1 - 103.121.197.254<br>
             • 36.50.94.1 - 36.50.94.254
+        </div>
+        <div class="admin-info">
+            <strong>Are you an Admin?</strong><br>
+            If you are a system administrator trying to access from outside the university network, 
+            <a href="/admin-bypass" style="color: #0066cc; text-decoration: underline;">click here to activate admin bypass</a>.
         </div>
         <p>Please contact the system administrator if you believe this is an error.</p>
     </div>

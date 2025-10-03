@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminBypassController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\JadwalPesertaController;
@@ -32,6 +33,13 @@ Route::get('/', function () {
 Route::get('/dev', function () {
     return Inertia::render('dev');
 })->name('dev');
+
+// Admin IP Bypass routes - accessible without normal authentication but requires special bypass
+Route::prefix('admin-bypass')->name('admin.bypass.')->group(function () {
+    Route::get('/', [AdminBypassController::class, 'showBypassForm'])->name('form');
+    Route::post('activate', [AdminBypassController::class, 'handleBypass'])->name('handle');
+    Route::post('deactivate', [AdminBypassController::class, 'deactivateBypass'])->name('deactivate');
+});
 
 // Protected routes - requires authentication and email verification
 Route::middleware(['auth', 'verified'])->group(function () {
