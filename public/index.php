@@ -106,26 +106,33 @@ try {
             } else {
                 // Regular IP checking for other routes
 
-                // Check if admin bypass is active
+                // Check if admin bypass is active via database
                 $isAdminLoggedIn = false;
 
-                // Start session to check for admin bypass
-                session_start();
+                // Check for admin bypass cookie and validate against database
+                if (isset($_COOKIE['admin_bypass_session'])) {
+                    $sessionId = $_COOKIE['admin_bypass_session'];
 
-                // Check for admin bypass session
-                if (isset($_SESSION['admin_ip_bypass']) && $_SESSION['admin_ip_bypass'] === true) {
-                    // Verify bypass session is still valid (24 hours)
-                    $bypassTimestamp = $_SESSION['admin_bypass_timestamp'] ?? 0;
-                    $currentTime = time();
-                    $bypassDuration = 24 * 60 * 60; // 24 hours
+                    try {
+                        // Check if admin_bypass_sessions table exists
+                        $tableExists = $pdo->query("SHOW TABLES LIKE 'admin_bypass_sessions'")->rowCount() > 0;
 
-                    if (($currentTime - $bypassTimestamp) < $bypassDuration) {
-                        $isAdminLoggedIn = true;
-                    } else {
-                        // Bypass expired, clear session
-                        unset($_SESSION['admin_ip_bypass']);
-                        unset($_SESSION['admin_bypass_user_id']);
-                        unset($_SESSION['admin_bypass_timestamp']);
+                        if ($tableExists) {
+                            // Check database for valid bypass session
+                            $stmt = $pdo->prepare("
+                                SELECT COUNT(*) as count
+                                FROM admin_bypass_sessions
+                                WHERE session_id = ? AND expires_at > NOW()
+                            ");
+                            $stmt->execute([$sessionId]);
+                            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                            if ($result && $result['count'] > 0) {
+                                $isAdminLoggedIn = true;
+                            }
+                        }
+                    } catch (Exception $e) {
+                        // If table doesn't exist or query fails, continue without bypass
                     }
                 }
 

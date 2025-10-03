@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdminBypassSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 class AdminBypassController extends Controller
 {
@@ -42,10 +43,17 @@ class AdminBypassController extends Controller
 
             // Check if user is admin
             if ($user->role === 'admin') {
-                // Set bypass session
-                Session::put('admin_ip_bypass', true);
-                Session::put('admin_bypass_user_id', $user->id);
-                Session::put('admin_bypass_timestamp', time());
+                // Get client IP
+                $clientIP = $this->getClientIP();
+
+                // Generate unique session ID
+                $sessionId = Str::random(40);
+
+                // Create bypass session in database
+                AdminBypassSession::createBypass($user->id, $sessionId, $clientIP);
+
+                // Store session ID in cookie for future requests
+                cookie()->queue('admin_bypass_session', $sessionId, 60 * 24); // 24 hours
 
                 return redirect()->route('dashboard')->with('success', 'Admin bypass activated successfully.');
             } else {
@@ -66,10 +74,44 @@ class AdminBypassController extends Controller
      */
     public function deactivateBypass()
     {
-        Session::forget('admin_ip_bypass');
-        Session::forget('admin_bypass_user_id');
-        Session::forget('admin_bypass_timestamp');
+        if (Auth::check() && Auth::user()->role === 'admin') {
+            AdminBypassSession::deactivateBypass(Auth::id());
+
+            // Clear cookie
+            cookie()->queue(cookie()->forget('admin_bypass_session'));
+        }
 
         return redirect()->route('login')->with('success', 'Admin bypass deactivated.');
+    }
+
+    /**
+     * Get client IP address
+     */
+    private function getClientIP()
+    {
+        $ipSources = [
+            'HTTP_CF_CONNECTING_IP',
+            'HTTP_CLIENT_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_FORWARDED',
+            'HTTP_X_CLUSTER_CLIENT_IP',
+            'HTTP_FORWARDED_FOR',
+            'HTTP_FORWARDED',
+            'REMOTE_ADDR'
+        ];
+
+        foreach ($ipSources as $source) {
+            if (!empty($_SERVER[$source])) {
+                $ip = $_SERVER[$source];
+                // Handle comma-separated IPs
+                if (strpos($ip, ',') !== false) {
+                    $ips = explode(',', $ip);
+                    $ip = trim($ips[0]);
+                }
+                return $ip;
+            }
+        }
+
+        return 'unknown';
     }
 }
