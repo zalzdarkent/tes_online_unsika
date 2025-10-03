@@ -109,22 +109,29 @@ class DashboardController extends Controller
                 // Tentukan status berdasarkan waktu
                 $tanggalMulai = Carbon::parse($jadwal->tanggal_mulai);
                 $tanggalBerakhir = Carbon::parse($jadwal->tanggal_berakhir);
+                
+                // Gunakan waktu_mulai_tes untuk menentukan kapan tes bisa dimulai
+                $waktuMulaiTes = $jadwal->waktu_mulai_tes 
+                    ? Carbon::parse($jadwal->waktu_mulai_tes) 
+                    : $tanggalMulai; // fallback ke tanggal_mulai jika waktu_mulai_tes null
 
                 $statusAktivitas = 'Akan Datang';
                 $deskripsi = "";
 
-                if ($now->between($tanggalMulai, $tanggalBerakhir)) {
+                if ($now->gte($waktuMulaiTes) && $now->lte($tanggalBerakhir)) {
+                    // Tes sudah bisa dimulai (waktu_mulai_tes sudah tiba) dan belum berakhir
                     $statusAktivitas = 'Sedang Berlangsung';
-                    $waktuMulai = $tanggalMulai->format('d M Y, H:i');
+                    $waktuMulai = $waktuMulaiTes->format('d M Y, H:i');
                     $waktuSelesai = $tanggalBerakhir->format('d M Y, H:i');
                     $deskripsi = "{$waktuMulai} - {$waktuSelesai}";
                 } elseif ($now->gt($tanggalBerakhir)) {
+                    // Tes sudah berakhir
                     $statusAktivitas = 'Selesai';
                     $waktuBerakhir = $tanggalBerakhir->format('d M Y, H:i');
                     $deskripsi = "Berakhir {$waktuBerakhir}";
                 } else {
-                    // Akan datang
-                    $waktuMulai = $tanggalMulai->format('d M Y, H:i');
+                    // Tes belum bisa dimulai (waktu_mulai_tes belum tiba)
+                    $waktuMulai = $waktuMulaiTes->format('d M Y, H:i');
                     $deskripsi = "Dimulai {$waktuMulai}";
                 }
 
