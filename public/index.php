@@ -93,7 +93,7 @@ try {
                 strpos($requestUri, '/admin-bypass') === 0 ||
                 strpos($requestUri, '/admin-bypass/') === 0
             );
-            
+
             // If this is an admin bypass route, skip IP checking and allow access
             if ($isAdminBypassRoute) {
                 // Log bypass route access
@@ -105,7 +105,7 @@ try {
                 // Continue to Laravel without IP checking
             } else {
                 // Regular IP checking for other routes
-                
+
                 // Check if admin bypass is active
                 $isAdminLoggedIn = false;
 
