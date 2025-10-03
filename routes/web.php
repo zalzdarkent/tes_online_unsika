@@ -9,6 +9,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\PesertaTesController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ViolationController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -48,6 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('submit', [PesertaTesController::class, 'submit'])->name('submit');
         Route::post('lanjutkan-tes', [PesertaTesController::class, 'lanjutkanTes'])->name('lanjutkan-tes');
         Route::get('riwayat', [PesertaTesController::class, 'riwayat'])->name('riwayat');
+
+        // Violation reporting
+        Route::post('report-violation', [ViolationController::class, 'reportViolation'])->name('report-violation');
 
         // Pendaftaran tes
         Route::post('daftar', [JadwalPesertaController::class, 'daftar'])->name('daftar');
@@ -89,6 +93,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('peserta/bulk-reject', [JadwalPesertaController::class, 'bulkReject'])->name('bulk-reject');
             Route::post('peserta/bulk-delete', [JadwalPesertaController::class, 'bulkDelete'])->name('bulk-delete');
             Route::delete('peserta/{registration}', [JadwalPesertaController::class, 'destroy'])->name('destroy');
+
+            // Violation reporting for admin
+            Route::get('violations', [ViolationController::class, 'getJadwalViolations'])->name('violations');
+        });
+
+        // Violation management routes
+        Route::prefix('violations')->name('violations.')->group(function () {
+            Route::get('summary', [ViolationController::class, 'getViolationSummary'])->name('summary');
         });
 
         // Soal Management (nested under jadwal)

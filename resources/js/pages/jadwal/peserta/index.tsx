@@ -18,9 +18,10 @@ import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
 import { formatDateTime } from '@/lib/format-date';
 import { type BreadcrumbItem } from '@/types';
+import ViolationAlert from '@/components/violation-alert';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Check, MoreHorizontal, Play, Trash2, UserPlus, X } from 'lucide-react';
+import { Check, MoreHorizontal, Play, Trash2, UserPlus, X, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
 interface JadwalData {
@@ -387,9 +388,10 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             enableHiding: false,
         },
         {
-            accessorKey: 'peserta.nama',
+            id: 'peserta_nama',
             header: 'Nama Peserta',
             enableSorting: true,
+            accessorFn: (row) => row.peserta.nama,
             cell: ({ row }) => {
                 const peserta = row.original.peserta;
                 return (
@@ -401,14 +403,16 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             },
         },
         {
-            accessorKey: 'peserta.email',
+            id: 'peserta_email',
             header: 'Email',
             enableSorting: true,
+            accessorFn: (row) => row.peserta.email,
         },
         {
-            accessorKey: 'peserta.prodi',
+            id: 'peserta_prodi',
             header: 'Program Studi',
             enableSorting: true,
+            accessorFn: (row) => row.peserta.prodi,
             cell: ({ row }) => {
                 const peserta = row.original.peserta;
                 return (
@@ -454,9 +458,10 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             },
         },
         {
-            accessorKey: 'hasil_test.status_tes',
+            id: 'status_tes',
             header: 'Status Tes',
             enableSorting: true,
+            accessorFn: (row) => row.hasil_test?.status_tes || 'tidak_dimulai',
             cell: ({ row }) => {
                 const hasilTest = row.original.hasil_test;
                 if (!hasilTest) {
@@ -488,6 +493,27 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                             </div>
                         )}
                     </div>
+                );
+            },
+        },
+        {
+            id: 'violations',
+            header: 'Pelanggaran',
+            enableSorting: false,
+            cell: ({ row }) => {
+                const registration = row.original;
+
+                // Only show violation alert if the student has started the test
+                if (!registration.hasil_test || registration.hasil_test.status_tes === 'tidak_dimulai') {
+                    return <span className="text-xs text-muted-foreground">-</span>;
+                }
+
+                return (
+                    <ViolationAlert
+                        jadwalId={registration.id_jadwal}
+                        pesertaId={registration.id_peserta}
+                        compact={true}
+                    />
                 );
             },
         },
@@ -696,7 +722,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                     <DataTable
                         columns={columns}
                         data={pesertaTerdaftar}
-                        searchColumn="peserta.nama"
+                        searchColumn="peserta_nama"
                         searchPlaceholder="Cari peserta..."
                         customBulkActions={[
                             {

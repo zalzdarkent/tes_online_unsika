@@ -397,6 +397,10 @@ class PesertaTesController extends Controller
                 }),
                 'end_time_timestamp' => $endTimeTimestamp,
                 'jawaban_tersimpan' => $jawaban,
+                'user' => [
+                    'id' => Auth::user()->id,
+                    'name' => Auth::user()->name,
+                ],
             ]);
         } catch (\Exception $e) {
             return redirect()->route('peserta.daftar-tes')->withErrors([

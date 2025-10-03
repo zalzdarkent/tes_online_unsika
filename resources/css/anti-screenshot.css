@@ -1,0 +1,159 @@
+/* Anti-Screenshot CSS Protection */
+
+/* Mencegah screenshot dengan CSS */
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+    body::before {
+        content: "Screenshot dan Print tidak diperbolehkan" !important;
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        font-size: 24px !important;
+        font-weight: bold !important;
+        color: red !important;
+        visibility: visible !important;
+        z-index: 9999 !important;
+    }
+}
+
+/* Mencegah select text pada konten soal, tapi memungkinkan input field */
+.anti-screenshot {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    /* Mencegah drag and drop */
+    -webkit-user-drag: none !important;
+    -khtml-user-drag: none !important;
+    -moz-user-drag: none !important;
+    -o-user-drag: none !important;
+}
+
+/* Mengizinkan input, textarea, dan select untuk berfungsi normal */
+.anti-screenshot input,
+.anti-screenshot textarea,
+.anti-screenshot select,
+.anti-screenshot [contenteditable],
+.anti-screenshot [role="textbox"],
+.anti-screenshot [role="searchbox"] {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+    pointer-events: auto !important;
+}
+
+/* Mencegah drag and drop pada child elements, tapi tidak pada input */
+.anti-screenshot *:not(input):not(textarea):not(select):not([contenteditable]):not([role="textbox"]):not([role="searchbox"]) {
+    -webkit-user-drag: none !important;
+    -khtml-user-drag: none !important;
+    -moz-user-drag: none !important;
+    -o-user-drag: none !important;
+    pointer-events: auto !important;
+}
+
+/* CSS untuk mobile screenshot protection */
+@media screen and (max-width: 768px) {
+    .anti-screenshot {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+        /* Mencegah zoom untuk screenshot */
+        -webkit-text-size-adjust: 100% !important;
+        -ms-text-size-adjust: 100% !important;
+    }
+
+    /* Mencegah screenshot pada mobile dengan overlay invisible */
+    .anti-screenshot::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        z-index: 1;
+        pointer-events: none;
+    }
+}
+
+/* Mencegah developer tools */
+.no-inspect {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+}
+
+/* Blur effect untuk screenshot prevention */
+.screenshot-blur {
+    filter: blur(20px) !important;
+    transition: filter 0.1s ease !important;
+}
+
+/* Watermark untuk identifikasi */
+.anti-screenshot-watermark {
+    position: relative;
+}
+
+.anti-screenshot-watermark::after {
+    content: attr(data-watermark);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 48px;
+    color: rgba(255, 0, 0, 0.1);
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+/* Mencegah copy paste pada konten, tapi memungkinkan input field */
+.no-copy {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+}
+
+/* Mengizinkan copy paste pada input field */
+.no-copy input,
+.no-copy textarea,
+.no-copy select,
+.no-copy [contenteditable],
+.no-copy [role="textbox"],
+.no-copy [role="searchbox"] {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+    -webkit-touch-callout: default !important;
+}
+
+/* Overlay untuk melindungi konten */
+.content-protection::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg,
+        transparent 49%,
+        rgba(255,255,255,0.01) 50%,
+        transparent 51%);
+    pointer-events: none;
+    z-index: 1;
+}

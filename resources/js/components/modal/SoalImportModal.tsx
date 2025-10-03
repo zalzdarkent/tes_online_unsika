@@ -25,12 +25,12 @@ interface SoalImportModalProps {
 interface ExcelSoal {
     jenis_soal: string;
     pertanyaan: string;
-    skor: number;
+    skor: number | null; // Allow null for import
     opsi_a?: string;
     opsi_b?: string;
     opsi_c?: string;
     opsi_d?: string;
-    jawaban_benar: string;
+    jawaban_benar: string; // Allow empty string for import
     skala_min?: number;
     skala_maks?: number;
     skala_label_min?: string;
@@ -77,12 +77,12 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                 const validatedData = jsonData.map((item) => ({
                     jenis_soal: String(item.jenis_soal || 'pilihan_ganda'),
                     pertanyaan: String(item.pertanyaan || ''),
-                    skor: Number(item.skor) || 1,
+                    skor: item.skor ? Number(item.skor) : null, // Allow null for import
                     opsi_a: item.opsi_a ? String(item.opsi_a) : '',
                     opsi_b: item.opsi_b ? String(item.opsi_b) : '',
                     opsi_c: item.opsi_c ? String(item.opsi_c) : '',
                     opsi_d: item.opsi_d ? String(item.opsi_d) : '',
-                    jawaban_benar: String(item.jawaban_benar || '').toUpperCase(),
+                    jawaban_benar: item.jawaban_benar ? String(item.jawaban_benar).toUpperCase() : '', // Allow empty for import
                     skala_min: item.skala_min ? Number(item.skala_min) : undefined,
                     skala_maks: item.skala_maks ? Number(item.skala_maks) : undefined,
                     skala_label_min: item.skala_label_min ? String(item.skala_label_min) : '',
@@ -118,7 +118,6 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
 
         try {
             const totalSoal = soalData.length;
-            let uploaded = 0;
 
             // Kirim semua data sekaligus
             router.post(
@@ -230,13 +229,14 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                 <Input
                     type="number"
                     className="h-8 w-full rounded border border-input bg-background px-2 py-1 text-xs"
-                    value={(getValue() as number) ?? 0}
+                    value={(getValue() as number) ?? ''}
                     onChange={(e) => {
                         const newData = [...soalData];
-                        newData[row.index].skor = Number(e.target.value) || 0;
+                        newData[row.index].skor = e.target.value ? Number(e.target.value) : null;
                         setSoalData(newData);
                     }}
                     min={0}
+                    placeholder="Opsional"
                 />
             ),
         },
@@ -278,7 +278,7 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                         newData[row.index].jawaban_benar = e.target.value;
                         setSoalData(newData);
                     }}
-                    placeholder="a/b/c/d"
+                    placeholder="Opsional (a/b/c/d)"
                 />
             ),
         },

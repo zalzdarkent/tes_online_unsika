@@ -8,6 +8,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import AntiScreenshot from '@/components/anti-screenshot';
 import RichTextViewer from '@/components/rich-text-viewer';
 import { toast } from '@/hooks/use-toast';
 import { PesertaTesPageProps } from '@/types/page-props/peserta-tes';
@@ -20,7 +21,7 @@ import SoalHeader from './SoalHeader';
 import SoalOpsi from './SoalOpsi';
 import SoalSidebar from './SoalSidebar';
 
-export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_timestamp }: PesertaTesPageProps) {
+export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_timestamp, user }: PesertaTesPageProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [tandaiSoal, setTandaiSoal] = useState<Record<number, boolean>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,20 +36,36 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     const [showTabLeaveDialog, setShowTabLeaveDialog] = useState(false);
     const [alertTitle, setAlertTitle] = useState('');
     const [alertDescription, setAlertDescription] = useState('');
-    const [submitReason, setSubmitReason] = useState<'manual' | 'tab_switch' | 'time_up'>('manual');
+    const [submitReason, setSubmitReason] = useState<'manual' | 'tab_switch' | 'time_up' | 'screenshot_violation'>('manual');
+    const [screenshotCount, setScreenshotCount] = useState(0);
+    const [timeUpSubmitted, setTimeUpSubmitted] = useState(false);
 
     const lastSavedAnswersRef = useRef<Record<number, string>>({});
 
-    const calculateTimeLeft = () => {
+    const calculateTimeLeft = useCallback(() => {
         const now = Date.now();
         const serverEndTime = end_time_timestamp * 1000;
         const remainingMs = Math.max(0, serverEndTime - now);
-        return Math.floor(remainingMs / 1000);
-    };
+        const remainingSeconds = Math.floor(remainingMs / 1000);
+
+        // Log setiap 10 detik untuk debugging saat waktu menipis
+        if (remainingSeconds <= 60 && remainingSeconds % 10 === 0) {
+            console.log(`Time calculation - Now: ${new Date(now).toLocaleTimeString()}, End: ${new Date(serverEndTime).toLocaleTimeString()}, Remaining: ${remainingSeconds}s`);
+        }
+
+        return remainingSeconds;
+    }, [end_time_timestamp]);
 
     const [timeLeft, setTimeLeft] = useState(() => calculateTimeLeft());
 
     const currentSoal = soal[currentIndex];
+
+    // Debug log untuk tracking screenshot violations
+    useEffect(() => {
+        if (screenshotCount > 0) {
+            console.log(`Current screenshot violations count: ${screenshotCount}`);
+        }
+    }, [screenshotCount]);
 
     const saveAnswer = useCallback(async (jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -86,16 +103,24 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
 
     const debouncedSaveAnswer = useMemo(() => debounce(saveAnswer, 500), [saveAnswer]);
 
-    const handleSubmit = async (redirect = false, reason = 'manual') => {
-        if (isSubmitting) return;
+    const handleSubmit = useCallback(async (redirect = false, reason = 'manual') => {
+        console.log(`HandleSubmit called with reason: ${reason}, redirect: ${redirect}, isSubmitting: ${isSubmitting}`);
+
+        if (isSubmitting) {
+            console.log('Already submitting, skipping...');
+            return;
+        }
+
         setIsSubmitting(true);
+        console.log('Starting submit process...');
 
         await debouncedSaveAnswer.flush();
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 
         try {
-            await fetch(route('peserta.submit'), {
+            console.log('Sending submit request to server...');
+            const response = await fetch(route('peserta.submit'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -109,7 +134,13 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                 credentials: 'same-origin',
             });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            console.log('Submit request successful');
             console.log('Jawaban berhasil dikumpulkan');
+
             if (redirect) {
                 router.visit('/peserta/riwayat');
 
@@ -119,35 +150,130 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                     description: 'Jawaban Anda berhasil dikumpulkan.',
                 });
             }
-        } catch {
+        } catch (error) {
+            console.error('Submit request failed:', error);
             toast({
                 variant: 'destructive',
                 title: 'Terjadi kesalahan!',
                 description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
             });
+
+            // Jika ini auto-submit karena waktu habis, tetap tampilkan dialog
+            if (reason === 'time_up') {
+                console.log('Auto-submit failed but showing dialog anyway');
+                setTimeout(() => setShowTabLeaveDialog(true), 1000);
+            }
         } finally {
             setIsSubmitting(false);
+            console.log('Submit process completed');
         }
-    };
+    }, [isSubmitting, debouncedSaveAnswer, jadwal.id]);
+
+    const handleScreenshotDetected = useCallback((violationType: string, detectionMethod: string) => {
+        setScreenshotCount(prev => {
+            const newCount = prev + 1;
+
+            console.log('Screenshot violation detected:', {
+                type: violationType,
+                method: detectionMethod,
+                count: newCount,
+                jadwalId: jadwal.id,
+                userId: user.id
+            });
+
+            // Jika sudah 3 kali pelanggaran, otomatis submit
+            if (newCount >= 3) {
+                setAlertTitle('Pelanggaran Berulang Terdeteksi');
+                setAlertDescription('Anda telah melakukan pelanggaran screenshot sebanyak 3 kali. Tes akan dihentikan secara otomatis.');
+                setSubmitReason('screenshot_violation');
+                handleSubmit(false, 'screenshot_violation');
+                setShowTabLeaveDialog(true);
+            } else {
+                toast({
+                    variant: 'destructive',
+                    title: `Pelanggaran Screenshot ${newCount}/3`,
+                    description: `Peringatan: ${violationType} terdeteksi via ${detectionMethod}. Jika mencapai 3 kali, tes akan dihentikan otomatis.`,
+                });
+
+                // Log untuk debugging
+                console.warn(`Screenshot violation detected. Count: ${newCount}/3`);
+            }
+
+            return newCount;
+        });
+    }, [handleSubmit, jadwal.id, user.id]);
+
+    // Failsafe: Backup timer untuk auto-submit jika countdown utama gagal
+    useEffect(() => {
+        const timeToEnd = calculateTimeLeft();
+        if (timeToEnd <= 0) return; // Jika sudah habis, tidak perlu backup timer
+
+        const backupTimer = setTimeout(() => {
+            const remainingSeconds = calculateTimeLeft();
+            if (remainingSeconds <= 0 && !timeUpSubmitted && !isSubmitting) {
+                console.warn('Backup timer triggered for auto-submit');
+                setTimeUpSubmitted(true);
+                setAlertTitle('Waktu Habis');
+                setAlertDescription('Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim otomatis.');
+                setSubmitReason('time_up');
+
+                handleSubmit(false, 'time_up').then(() => {
+                    setShowTabLeaveDialog(true);
+                });
+            }
+        }, (timeToEnd + 5) * 1000); // 5 detik setelah waktu habis
+
+        return () => clearTimeout(backupTimer);
+    }, [calculateTimeLeft, handleSubmit, timeUpSubmitted, isSubmitting]);
 
     // countdown
     useEffect(() => {
         const interval = setInterval(() => {
             const remainingSeconds = calculateTimeLeft();
             setTimeLeft(remainingSeconds);
-            if (remainingSeconds <= 0) {
+
+            // Log setiap menit untuk debugging
+            if (remainingSeconds > 0 && remainingSeconds % 60 === 0) {
+                console.log(`Time remaining: ${Math.floor(remainingSeconds / 60)} minutes`);
+            }
+
+            // Warning 1 menit sebelum habis
+            if (remainingSeconds === 60) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Peringatan!',
+                    description: 'Waktu tersisa 1 menit. Segera selesaikan tes Anda.',
+                });
+            }
+
+            // Auto submit ketika waktu habis
+            if (remainingSeconds <= 0 && !timeUpSubmitted && !isSubmitting) {
+                console.log('Timer reached 0, triggering auto-submit...');
+                setTimeUpSubmitted(true);
                 setAlertTitle('Waktu Habis');
                 setAlertDescription('Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim otomatis.');
                 setSubmitReason('time_up');
 
-                handleSubmit(false, 'time_up');
-                setShowTabLeaveDialog(true);
+                // Clear interval segera untuk mencegah multiple calls
                 clearInterval(interval);
+
+                // Submit dengan delay kecil untuk memastikan state terupdate
+                setTimeout(() => {
+                    console.log('Executing auto-submit...');
+                    handleSubmit(false, 'time_up').then(() => {
+                        console.log('Auto-submit completed, showing dialog...');
+                        setShowTabLeaveDialog(true);
+                    }).catch((error) => {
+                        console.error('Auto-submit failed:', error);
+                        // Fallback: tampilkan dialog meskipun submit gagal
+                        setShowTabLeaveDialog(true);
+                    });
+                }, 100);
             }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [end_time_timestamp]);
+    }, [calculateTimeLeft, handleSubmit, timeUpSubmitted, isSubmitting]);
 
     // open other tab
     useEffect(() => {
@@ -169,7 +295,34 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, []);
+    }, [handleSubmit]);
+
+    // Failsafe: beforeunload event untuk memastikan jawaban tersimpan
+    useEffect(() => {
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            // Flush semua jawaban yang belum tersimpan
+            debouncedSaveAnswer.flush();
+
+            const remainingSeconds = calculateTimeLeft();
+            if (remainingSeconds <= 0 && !timeUpSubmitted) {
+                // Jika waktu sudah habis tapi belum submit, paksa submit
+                event.preventDefault();
+                event.returnValue = '';
+
+                setTimeout(() => {
+                    handleSubmit(false, 'time_up');
+                }, 100);
+
+                return '';
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [debouncedSaveAnswer, calculateTimeLeft, timeUpSubmitted, handleSubmit]);
 
     const handleJawabanChange = (soalId: number, newJawaban: string[]) => {
         setJawaban((prev) => ({
@@ -195,7 +348,13 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     return (
         <>
             <Head title="Soal Tes" />
-            <div className="flex min-h-screen">
+            <AntiScreenshot
+                onScreenshotDetected={handleScreenshotDetected}
+                isActive={true}
+                jadwalId={jadwal.id}
+                pesertaId={user.id}
+            />
+            <div className="flex min-h-screen anti-screenshot no-copy content-protection" data-watermark={`${jadwal.nama_jadwal} - Peserta: ${jadwal.id}`}>
                 <SoalSidebar
                     jadwalNama={jadwal.nama_jadwal}
                     currentIndex={currentIndex}
@@ -248,21 +407,21 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                             <AlertDialogDescription>{alertDescription}</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            {submitReason === 'tab_switch' && (
+                            {(submitReason === 'tab_switch' || submitReason === 'screenshot_violation') && (
                                 <AlertDialogCancel onClick={() => setShowTabLeaveDialog(false)}>
                                     Tutup
                                 </AlertDialogCancel>
                             )}
                             <AlertDialogAction
                                 onClick={() => {
-                                    if (submitReason === 'tab_switch') {
+                                    if (submitReason === 'tab_switch' || submitReason === 'screenshot_violation') {
                                         router.visit('/peserta/daftar-tes');
                                     } else {
                                         router.visit('/peserta/riwayat');
                                     }
                                 }}
                             >
-                                {submitReason === 'tab_switch' ? 'Kembali ke Daftar Tes' : 'Lihat Riwayat'}
+                                {(submitReason === 'tab_switch' || submitReason === 'screenshot_violation') ? 'Kembali ke Daftar Tes' : 'Lihat Riwayat'}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -272,50 +431,4 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     );
 }
 
-// save answer (SPA)
-// eslint-disable-next-line react-hooks/exhaustive-deps
-// const saveAnswer = useCallback(
-//     debounce((jadwalId: number, idSoal: number, jawaban: string[] | undefined) => {
-//         const finalJawaban = Array.isArray(jawaban) ? jawaban.join(',') : '';
-
-//         router.post(
-//             route('peserta.save'),
-//             {
-//                 jadwal_id: jadwalId,
-//                 id_soal: idSoal,
-//                 jawaban: finalJawaban,
-//             },
-
-//             {
-//                 preserveState: true,
-//                 preserveScroll: true,
-//                 only: [],
-//                 replace: true,
-//                 onSuccess: () => {
-//                     console.log('jawaban berhasil terkirim');
-//                 },
-//                 onError: () => {
-//                     toast({
-//                         variant: 'destructive',
-//                         title: 'Terjadi kesalahan!',
-//                         description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
-//                     });
-//                 },
-//             },
-//         );
-//     }, 1000),
-//     [],
-// );
-
-// save answer and prevent debounce on mount
-// useEffect(() => {
-//     if (!hasInteractedRef.current) return;
-
-//     const currentSoal = soal[currentIndex];
-//     if (!currentSoal) return;
-
-//     const jawabanSaatIni = jawaban[currentSoal.id];
-//     if (!jawabanSaatIni || jawabanSaatIni.length === 0) return;
-
-//     saveAnswerFetch(jadwal.id, currentSoal.id, jawabanSaatIni);
-// }, [jawaban, currentIndex]);
+// Note: Kode yang di-comment dibawah adalah implementasi SPA yang tidak digunakan
