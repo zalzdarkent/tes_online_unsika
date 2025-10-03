@@ -87,30 +87,49 @@ try {
 
         // If system is set to private, check IP access
         if ($accessMode === 'private') {
-            // Check if admin bypass is active
-            $isAdminLoggedIn = false;
+            // Check current request URI to allow admin bypass routes
+            $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+            $isAdminBypassRoute = (
+                strpos($requestUri, '/admin-bypass') === 0 ||
+                strpos($requestUri, '/admin-bypass/') === 0
+            );
             
-            // Start session to check for admin bypass
-            session_start();
-            
-            // Check for admin bypass session
-            if (isset($_SESSION['admin_ip_bypass']) && $_SESSION['admin_ip_bypass'] === true) {
-                // Verify bypass session is still valid (24 hours)
-                $bypassTimestamp = $_SESSION['admin_bypass_timestamp'] ?? 0;
-                $currentTime = time();
-                $bypassDuration = 24 * 60 * 60; // 24 hours
-                
-                if (($currentTime - $bypassTimestamp) < $bypassDuration) {
-                    $isAdminLoggedIn = true;
-                } else {
-                    // Bypass expired, clear session
-                    unset($_SESSION['admin_ip_bypass']);
-                    unset($_SESSION['admin_bypass_user_id']);
-                    unset($_SESSION['admin_bypass_timestamp']);
+            // If this is an admin bypass route, skip IP checking and allow access
+            if ($isAdminBypassRoute) {
+                // Log bypass route access
+                $debugLog = __DIR__.'/../storage/logs/ip_access.log';
+                $logEntry = date('Y-m-d H:i:s') . " - ADMIN BYPASS ROUTE ACCESS: {$clientIP} -> {$requestUri}" . PHP_EOL;
+                if (is_writable(dirname($debugLog))) {
+                    file_put_contents($debugLog, $logEntry, FILE_APPEND | LOCK_EX);
                 }
-            }
-            
-            $allowedIPs = array(
+                // Continue to Laravel without IP checking
+            } else {
+                // Regular IP checking for other routes
+                
+                // Check if admin bypass is active
+                $isAdminLoggedIn = false;
+
+                // Start session to check for admin bypass
+                session_start();
+
+                // Check for admin bypass session
+                if (isset($_SESSION['admin_ip_bypass']) && $_SESSION['admin_ip_bypass'] === true) {
+                    // Verify bypass session is still valid (24 hours)
+                    $bypassTimestamp = $_SESSION['admin_bypass_timestamp'] ?? 0;
+                    $currentTime = time();
+                    $bypassDuration = 24 * 60 * 60; // 24 hours
+
+                    if (($currentTime - $bypassTimestamp) < $bypassDuration) {
+                        $isAdminLoggedIn = true;
+                    } else {
+                        // Bypass expired, clear session
+                        unset($_SESSION['admin_ip_bypass']);
+                        unset($_SESSION['admin_bypass_user_id']);
+                        unset($_SESSION['admin_bypass_timestamp']);
+                    }
+                }
+
+                $allowedIPs = array(
                 '::1','127.0.0.1',
                 '103.121.197.1','36.50.94.1','103.121.197.2','36.50.94.2','103.121.197.3','36.50.94.3',
                 '103.121.197.4','36.50.94.4','103.121.197.5','36.50.94.5','103.121.197.6','36.50.94.6',
@@ -197,20 +216,20 @@ try {
                 '103.121.197.247','36.50.94.247','103.121.197.248','36.50.94.248','103.121.197.249','36.50.94.249',
                 '103.121.197.250','36.50.94.250','103.121.197.251','36.50.94.251','103.121.197.252','36.50.94.252',
                 '103.121.197.253','36.50.94.253','103.121.197.254','36.50.94.254'
-            );
+                );
 
-            // Log IP check result
-            $isAllowed = in_array($clientIP, $allowedIPs) || $isAdminLoggedIn;
-            $logEntry = date('Y-m-d H:i:s') . " - IP Check: {$clientIP} " . ($isAllowed ? 'ALLOWED' : 'DENIED') . 
-                       ($isAdminLoggedIn ? ' (ADMIN BYPASS)' : '') . PHP_EOL;
-            if (is_writable(dirname($debugLog))) {
-                file_put_contents($debugLog, $logEntry, FILE_APPEND | LOCK_EX);
-            }
+                // Log IP check result
+                $isAllowed = in_array($clientIP, $allowedIPs) || $isAdminLoggedIn;
+                $logEntry = date('Y-m-d H:i:s') . " - IP Check: {$clientIP} " . ($isAllowed ? 'ALLOWED' : 'DENIED') .
+                           ($isAdminLoggedIn ? ' (ADMIN BYPASS)' : '') . PHP_EOL;
+                if (is_writable(dirname($debugLog))) {
+                    file_put_contents($debugLog, $logEntry, FILE_APPEND | LOCK_EX);
+                }
 
-            // Check if client IP is allowed OR if admin bypass is active
-            if (!$isAllowed) {
-                http_response_code(403);
-                echo '<!DOCTYPE html>
+                // Check if client IP is allowed OR if admin bypass is active
+                if (!$isAllowed) {
+                    http_response_code(403);
+                    echo '<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -238,17 +257,18 @@ try {
         </div>
         <div class="admin-info">
             <strong>Are you an Admin?</strong><br>
-            If you are a system administrator trying to access from outside the university network, 
+            If you are a system administrator trying to access from outside the university network,
             <a href="/admin-bypass" style="color: #0066cc; text-decoration: underline;">click here to activate admin bypass</a>.
         </div>
         <p>Please contact the system administrator if you believe this is an error.</p>
     </div>
 </body>
 </html>';
-                exit;
-            }
-        }
-    }
+                    exit;
+                }
+            } // End of regular IP checking
+        } // End of private mode check
+    } // End of table exists check
 } catch (Exception $e) {
     // Log the exception for debugging
     $errorLog = __DIR__.'/../storage/logs/ip_access_error.log';
