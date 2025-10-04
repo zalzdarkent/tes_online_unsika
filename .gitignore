@@ -22,3 +22,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/github-actions-deploy.pub
+/debug_dashboard.php
+/debug_ip.php
