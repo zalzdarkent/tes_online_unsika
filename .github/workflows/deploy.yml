@@ -46,6 +46,14 @@ jobs:
       - name: Generate Key
         run: php artisan key:generate
 
+      - name: Configure Database for CI
+        run: |
+          php artisan config:clear
+          sed -i 's/DB_HOST=127.0.0.1/DB_HOST=127.0.0.1/' .env
+          sed -i 's/DB_DATABASE=tes_online_unsika/DB_DATABASE=sql_onlinetest/' .env
+          sed -i 's/DB_USERNAME=root/DB_USERNAME=sql_onlinetest/' .env
+          sed -i 's/DB_PASSWORD=/DB_PASSWORD=TpFBSyz35Fmc2ALT/' .env
+
       - name: Run Migrations
         run: php artisan migrate
 
