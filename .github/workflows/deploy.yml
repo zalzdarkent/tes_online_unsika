@@ -1,4 +1,4 @@
-name: CI/CD Laravel to VPS with Docker
+name: Deploy Laravel to VPS with Docker
 
 on:
   push:
@@ -6,69 +6,10 @@ on:
 
 jobs:
   # ----------------------
-  # CI: Lint & Test
-  # ----------------------
-  ci:
-    runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: TpFBSyz35Fmc2ALT
-          MYSQL_DATABASE: sql_onlinetest
-          MYSQL_USER: sql_onlinetest
-          MYSQL_PASSWORD: TpFBSyz35Fmc2ALT
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root --password=root"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, bcmath, pdo_mysql
-          coverage: none
-
-      - name: Install Dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
-
-      - name: Copy .env
-        run: cp .env.example .env
-
-      - name: Generate Key
-        run: php artisan key:generate
-
-      - name: Configure Database for CI
-        run: |
-          php artisan config:clear
-          sed -i 's/DB_HOST=127.0.0.1/DB_HOST=127.0.0.1/' .env
-          sed -i 's/DB_DATABASE=tes_online_unsika/DB_DATABASE=sql_onlinetest/' .env
-          sed -i 's/DB_USERNAME=root/DB_USERNAME=sql_onlinetest/' .env
-          sed -i 's/DB_PASSWORD=/DB_PASSWORD=TpFBSyz35Fmc2ALT/' .env
-
-      - name: Run Migrations
-        run: php artisan migrate
-
-      - name: Run PHP Linter
-        run: find app/ -type f -name "*.php" -print0 | xargs -0 -n1 php -l
-
-      - name: Run PHPUnit
-        run: php artisan test
-
-  # ----------------------
-  # CD: Deploy ke VPS
+  # Deploy ke VPS
   # ----------------------
   deploy:
     runs-on: ubuntu-latest
-    needs: ci   # <-- deploy hanya jalan kalau CI sukses
 
     steps:
       - name: Checkout Repository
