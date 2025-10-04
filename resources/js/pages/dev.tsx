@@ -27,7 +27,7 @@ export default function DevPage() {
 
     const teamMembers = [
         {
-            name: 'Alif Fadillah Ummar',
+            name: 'Alif Fadillah',
             role: 'Lead Developer',
             description: 'Full Stack Developer yang fokus menyuruh AI untuk membuat frontnd dan backend aplikasi',
             photo: '/team/foto-kucing-oren.jpg', // Foto akan disimpan di public/team/
@@ -115,7 +115,7 @@ export default function DevPage() {
                                         </p>
                                         <div className="flex items-center justify-center gap-2">
                                             <Mail className="h-4 w-4 text-muted-foreground" />
-                                            <a 
+                                            <a
                                                 href={`mailto:${member.contact}`}
                                                 className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline transition-colors cursor-pointer"
                                             >
