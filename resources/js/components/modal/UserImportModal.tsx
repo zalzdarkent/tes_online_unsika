@@ -419,6 +419,7 @@ export default function UserImportModal({ trigger, open = false, onOpenChange, o
                                         data={userData}
                                         searchColumn="nama"
                                         searchPlaceholder="Cari nama user..."
+                                        enableResponsiveHiding={false}
                                     />
                                 </div>
                             </div>

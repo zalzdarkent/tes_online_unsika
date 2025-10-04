@@ -344,7 +344,7 @@ export default function SoalImportModal({ trigger, open = false, onOpenChange, i
                                     <div className="text-xs text-muted-foreground">💡 Scroll horizontal untuk melihat semua kolom</div>
                                 </div>
                                 <div className="overflow-x-auto">
-                                    <DataTable columns={columns} data={soalData} searchColumn="pertanyaan" searchPlaceholder="Cari pertanyaan..." />
+                                    <DataTable columns={columns} data={soalData} searchColumn="pertanyaan" searchPlaceholder="Cari pertanyaan..." enableResponsiveHiding={false} />
                                 </div>
                             </div>
                         )}

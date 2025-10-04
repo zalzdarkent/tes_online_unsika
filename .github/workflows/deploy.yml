@@ -1,41 +1,86 @@
-name: Deploy to VPS
+name: CI/CD Laravel to VPS with Docker
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  deploy:
+  # ----------------------
+  # CI: Lint & Test
+  # ----------------------
+  ci:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sql_onlinetest
+          MYSQL_USER: sql_onlinetest
+          MYSQL_PASSWORD: TpFBSyz35Fmc2ALT
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root --password=root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
-    - name: Deploy to VPS with Docker
-      uses: appleboy/ssh-action@v1.1.0
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT || 22 }}
-        script: |
-          cd ${{ secrets.VPS_PROJECT_PATH }}
+      - uses: actions/checkout@v3
 
-          # Pull latest code (sama seperti yang kamu lakukan manual)
-          echo "🔄 Pulling latest code from GitHub..."
-          git pull origin main
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, pdo_mysql
+          coverage: none
 
-          # Masuk ke container app untuk migration (kalau ada perubahan DB)
-          echo "🗄️ Running database migrations..."
-          docker compose exec -T app php artisan migrate
+      - name: Install Dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
 
-          # Masuk ke container app untuk build assets (seperti yang kamu lakukan manual)
-          echo "🏗️ Building frontend assets..."
-          docker compose exec -T app npm run build
+      - name: Copy .env
+        run: cp .env.example .env
 
-          # Laravel optimizations (opsional - bisa di-comment kalau tidak perlu)
-          echo "⚡ Optimizing Laravel..."
-          docker compose exec -T app php artisan config:cache
-          docker compose exec -T app php artisan route:cache
-          docker compose exec -T app php artisan view:cache
+      - name: Generate Key
+        run: php artisan key:generate
 
-          echo "✅ Deployment completed successfully!"
+      - name: Run Migrations
+        run: php artisan migrate
+
+      - name: Run PHP Linter
+        run: find app/ -type f -name "*.php" -print0 | xargs -0 -n1 php -l
+
+      - name: Run PHPUnit
+        run: php artisan test
+
+  # ----------------------
+  # CD: Deploy ke VPS
+  # ----------------------
+  deploy:
+    runs-on: ubuntu-latest
+    needs: ci   # <-- deploy hanya jalan kalau CI sukses
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/onlinetest/tes_online_unsika
+
+            docker compose exec -T app bash -c "
+              git pull origin main &&
+              composer install --no-dev --optimize-autoloader &&
+              php artisan migrate --force &&
+              npm ci &&
+              npm run build &&
+              php artisan config:cache &&
+              php artisan route:cache
+            "

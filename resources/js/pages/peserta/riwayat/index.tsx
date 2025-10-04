@@ -61,6 +61,7 @@ export default function RiwayatTes({ riwayat }: Props) {
                     searchColumn="nama_jadwal"
                     searchPlaceholder="Cari nama tes..."
                     emptyMessage={<div className="w-full py-8 text-center text-gray-500">Belum ada tes yang dikerjakan.</div>}
+                    enableResponsiveHiding={false}
                 />
                 {/* </div> */}
             </div>

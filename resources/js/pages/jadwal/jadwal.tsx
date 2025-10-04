@@ -381,9 +381,6 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
             header: 'Waktu Mulai Tes',
             enableSorting: true,
             enableHiding: true,
-            meta: {
-                defaultHidden: true,
-            },
             cell: ({ row }) => {
                 const waktuMulai = row.getValue('waktu_mulai_tes') as string | null;
                 if (!waktuMulai) {
@@ -427,6 +424,9 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
             header: 'Jumlah Peserta',
             enableSorting: true,
             enableHiding: true,
+            meta: {
+                defaultHidden: true,
+            },
             cell: ({ row }) => {
                 const jumlahPeserta = row.getValue('jumlah_peserta') as number;
                 const jadwalItem = row.original;
@@ -552,7 +552,6 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                         onBulkDelete={handleBulkDelete}
                         initialColumnVisibility={{
                             id_jadwal_sebelumnya: false,
-                            waktu_mulai_tes: false,
                         }}
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}
                         showExportButton
@@ -560,6 +559,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                         filters={filterConfigs}
                         onFilterChange={handleFilterChange}
                         activeFilters={activeFilters}
+                        enableResponsiveHiding={true}
                     />
                 </div>
             </JadwalLayout>

@@ -328,7 +328,7 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
 
                 {renderStatistik()}
 
-                <DataTable columns={columns} data={skorData} />
+                <DataTable columns={columns} data={skorData} enableResponsiveHiding={false} />
 
                 {/* button simpan dan submit */}
                 {!isSubmitted && (

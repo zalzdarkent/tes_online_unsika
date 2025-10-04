@@ -838,6 +838,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                             opsi_d: false,
                             jawaban_benar: false,
                         }}
+                        enableResponsiveHiding={false}
                     />
                     {renderSoalDetailModal()}
 

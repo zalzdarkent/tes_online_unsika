@@ -204,6 +204,7 @@ export default function KategoriTes({ kategori }: KategoriProps) {
                         searchPlaceholder="Cari kategori..."
                         onBulkDelete={handleBulkDelete}
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada kategori tes yang tersedia saat ini.</div>}
+                        enableResponsiveHiding={false}
                     />
                 </div>
 

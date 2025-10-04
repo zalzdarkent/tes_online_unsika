@@ -13,7 +13,7 @@ import {
   VisibilityState,
   RowSelectionState,
 } from "@tanstack/react-table"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -76,6 +76,7 @@ interface DataTableProps<TData, TValue> {
   filters?: FilterConfig[]
   onFilterChange?: (filterId: string, selectedValues: (string | number | boolean)[]) => void
   activeFilters?: Record<string, (string | number | boolean)[]>
+  enableResponsiveHiding?: boolean // New prop to enable/disable responsive column hiding
 }
 
 export function DataTable<TData, TValue>({
@@ -93,13 +94,99 @@ export function DataTable<TData, TValue>({
   showExportButton = false,
   filters = [],
   onFilterChange,
-  activeFilters = {}
+  activeFilters = {},
+  enableResponsiveHiding = true // Default to true for backward compatibility
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(initialColumnVisibility)
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Handle responsive behavior
+  useEffect(() => {
+    // Check if we're in browser environment
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const checkIsMobile = () => {
+      const newIsMobile = window.innerWidth < 768
+      setIsMobile(newIsMobile)
+    }
+
+    // Set initial state
+    checkIsMobile()
+
+    // Add resize listener
+    window.addEventListener('resize', checkIsMobile)
+
+    return () => {
+      window.removeEventListener('resize', checkIsMobile)
+    }
+  }, [])
+
+  // Apply responsive column visibility when mobile state changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !columns || columns.length === 0 || !enableResponsiveHiding) {
+      return
+    }
+
+    if (!isMobile) {
+      // On desktop, use initial visibility
+      setColumnVisibility(initialColumnVisibility)
+      return
+    }
+
+    // On mobile, hide some columns but keep essential ones
+    const columnIds = columns.map(col => {
+      if (col.id) return col.id
+      if ('accessorKey' in col) return col.accessorKey as string
+      return 'unknown'
+    }).filter(id => id !== 'unknown')
+
+    if (columnIds.length === 0) return
+
+    const newVisibility: VisibilityState = { ...initialColumnVisibility }
+
+    // Find essential columns
+    const hasNoColumn = columnIds.includes('no')
+    const noColumnIndex = columnIds.findIndex(id => id === 'no')
+
+    // Hide non-essential columns on mobile
+    columnIds.forEach((id, index) => {
+      // Always keep these visible
+      if (id === 'select' || id === 'actions' || id === 'aksi' || id === 'action') {
+        newVisibility[id] = true
+        return
+      }
+
+      // Keep 'no' column if it exists
+      if (id === 'no') {
+        newVisibility[id] = true
+        return
+      }
+
+      // Keep one column after 'no' column, or first data column if no 'no' column
+      if (hasNoColumn && noColumnIndex !== -1 && index === noColumnIndex + 1) {
+        newVisibility[id] = true
+        return
+      }
+
+      if (!hasNoColumn && index === columnIds.findIndex(colId =>
+        colId !== 'select' && colId !== 'actions' && colId !== 'aksi' && colId !== 'action'
+      )) {
+        newVisibility[id] = true
+        return
+      }
+
+      // Hide other columns on mobile
+      newVisibility[id] = false
+    })
+
+    setColumnVisibility(newVisibility)
+  }, [isMobile, columns, initialColumnVisibility, enableResponsiveHiding])
 
   const table = useReactTable({
     data,
@@ -145,7 +232,7 @@ export function DataTable<TData, TValue>({
               const doc = new DOMParser().parseFromString(value, "text/html");
               value = doc.body.textContent || "";
             }
-            
+
             const header = col.columnDef.header
             const headerText = typeof header === "string"
               ? header

@@ -289,6 +289,7 @@ export default function UsersIndex({ users }: UserProps) {
                         onBulkDelete={handleBulkDelete}
                         searchColumn="nama"
                         searchPlaceholder="Cari nama user..."
+                        enableResponsiveHiding={false}
                     />
                 </div>
             </div>

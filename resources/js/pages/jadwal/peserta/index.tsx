@@ -658,6 +658,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                                                 Tidak ada peserta yang dapat didaftarkan.
                                                             </div>
                                                         }
+                                                        enableResponsiveHiding={false}
                                                     />
                                                 </div>
 
@@ -745,6 +746,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                             );
                         }}
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Belum ada peserta yang terdaftar di jadwal ini.</div>}
+                        enableResponsiveHiding={false}
                     />
                 </div>
             </JadwalLayout>

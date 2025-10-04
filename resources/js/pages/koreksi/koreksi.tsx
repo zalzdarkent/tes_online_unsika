@@ -358,6 +358,7 @@ export default function Koreksi({ data, jadwalList }: Props) {
                     onFilterChange={handleFilterChange}
                     activeFilters={activeFilters}
                     emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada daftar koreksi yang tersedia saat ini.</div>}
+                    enableResponsiveHiding={false}
                 />
             </div>
         </AppLayout>

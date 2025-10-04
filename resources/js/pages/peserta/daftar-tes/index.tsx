@@ -459,6 +459,7 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
                         searchColumn="nama_jadwal"
                         searchPlaceholder="Cari tes..."
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}
+                        enableResponsiveHiding={false}
                     />
                 </div>
             </TooltipProvider>
