@@ -15,7 +15,7 @@ jobs:
       mysql:
         image: mysql:8
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: sql_onlinetest
           MYSQL_DATABASE: sql_onlinetest
           MYSQL_USER: sql_onlinetest
           MYSQL_PASSWORD: TpFBSyz35Fmc2ALT
