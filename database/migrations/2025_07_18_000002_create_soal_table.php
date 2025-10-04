@@ -28,8 +28,8 @@ return new class extends Migration
             $table->string('opsi_b', 255)->nullable();
             $table->string('opsi_c', 255)->nullable();
             $table->string('opsi_d', 255)->nullable();
-            $table->string('jawaban_benar', 255);
-            $table->integer('skor')->default(0);
+            $table->string('jawaban_benar', 255)->nullable();
+            $table->integer('skor')->nullable();
             $table->timestamps();
 
             $table->index('id_jadwal');

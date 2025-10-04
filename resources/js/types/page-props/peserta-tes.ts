@@ -9,4 +9,8 @@ export interface PesertaTesPageProps {
     soal: Soal[];
     jawaban_tersimpan: Record<number, string>;
     end_time_timestamp: number;
+    user: {
+        id: number;
+        name: string;
+    };
 }

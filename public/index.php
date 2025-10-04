@@ -87,7 +87,56 @@ try {
 
         // If system is set to private, check IP access
         if ($accessMode === 'private') {
-            $allowedIPs = array(
+            // Check current request URI to allow admin bypass routes
+            $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+            $isAdminBypassRoute = (
+                strpos($requestUri, '/admin-bypass') === 0 ||
+                strpos($requestUri, '/admin-bypass/') === 0
+            );
+
+            // If this is an admin bypass route, skip IP checking and allow access
+            if ($isAdminBypassRoute) {
+                // Log bypass route access
+                $debugLog = __DIR__.'/../storage/logs/ip_access.log';
+                $logEntry = date('Y-m-d H:i:s') . " - ADMIN BYPASS ROUTE ACCESS: {$clientIP} -> {$requestUri}" . PHP_EOL;
+                if (is_writable(dirname($debugLog))) {
+                    file_put_contents($debugLog, $logEntry, FILE_APPEND | LOCK_EX);
+                }
+                // Continue to Laravel without IP checking
+            } else {
+                // Regular IP checking for other routes
+
+                // Check if admin bypass is active via database
+                $isAdminLoggedIn = false;
+
+                // Check for admin bypass cookie and validate against database
+                if (isset($_COOKIE['admin_bypass_session'])) {
+                    $sessionId = $_COOKIE['admin_bypass_session'];
+
+                    try {
+                        // Check if admin_bypass_sessions table exists
+                        $tableExists = $pdo->query("SHOW TABLES LIKE 'admin_bypass_sessions'")->rowCount() > 0;
+
+                        if ($tableExists) {
+                            // Check database for valid bypass session
+                            $stmt = $pdo->prepare("
+                                SELECT COUNT(*) as count
+                                FROM admin_bypass_sessions
+                                WHERE session_id = ? AND expires_at > NOW()
+                            ");
+                            $stmt->execute([$sessionId]);
+                            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                            if ($result && $result['count'] > 0) {
+                                $isAdminLoggedIn = true;
+                            }
+                        }
+                    } catch (Exception $e) {
+                        // If table doesn't exist or query fails, continue without bypass
+                    }
+                }
+
+                $allowedIPs = array(
                 '::1','127.0.0.1',
                 '103.121.197.1','36.50.94.1','103.121.197.2','36.50.94.2','103.121.197.3','36.50.94.3',
                 '103.121.197.4','36.50.94.4','103.121.197.5','36.50.94.5','103.121.197.6','36.50.94.6',
@@ -174,19 +223,20 @@ try {
                 '103.121.197.247','36.50.94.247','103.121.197.248','36.50.94.248','103.121.197.249','36.50.94.249',
                 '103.121.197.250','36.50.94.250','103.121.197.251','36.50.94.251','103.121.197.252','36.50.94.252',
                 '103.121.197.253','36.50.94.253','103.121.197.254','36.50.94.254'
-            );
+                );
 
-            // Log IP check result
-            $isAllowed = in_array($clientIP, $allowedIPs);
-            $logEntry = date('Y-m-d H:i:s') . " - IP Check: {$clientIP} " . ($isAllowed ? 'ALLOWED' : 'DENIED') . PHP_EOL;
-            if (is_writable(dirname($debugLog))) {
-                file_put_contents($debugLog, $logEntry, FILE_APPEND | LOCK_EX);
-            }
+                // Log IP check result
+                $isAllowed = in_array($clientIP, $allowedIPs) || $isAdminLoggedIn;
+                $logEntry = date('Y-m-d H:i:s') . " - IP Check: {$clientIP} " . ($isAllowed ? 'ALLOWED' : 'DENIED') .
+                           ($isAdminLoggedIn ? ' (ADMIN BYPASS)' : '') . PHP_EOL;
+                if (is_writable(dirname($debugLog))) {
+                    file_put_contents($debugLog, $logEntry, FILE_APPEND | LOCK_EX);
+                }
 
-            // Check if client IP is allowed
-            if (!$isAllowed) {
-                http_response_code(403);
-                echo '<!DOCTYPE html>
+                // Check if client IP is allowed OR if admin bypass is active
+                if (!$isAllowed) {
+                    http_response_code(403);
+                    echo '<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -198,6 +248,7 @@ try {
         h1 { color: #dc3545; margin-bottom: 20px; }
         p { color: #6c757d; line-height: 1.6; margin-bottom: 15px; }
         .ip-info { background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        .admin-info { background: #e7f3ff; padding: 15px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #0066cc; }
         .debug { background: #fff3cd; padding: 10px; border-radius: 4px; margin: 20px 0; font-size: 12px; }
     </style>
 </head>
@@ -211,14 +262,20 @@ try {
             • 103.121.197.1 - 103.121.197.254<br>
             • 36.50.94.1 - 36.50.94.254
         </div>
+        <div class="admin-info">
+            <strong>Are you an Admin?</strong><br>
+            If you are a system administrator trying to access from outside the university network,
+            <a href="/admin-bypass" style="color: #0066cc; text-decoration: underline;">click here to activate admin bypass</a>.
+        </div>
         <p>Please contact the system administrator if you believe this is an error.</p>
     </div>
 </body>
 </html>';
-                exit;
-            }
-        }
-    }
+                    exit;
+                }
+            } // End of regular IP checking
+        } // End of private mode check
+    } // End of table exists check
 } catch (Exception $e) {
     // Log the exception for debugging
     $errorLog = __DIR__.'/../storage/logs/ip_access_error.log';

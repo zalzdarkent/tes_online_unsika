@@ -21,9 +21,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface SystemSettingsProps {
     currentAccess: 'public' | 'private';
+    adminBypassActive?: boolean;
 }
 
-export default function SystemSettings({ currentAccess }: SystemSettingsProps) {
+export default function SystemSettings({ currentAccess, adminBypassActive = false }: SystemSettingsProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -53,6 +54,24 @@ export default function SystemSettings({ currentAccess }: SystemSettingsProps) {
         });
     };
 
+    const handleDeactivateBypass = () => {
+        post('/admin-bypass/deactivate', {
+            onSuccess: () => {
+                toast({
+                    title: 'Success',
+                    description: 'Admin bypass deactivated successfully.',
+                });
+            },
+            onError: () => {
+                toast({
+                    title: 'Error',
+                    description: 'Failed to deactivate admin bypass.',
+                    variant: 'destructive',
+                });
+            },
+        });
+    };
+
     const handleAccessChange = (newAccess: 'public' | 'private') => {
         setData('access', newAccess);
     };
@@ -67,6 +86,27 @@ export default function SystemSettings({ currentAccess }: SystemSettingsProps) {
                         title="System Settings"
                         description="Manage system access and security settings. Only admin can access this page."
                     />
+
+                    {/* Admin Bypass Status Card */}
+                    {adminBypassActive && (
+                        <Card className="border-orange-200 bg-orange-50">
+                            <CardHeader>
+                                <CardTitle className="text-orange-800">Admin IP Bypass Active</CardTitle>
+                                <CardDescription className="text-orange-700">
+                                    You are currently accessing the system with admin bypass enabled. This allows access from any IP address.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Button
+                                    variant="outline"
+                                    onClick={handleDeactivateBypass}
+                                    className="border-orange-300 text-orange-800 hover:bg-orange-100"
+                                >
+                                    Deactivate Admin Bypass
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <Card>
                         <CardHeader>
@@ -150,6 +190,32 @@ export default function SystemSettings({ currentAccess }: SystemSettingsProps) {
                                 </div>
                                 <div>
                                     <span className="font-medium">Local:</span> 127.0.0.1, ::1 (for development)
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Admin Bypass Information Card */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Admin Bypass Information</CardTitle>
+                            <CardDescription>
+                                Information about admin bypass functionality when private mode is enabled.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid gap-3 text-sm">
+                                <div>
+                                    <span className="font-medium">Purpose:</span> Allows administrators to access the system from any IP address when private mode is active.
+                                </div>
+                                <div>
+                                    <span className="font-medium">Access:</span> Visit <code className="bg-muted px-1 py-0.5 rounded text-xs">/admin-bypass</code> when blocked by IP restrictions.
+                                </div>
+                                <div>
+                                    <span className="font-medium">Requirements:</span> Valid admin credentials + bypass code.
+                                </div>
+                                <div>
+                                    <span className="font-medium">Duration:</span> Bypass remains active for 24 hours or until manually deactivated.
                                 </div>
                             </div>
                         </CardContent>

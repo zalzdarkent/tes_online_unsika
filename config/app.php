@@ -123,4 +123,17 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin IP Bypass Configuration
+    |--------------------------------------------------------------------------
+    |
+    | This configuration is used for admin IP bypass functionality when
+    | the system is in private mode. Admins can use this code to bypass
+    | IP restrictions and access the system from anywhere.
+    |
+    */
+
+    'admin_bypass_code' => env('ADMIN_BYPASS_CODE', 'unsika_admin_2024'),
+
 ];

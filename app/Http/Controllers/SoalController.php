@@ -29,7 +29,7 @@ class SoalController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi request
+        // Validasi request - untuk form manual, skor dan jawaban_benar required
         $validated = $request->validate([
             'id_jadwal' => 'required|integer|exists:jadwal,id',
             'jenis_soal' => 'required|string',
@@ -40,7 +40,7 @@ class SoalController extends Controller
             'opsi_c' => 'nullable|string',
             'opsi_d' => 'nullable|string',
             // Untuk multi_choice, jawaban_benar bisa array
-            'jawaban_benar' => 'nullable',
+            'jawaban_benar' => 'required',
             'media' => 'nullable|file|mimes:jpg,jpeg,png,mp3,mpeg|max:70120', // 70120 KB = 68.5 MB
             // Validasi untuk skala
             'skala_min' => 'nullable|integer|min:1',
@@ -135,7 +135,7 @@ class SoalController extends Controller
     {
         $soal = \App\Models\Soal::findOrFail($id);
 
-        // Validasi request
+        // Validasi request - untuk form manual, skor dan jawaban_benar required
         $validated = $request->validate([
             'id_jadwal' => 'required|integer|exists:jadwal,id',
             'jenis_soal' => 'required|string',
@@ -145,7 +145,7 @@ class SoalController extends Controller
             'opsi_b' => 'nullable|string',
             'opsi_c' => 'nullable|string',
             'opsi_d' => 'nullable|string',
-            'jawaban_benar' => 'nullable',
+            'jawaban_benar' => 'required',
             'media' => 'nullable|file|mimes:jpg,jpeg,png,mp3,mpeg|max:70120',
             'skala_min' => 'nullable|integer|min:1',
             'skala_maks' => 'nullable|integer|min:2',
@@ -293,18 +293,18 @@ class SoalController extends Controller
                 'soal' => 'required|array|min:1',
             ]);
 
-            // Validasi manual untuk setiap soal
+            // Validasi manual untuk setiap soal - untuk import, skor dan jawaban_benar boleh nullable
             foreach ($soalData as $index => $soal) {
                 $validator = \Illuminate\Support\Facades\Validator::make($soal, [
                     'id_jadwal' => 'required|integer|exists:jadwal,id',
                     'jenis_soal' => 'required|string|in:pilihan_ganda,multi_choice,esai,essay_gambar,essay_audio,skala,equation',
                     'pertanyaan' => 'required|string',
-                    'skor' => 'required|integer|min:1',
+                    'skor' => 'nullable|integer|min:1',
                     'opsi_a' => 'nullable|string',
                     'opsi_b' => 'nullable|string',
                     'opsi_c' => 'nullable|string',
                     'opsi_d' => 'nullable|string',
-                    'jawaban_benar' => 'required|string',
+                    'jawaban_benar' => 'nullable|string',
                     'skala_min' => 'nullable|integer|min:1',
                     'skala_maks' => 'nullable|integer|min:2',
                     'skala_label_min' => 'nullable|string|max:255',
@@ -339,18 +339,18 @@ class SoalController extends Controller
                         }
                     }
 
-                    // Buat soal baru
+                    // Buat soal baru - handle nilai null dengan default values
                     \App\Models\Soal::create([
                         'id_jadwal' => $soal['id_jadwal'],
                         'urutan_soal' => $index + 1, // Gunakan index + 1 sebagai urutan
                         'jenis_soal' => $soal['jenis_soal'],
                         'pertanyaan' => $soal['pertanyaan'],
-                        'skor' => (int)$soal['skor'],
+                        'skor' => !empty($soal['skor']) ? (int)$soal['skor'] : null,
                         'opsi_a' => $soal['opsi_a'],
                         'opsi_b' => $soal['opsi_b'],
                         'opsi_c' => $soal['opsi_c'],
                         'opsi_d' => $soal['opsi_d'],
-                        'jawaban_benar' => $soal['jawaban_benar'],
+                        'jawaban_benar' => !empty($soal['jawaban_benar']) ? $soal['jawaban_benar'] : null,
                         'skala_min' => $soal['skala_min'],
                         'skala_maks' => $soal['skala_maks'],
                         'skala_label_min' => $soal['skala_label_min'],

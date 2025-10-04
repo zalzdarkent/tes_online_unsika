@@ -348,9 +348,22 @@ export function DataTable<TData, TValue>({
               <Input
                 placeholder={searchPlaceholder}
                 value={(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""}
-                onChange={(event) =>
-                  table.getColumn(searchColumn)?.setFilterValue(event.target.value)
-                }
+                onChange={(event) => {
+                  console.log('Input onChange triggered:', event.target.value)
+                  const column = table.getColumn(searchColumn)
+                  if (column) {
+                    console.log('Column found, setting filter value')
+                    column.setFilterValue(event.target.value)
+                  } else {
+                    console.warn(`Column "${searchColumn}" not found. Available columns:`, table.getAllColumns().map(c => c.id))
+                  }
+                }}
+                onInput={(event) => {
+                  console.log('Input onInput triggered:', event.currentTarget.value)
+                }}
+                onKeyDown={(event) => {
+                  console.log('Input onKeyDown triggered:', event.key)
+                }}
                 className="pl-9 w-full"
               />
             </div>
