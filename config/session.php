@@ -156,7 +156,16 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => env('SESSION_DOMAIN', function() {
+        // Auto-detect domain untuk Cloudflare
+        if (isset($_SERVER['HTTP_HOST'])) {
+            $host = $_SERVER['HTTP_HOST'];
+            if (str_contains($host, 'unsika.ac.id')) {
+                return '.' . $host; // Wildcard domain untuk subdomain
+            }
+        }
+        return null;
+    }),
 
     /*
     |--------------------------------------------------------------------------

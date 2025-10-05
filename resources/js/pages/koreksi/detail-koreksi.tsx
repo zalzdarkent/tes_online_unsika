@@ -114,16 +114,33 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 header: 'Soal',
                 cell: ({ row }) => {
                     const html = row.getValue('pertanyaan') as string;
-                    return <RichTextViewer content={html} className="line-clamp-3 w-64 max-w-64 overflow-hidden" />;
+                    return <RichTextViewer content={html} className="line-clamp-3 max-w-xs overflow-hidden break-words" />;
                 },
             },
-            { accessorKey: 'jawaban_benar', header: 'Jawaban Benar' },
+            {
+                accessorKey: 'jawaban_benar',
+                header: 'Jawaban Benar',
+                cell: ({ row }) => {
+                    const jawaban = row.getValue('jawaban_benar') as string;
+                    return (
+                        <div className="max-w-xs break-words whitespace-pre-wrap">
+                            {jawaban}
+                        </div>
+                    );
+                },
+            },
             {
                 accessorKey: 'jawaban_peserta',
                 header: 'Jawaban Peserta',
                 cell: ({ row }) => {
                     const jawaban = row.original.jawaban_peserta;
-                    return jawaban ? jawaban : <span className="text-muted-foreground italic">Tidak diisi</span>;
+                    return jawaban ? (
+                        <div className="max-w-xs break-words whitespace-pre-wrap">
+                            {jawaban}
+                        </div>
+                    ) : (
+                        <span className="text-muted-foreground italic">Tidak diisi</span>
+                    );
                 },
             },
             {
@@ -328,7 +345,9 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
 
                 {renderStatistik()}
 
-                <DataTable columns={columns} data={skorData} enableResponsiveHiding={false} />
+                <div className="overflow-x-auto">
+                    <DataTable columns={columns} data={skorData} enableResponsiveHiding={false} />
+                </div>
 
                 {/* button simpan dan submit */}
                 {!isSubmitted && (

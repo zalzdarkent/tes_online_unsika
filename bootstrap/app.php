@@ -21,12 +21,14 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\CloudflareSessionOptimizer::class, // Optimize session untuk Cloudflare
         ]);
 
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'bulk.throttle' => \App\Http\Middleware\BulkActionThrottle::class,
             'cache.response' => \App\Http\Middleware\CacheResponse::class,
+            'cloudflare.session' => \App\Http\Middleware\CloudflareSessionOptimizer::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

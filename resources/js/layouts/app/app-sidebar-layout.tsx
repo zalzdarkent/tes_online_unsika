@@ -3,12 +3,15 @@ import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { FlashMessages } from '@/components/flash-messages';
+import { SessionManager, useSessionManager } from '@/components/session-manager';
 import { Toaster } from '@/components/ui/toaster';
 import { type BreadcrumbItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 
 export default function AppSidebarLayout({ children, breadcrumbs = [] }: PropsWithChildren<{ breadcrumbs?: BreadcrumbItem[] }>) {
+    const sessionManagerProps = useSessionManager();
+
     return (
         <AppShell variant="sidebar">
             <AppSidebar />
@@ -22,8 +25,8 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: PropsWi
                     <div className="container mx-auto px-4 py-3">
                         <div className="text-center text-xs text-muted-foreground">
                             © {new Date().getFullYear()} UPA TIK UNSIKA X{' '}
-                            <Link 
-                                href="/dev" 
+                            <Link
+                                href="/dev"
                                 className="hover:text-foreground transition-colors cursor-pointer underline decoration-dotted underline-offset-2"
                             >
                                 Asisten Laboratorium Komputer
@@ -35,6 +38,8 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: PropsWi
             </AppContent>
             <FlashMessages />
             <Toaster />
+            {/* Session Manager untuk mencegah Cloudflare verification berulang */}
+            <SessionManager {...sessionManagerProps} />
         </AppShell>
     );
 }

@@ -455,7 +455,7 @@ class PesertaTesController extends Controller
     {
         $request->validate([
             'jadwal_id' => 'required|exists:jadwal,id',
-            'reason' => 'nullable|string|in:tab_switch,time_up,manual', // tambah parameter reason
+            'reason' => 'nullable|string|in:tab_switch,time_up,manual,screenshot_violation',
         ]);
 
         $user = Auth::user();
@@ -463,34 +463,43 @@ class PesertaTesController extends Controller
         $reason = $request->reason ?? 'manual';
 
         try {
-            $hasil = \App\Models\HasilTestPeserta::where('id_user', $user->id)
+            // Gunakan database transaction untuk memastikan atomicity
+            DB::beginTransaction();
+
+            $hasil = HasilTestPeserta::where('id_user', $user->id)
                 ->where('id_jadwal', $jadwalId)
+                ->lockForUpdate() // Prevent race condition
                 ->first();
 
-            // cek apakah user start selain from button
-            // if (!$hasil) {
-            //     return redirect()->route('peserta.daftar-tes')->withErrors([
-            //         'error' => 'Tes belum dimulai atau tidak ditemukan.'
-            //     ])->withInput();
-            // }
+            if (!$hasil) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Data tes tidak ditemukan.'
+                ], 404);
+            }
 
-            // if ($hasil && $hasil->is_submitted_test_test) {
-            //     return redirect()->route('peserta.daftar-tes')->withErrors([
-            //         'error' => 'Anda sudah pernah mengerjakan tes ini sebelumnya.'
-            //     ])->withInput();
-            // }
+            // Cek apakah sudah pernah submit sebelumnya
+            if ($hasil->is_submitted_test) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Tes ini sudah pernah dikumpulkan sebelumnya.',
+                    'already_submitted' => true
+                ], 409); // Conflict status
+            }
 
-            $soalIds = \App\Models\Soal::where('id_jadwal', $jadwalId)->pluck('id');
+            $soalIds = Soal::where('id_jadwal', $jadwalId)->pluck('id');
 
-            $existingJawabanIds = \App\Models\Jawaban::where('id_user', $user->id)
+            $existingJawabanIds = Jawaban::where('id_user', $user->id)
                 ->where('id_jadwal', $jadwalId)
                 ->pluck('id_soal');
 
             $missingSoalIds = $soalIds->diff($existingJawabanIds);
 
-            // insert jawaban null untuk soal yang belum dijawab
+            // Insert jawaban null untuk soal yang belum dijawab
             foreach ($missingSoalIds as $idSoal) {
-                \App\Models\Jawaban::create([
+                Jawaban::create([
                     'id_user'   => $user->id,
                     'id_jadwal' => $jadwalId,
                     'id_soal'   => $idSoal,
@@ -503,40 +512,57 @@ class PesertaTesController extends Controller
             $alasanTerputus = null;
             $sisaWaktu = null;
 
-            if ($reason === 'tab_switch') {
-                $statusTes = 'terputus';
-                $alasanTerputus = 'Terdeteksi pindah tab atau window';
+            switch ($reason) {
+                case 'tab_switch':
+                    $statusTes = 'terputus';
+                    $alasanTerputus = 'Terdeteksi pindah tab atau window';
+                    break;
 
-                // Hitung sisa waktu jika tes terputus
-                if ($hasil && $hasil->waktu_mulai_tes) {
-                    $jadwal = \App\Models\Jadwal::find($jadwalId);
-                    $waktuMulai = \Carbon\Carbon::parse($hasil->waktu_mulai_tes);
-                    $waktuSekarang = now();
-                    $waktuTerpakai = $waktuMulai->diffInSeconds($waktuSekarang);
-                    $totalWaktu = $jadwal->durasi * 60; // convert menit ke detik
+                case 'screenshot_violation':
+                    $statusTes = 'terputus';
+                    $alasanTerputus = 'Pelanggaran screenshot berulang';
+                    break;
 
-                    // Debug: log perhitungan
-                Log::info('Perhitungan sisa waktu:', [
-                        'waktu_mulai' => $waktuMulai->toDateTimeString(),
-                        'waktu_sekarang' => $waktuSekarang->toDateTimeString(),
-                        'waktu_terpakai_detik' => $waktuTerpakai,
-                        'total_waktu_detik' => $totalWaktu,
-                        'sisa_waktu_hitung' => max(0, $totalWaktu - $waktuTerpakai)
-                    ]);
+                case 'time_up':
+                    $statusTes = 'selesai';
+                    $alasanTerputus = 'Waktu habis';
+                    $sisaWaktu = 0;
+                    break;
 
-                    $sisaWaktu = max(0, $totalWaktu - $waktuTerpakai);
-                }
-            } elseif ($reason === 'time_up') {
-                $statusTes = 'selesai';
-                $alasanTerputus = 'Waktu habis';
-                $sisaWaktu = 0;
+                default: // manual
+                    $statusTes = 'selesai';
+                    break;
             }
 
-            // update status submit dan status tes
+            // Hitung sisa waktu untuk tes terputus
+            if ($statusTes === 'terputus' && $hasil->waktu_mulai_tes) {
+                $jadwal = Jadwal::find($jadwalId);
+                $waktuMulai = Carbon::parse($hasil->waktu_mulai_tes);
+                $waktuSekarang = now();
+                $waktuTerpakai = $waktuMulai->diffInSeconds($waktuSekarang);
+                $totalWaktu = $jadwal->durasi * 60; // convert menit ke detik
+
+                $sisaWaktu = max(0, $totalWaktu - $waktuTerpakai);
+
+                // Log untuk debugging
+                Log::info('Submit tes - perhitungan sisa waktu:', [
+                    'user_id' => $user->id,
+                    'jadwal_id' => $jadwalId,
+                    'reason' => $reason,
+                    'waktu_mulai' => $waktuMulai->toDateTimeString(),
+                    'waktu_sekarang' => $waktuSekarang->toDateTimeString(),
+                    'waktu_terpakai_detik' => $waktuTerpakai,
+                    'total_waktu_detik' => $totalWaktu,
+                    'sisa_waktu_detik' => $sisaWaktu
+                ]);
+            }
+
+            // Update status submit dan status tes
             $updateData = [
                 'is_submitted_test' => true,
                 'status_tes' => $statusTes,
                 'waktu_terakhir_aktif' => now(),
+                'waktu_submit' => now(), // Track waktu submit
             ];
 
             if ($alasanTerputus) {
@@ -549,16 +575,45 @@ class PesertaTesController extends Controller
 
             $hasil->update($updateData);
 
-            // Return success response untuk Inertia
+            // Commit transaction
+            DB::commit();
+
+            // Log successful submit
+            Log::info('Submit tes berhasil:', [
+                'user_id' => $user->id,
+                'jadwal_id' => $jadwalId,
+                'reason' => $reason,
+                'status_tes' => $statusTes,
+                'alasan_terputus' => $alasanTerputus
+            ]);
+
+            // Return success response
             return response()->json([
                 'success' => true,
-                'message' => 'Jawaban berhasil dikumpulkan',
+                'message' => $statusTes === 'selesai'
+                    ? 'Jawaban berhasil dikumpulkan dan tes selesai'
+                    : 'Jawaban berhasil dikumpulkan namun tes terputus',
                 'status' => $statusTes,
-                'reason' => $alasanTerputus
+                'reason' => $alasanTerputus,
+                'submit_time' => now()->toISOString()
             ]);
+
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log error
+            Log::error('Submit tes gagal:', [
+                'user_id' => $user->id,
+                'jadwal_id' => $jadwalId,
+                'reason' => $reason,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
-                'error' => 'Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.'
+                'success' => false,
+                'error' => 'Terjadi kesalahan saat menyimpan jawaban. Silakan coba lagi.',
+                'details' => app()->environment('local') ? $e->getMessage() : null
             ], 500);
         }
     }

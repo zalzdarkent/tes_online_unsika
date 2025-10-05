@@ -10,7 +10,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import AntiScreenshot from '@/components/anti-screenshot';
 import RichTextViewer from '@/components/rich-text-viewer';
+import { SessionManager } from '@/components/session-manager';
 import { toast } from '@/hooks/use-toast';
+import { useSessionKeepAlive } from '@/hooks/use-session-keepalive';
 import { PesertaTesPageProps } from '@/types/page-props/peserta-tes';
 import { Head, router } from '@inertiajs/react';
 import 'katex/dist/katex.min.css';
@@ -25,6 +27,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     const [currentIndex, setCurrentIndex] = useState(0);
     const [tandaiSoal, setTandaiSoal] = useState<Record<number, boolean>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmittedRef = useRef(false);
     const [jawaban, setJawaban] = useState<Record<number, string[]>>(() => {
         const prefill: Record<number, string[]> = {};
         Object.entries(jawaban_tersimpan || {}).forEach(([soalId, ans]) => {
@@ -41,6 +44,23 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     const [timeUpSubmitted, setTimeUpSubmitted] = useState(false);
 
     const lastSavedAnswersRef = useRef<Record<number, string>>({});
+
+    // Session Keep-Alive khusus untuk halaman tes (ping setiap 90 detik)
+    const { manualPing } = useSessionKeepAlive({
+        enabled: true,
+        interval: 90000, // 90 detik - sangat agresif untuk halaman tes
+        endpoint: '/keep-alive',
+        onError: (error) => {
+            console.warn('Session keep-alive error during test:', error);
+            // Jika ada error session, coba manual ping
+            setTimeout(() => {
+                manualPing();
+            }, 5000);
+        },
+        onSuccess: () => {
+            console.log('Session kept alive during test');
+        }
+    });
 
     const calculateTimeLeft = useCallback(() => {
         const now = Date.now();
@@ -103,20 +123,26 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
 
     const debouncedSaveAnswer = useMemo(() => debounce(saveAnswer, 500), [saveAnswer]);
 
-    const handleSubmit = useCallback(async (redirect = false, reason = 'manual') => {
-        console.log(`HandleSubmit called with reason: ${reason}, redirect: ${redirect}, isSubmitting: ${isSubmitting}`);
+    const handleSubmit = useCallback(async (reason: 'manual' | 'time_up' | 'tab_switch' | 'screenshot_violation' = 'manual') => {
+        console.log(`HandleSubmit called with reason: ${reason}, isSubmitting: ${isSubmitting}`);
 
+        // Prevent multiple simultaneous submissions
         if (isSubmitting) {
             console.log('Already submitting, skipping...');
+            return;
+        }
+
+        // Prevent submission if already submitted
+        if (isSubmittedRef.current) {
+            console.log('Test already submitted, skipping...');
             return;
         }
 
         setIsSubmitting(true);
         console.log('Starting submit process...');
 
+        // Flush semua jawaban yang belum tersimpan
         await debouncedSaveAnswer.flush();
-
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 
         try {
             console.log('Sending submit request to server...');
@@ -124,50 +150,100 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     jadwal_id: jadwal.id,
-                    redirect,
-                    reason,
+                    reason: reason
                 }),
                 credentials: 'same-origin',
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            // Parse response as JSON
+            const result = await response.json();
+            console.log('Submit response:', result);
+
+            if (response.ok && result.success) {
+                console.log('Submit successful:', result.message);
+
+                // Mark as successfully submitted
+                isSubmittedRef.current = true;
+                setTimeUpSubmitted(true);
+
+                // Clear any existing timers to prevent duplicate submissions
+                if (timerRef.current) {
+                    clearInterval(timerRef.current);
+                    timerRef.current = null;
+                }
+                if (backupTimerRef.current) {
+                    clearTimeout(backupTimerRef.current);
+                    backupTimerRef.current = null;
+                }
+
+                // Show success message
+                const message = result.message || 'Jawaban berhasil dikumpulkan';
+                alert(message);
+
+                // Clear localStorage to prevent restoration issues
+                localStorage.removeItem(`test_${jadwal.id}_answers`);
+                localStorage.removeItem(`test_${jadwal.id}_time`);
+
+                // Redirect to test list
+                setTimeout(() => {
+                    window.location.href = route('peserta.daftar-tes');
+                }, 1000);
+
+            } else {
+                // Handle specific error cases
+                if (result.already_submitted) {
+                    isSubmittedRef.current = true;
+                    setTimeUpSubmitted(true);
+                    alert('Tes ini sudah pernah dikumpulkan sebelumnya.');
+                    window.location.href = route('peserta.daftar-tes');
+                    return;
+                }
+
+                const errorMessage = result.error || result.message || 'Terjadi kesalahan saat mengirim jawaban';
+                console.error('Submit failed:', errorMessage);
+                alert(`Gagal mengirim jawaban: ${errorMessage}`);
             }
 
-            console.log('Submit request successful');
-            console.log('Jawaban berhasil dikumpulkan');
-
-            if (redirect) {
-                router.visit('/peserta/riwayat');
-
-                toast({
-                    variant: 'success',
-                    title: 'Tes Selesai',
-                    description: 'Jawaban Anda berhasil dikumpulkan.',
-                });
-            }
         } catch (error) {
-            console.error('Submit request failed:', error);
-            toast({
-                variant: 'destructive',
-                title: 'Terjadi kesalahan!',
-                description: 'Gagal menyimpan jawaban. Silakan coba lagi.',
+            console.error('Submit error:', error);
+
+            // Enhanced error handling with more specific messages
+            let errorMessage = 'Terjadi kesalahan sistem. Silakan coba lagi.';
+
+            if (error instanceof TypeError) {
+                if (error.message.includes('fetch')) {
+                    errorMessage = 'Koneksi internet bermasalah. Pastikan koneksi internet stabil dan coba lagi.';
+                } else if (error.message.includes('JSON')) {
+                    errorMessage = 'Server mengembalikan respons yang tidak valid. Silakan hubungi administrator.';
+                }
+            } else if (error instanceof SyntaxError) {
+                errorMessage = 'Respons server tidak dapat dibaca. Silakan coba lagi atau hubungi administrator.';
+            }
+
+            // Log detailed error for debugging
+            console.error('Detailed submit error:', {
+                message: error instanceof Error ? error.message : String(error),
+                name: error instanceof Error ? error.name : 'Unknown',
+                stack: error instanceof Error ? error.stack : undefined,
+                timestamp: new Date().toISOString(),
+                jadwal_id: jadwal.id,
+                reason: reason
             });
 
-            // Jika ini auto-submit karena waktu habis, tetap tampilkan dialog
-            if (reason === 'time_up') {
-                console.log('Auto-submit failed but showing dialog anyway');
-                setTimeout(() => setShowTabLeaveDialog(true), 1000);
-            }
+            alert(errorMessage);
         } finally {
             setIsSubmitting(false);
             console.log('Submit process completed');
         }
     }, [isSubmitting, debouncedSaveAnswer, jadwal.id]);
+
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const backupTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleScreenshotDetected = useCallback((violationType: string, detectionMethod: string) => {
         setScreenshotCount(prev => {
@@ -186,7 +262,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                 setAlertTitle('Pelanggaran Berulang Terdeteksi');
                 setAlertDescription('Anda telah melakukan pelanggaran screenshot sebanyak 3 kali. Tes akan dihentikan secara otomatis.');
                 setSubmitReason('screenshot_violation');
-                handleSubmit(false, 'screenshot_violation');
+                handleSubmit('screenshot_violation');
                 setShowTabLeaveDialog(true);
             } else {
                 toast({
@@ -208,7 +284,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
         const timeToEnd = calculateTimeLeft();
         if (timeToEnd <= 0) return; // Jika sudah habis, tidak perlu backup timer
 
-        const backupTimer = setTimeout(() => {
+        const backupTimer = setTimeout(async () => {
             const remainingSeconds = calculateTimeLeft();
             if (remainingSeconds <= 0 && !timeUpSubmitted && !isSubmitting) {
                 console.warn('Backup timer triggered for auto-submit');
@@ -217,9 +293,17 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                 setAlertDescription('Waktu pengerjaan tes telah habis. Jawaban Anda akan dikirim otomatis.');
                 setSubmitReason('time_up');
 
-                handleSubmit(false, 'time_up').then(() => {
+                try {
+                    const success = await handleSubmit('time_up');
+                    console.log('Backup auto-submit completed with result:', success);
+
+                    setTimeout(() => {
+                        setShowTabLeaveDialog(true);
+                    }, 500);
+                } catch (error) {
+                    console.error('Backup auto-submit failed:', error);
                     setShowTabLeaveDialog(true);
-                });
+                }
             }
         }, (timeToEnd + 5) * 1000); // 5 detik setelah waktu habis
 
@@ -258,16 +342,21 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                 clearInterval(interval);
 
                 // Submit dengan delay kecil untuk memastikan state terupdate
-                setTimeout(() => {
+                setTimeout(async () => {
                     console.log('Executing auto-submit...');
-                    handleSubmit(false, 'time_up').then(() => {
-                        console.log('Auto-submit completed, showing dialog...');
-                        setShowTabLeaveDialog(true);
-                    }).catch((error) => {
+                    try {
+                        const success = await handleSubmit('time_up');
+                        console.log('Auto-submit completed with result:', success);
+
+                        // Selalu tampilkan dialog setelah auto-submit
+                        setTimeout(() => {
+                            setShowTabLeaveDialog(true);
+                        }, 500);
+                    } catch (error) {
                         console.error('Auto-submit failed:', error);
                         // Fallback: tampilkan dialog meskipun submit gagal
                         setShowTabLeaveDialog(true);
-                    });
+                    }
                 }, 100);
             }
         }, 1000);
@@ -279,15 +368,21 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     useEffect(() => {
         let submitted = false;
 
-        const handleVisibilityChange = () => {
-            if (!submitted && document.visibilityState === 'hidden') {
+        const handleVisibilityChange = async () => {
+            if (!submitted && document.visibilityState === 'hidden' && !timeUpSubmitted && !isSubmitting && !isSubmittedRef.current) {
                 submitted = true;
                 setAlertTitle('Anda terdeteksi meninggalkan tab ujian');
                 setAlertDescription('Tes Anda telah dihentikan karena keluar dari tab ujian. Hubungi pengawas untuk melanjutkan tes.');
                 setSubmitReason('tab_switch');
 
-                handleSubmit(false, 'tab_switch');
-                setShowTabLeaveDialog(true);
+                try {
+                    await handleSubmit('tab_switch');
+                    console.log('Tab switch submit completed');
+                } catch (error) {
+                    console.error('Tab switch submit failed:', error);
+                } finally {
+                    setShowTabLeaveDialog(true);
+                }
             }
         };
 
@@ -295,7 +390,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [handleSubmit]);
+    }, [handleSubmit, timeUpSubmitted, isSubmitting]);
 
     // Failsafe: beforeunload event untuk memastikan jawaban tersimpan
     useEffect(() => {
@@ -307,13 +402,25 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
             if (remainingSeconds <= 0 && !timeUpSubmitted) {
                 // Jika waktu sudah habis tapi belum submit, paksa submit
                 event.preventDefault();
-                event.returnValue = '';
+                event.returnValue = 'Tes Anda akan dikumpulkan otomatis karena waktu habis.';
 
-                setTimeout(() => {
-                    handleSubmit(false, 'time_up');
-                }, 100);
+                // Submit secara sync
+                handleSubmit('time_up').then(() => {
+                    // Allow page unload after submit
+                    window.removeEventListener('beforeunload', handleBeforeUnload);
+                }).catch(() => {
+                    // Even if submit fails, allow page unload
+                    window.removeEventListener('beforeunload', handleBeforeUnload);
+                });
 
-                return '';
+                return 'Tes Anda akan dikumpulkan otomatis karena waktu habis.';
+            }
+
+            // Warn user if they try to leave during active test
+            if (remainingSeconds > 0 && !timeUpSubmitted) {
+                event.preventDefault();
+                event.returnValue = 'Apakah Anda yakin ingin meninggalkan halaman? Tes akan terputus.';
+                return 'Apakah Anda yakin ingin meninggalkan halaman? Tes akan terputus.';
             }
         };
 
@@ -393,7 +500,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                             }))
                         }
                         onSubmit={() => {
-                            handleSubmit(true);
+                            handleSubmit('manual');
                         }}
                     />
                 </div>
@@ -427,6 +534,13 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                     </AlertDialogContent>
                 </AlertDialog>
             )}
+
+            {/* Session Manager khusus untuk halaman tes */}
+            <SessionManager
+                enabled={true}
+                interval={90000} // 90 detik - sangat agresif untuk halaman tes
+                showStatus={process.env.NODE_ENV === 'development'} // Tampilkan status di development
+            />
         </>
     );
 }

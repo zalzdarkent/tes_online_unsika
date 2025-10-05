@@ -13,3 +13,9 @@ Schedule::command('jadwal:update-expired')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground();
+
+// Schedule session cleanup daily at 2 AM (untuk Cloudflare optimization)
+Schedule::command('session:cleanup --hours=48')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->runInBackground();

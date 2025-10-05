@@ -19,6 +19,7 @@ class HasilTestPeserta extends Model
         'status_tes',
         'waktu_mulai_tes',
         'waktu_terakhir_aktif',
+        'waktu_submit',
         'sisa_waktu_detik',
         'boleh_dilanjutkan',
         'alasan_terputus',
@@ -31,6 +32,7 @@ class HasilTestPeserta extends Model
     protected $casts = [
         'waktu_mulai_tes' => 'datetime',
         'waktu_terakhir_aktif' => 'datetime',
+        'waktu_submit' => 'datetime',
         'diizinkan_lanjut_pada' => 'datetime',
         'waktu_resume_tes' => 'datetime',
         'boleh_dilanjutkan' => 'boolean',
