@@ -389,19 +389,9 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                     item.jawaban_benar || ''
                 );
             } else {
-                // Untuk soal esai dan lainnya - hanya yang dapat skor 0
-                return item.skor_didapat === 0;
+                // Untuk soal esai dan lainnya - skor tidak penuh (termasuk 0 dan sebagian)
+                return item.skor_didapat !== item.skor_maksimal;
             }
-        }).length;
-
-        const partial = skorData.filter((item) => {
-            if (item.skor_didapat === null) return false;
-
-            // Hanya untuk soal non-pilihan ganda yang skornya di antara 0 dan maksimal
-            if (!['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal)) {
-                return item.skor_didapat > 0 && item.skor_didapat < item.skor_maksimal;
-            }
-            return false;
         }).length;
 
         const ungraded = skorData.filter((item) => item.skor_didapat === null).length;
@@ -409,8 +399,8 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
         const blocks = [
             { label: 'Jawaban Benar', value: correct, icon: <CheckCircle />, color: 'green' },
             { label: 'Jawaban Salah', value: incorrect, icon: <XCircle />, color: 'red' },
-            { label: 'Sebagian Benar', value: partial, icon: <CheckCircle />, color: 'blue' },
             { label: 'Belum Dikoreksi', value: ungraded, icon: <AlertCircleIcon />, color: 'yellow' },
+            { label: 'Total Soal', value: skorData.length, icon: <ClipboardList />, color: 'blue' },
         ];
 
         return (
@@ -423,15 +413,6 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                         <div className={`text-sm text-${color}-700 dark:text-${color}-300 dark:bg-${color}-900`}>{label}</div>
                     </div>
                 ))}
-                {/* Total Soal sebagai baris kedua */}
-                <div className="col-span-2 md:col-span-4">
-                    <div className="rounded-lg bg-gray-50 p-4 text-center dark:bg-gray-800">
-                        <div className="text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-center gap-2 text-2xl font-bold">
-                            <ClipboardList /> {skorData.length}
-                        </div>
-                        <div className="text-sm text-gray-700 dark:text-gray-300">Total Soal</div>
-                    </div>
-                </div>
             </div>
         );
     };
