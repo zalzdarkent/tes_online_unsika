@@ -131,16 +131,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('template-soal', [SoalController::class, 'downloadTemplate'])->name('soal.template');
 
         // Koreksi Management
-        Route::prefix('koreksi')->name('koreksi')->group(function () {
-            Route::get('/', [KoreksiController::class, 'index'])->name('.index');
-            Route::get('{userId}/{jadwalId}', [KoreksiController::class, 'show'])->name('.detail');
-            Route::post('{userId}/{jadwalId}', [KoreksiController::class, 'update'])->name('.update');
-            Route::delete('{userId}/{jadwalId}', [KoreksiController::class, 'destroy'])->name('.destroy');
+        Route::prefix('koreksi')->name('koreksi.')->group(function () {
+            Route::get('/', [KoreksiController::class, 'index'])->name('index');
+            Route::get('{userId}/{jadwalId}', [KoreksiController::class, 'show'])->name('detail');
+            Route::post('{userId}/{jadwalId}', [KoreksiController::class, 'update'])->name('update');
+            Route::delete('{userId}/{jadwalId}', [KoreksiController::class, 'destroy'])->name('destroy');
             Route::post('batch-submit', [KoreksiController::class, 'batchSubmit'])
-                ->name('.batch-submit')
+                ->name('batch-submit')
                 ->middleware('bulk.throttle');
             Route::post('bulk-destroy', [KoreksiController::class, 'bulkDestroy'])
-                ->name('.bulk-destroy')
+                ->name('bulk-destroy')
                 ->middleware('bulk.throttle');
         });
     });

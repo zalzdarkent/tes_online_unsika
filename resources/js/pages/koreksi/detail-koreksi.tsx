@@ -208,27 +208,29 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
         [skorData, isSubmitted],
     );
 
-    const handleSave = (isSubmit = false) => {
-        if (skorData.some((item) => item.skor_didapat === null)) {
-            toast({
-                title: 'Peringatan',
-                description: 'Harap isi skor untuk semua soal terlebih dahulu',
-                variant: 'destructive',
-            });
-            return;
-        }
+    const handleSave = async (isSubmit = false) => {
+        if (isSaving) return;
 
         setIsSaving(true);
-        const url = window.location.pathname;
+
+        // Ensure we have a fresh CSRF token before submitting
+        const windowWithRefresh = window as unknown as { refreshCSRFToken?: () => Promise<string | null> };
+        if (windowWithRefresh.refreshCSRFToken) {
+            await windowWithRefresh.refreshCSRFToken();
+        }
+
+        // Get current URL
+        const currentUrl = window.location.pathname;
 
         router.post(
-            url,
+            currentUrl,
             {
                 skor_data: skorData.map(({ id, skor_didapat }) => ({ id, skor_didapat: skor_didapat || 0 })),
                 total_nilai: totalNilai,
                 action: isSubmit ? 'submit' : 'save',
             },
             {
+                preserveScroll: true,
                 onSuccess: () => {
                     toast({
                         title: 'Berhasil',
@@ -238,10 +240,52 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                     setIsSaving(false);
                     if (isSubmit) setIsSubmitDialogOpen(false);
                 },
-                onError: (error) => {
+                onError: async (error: Record<string, unknown>) => {
+                    // If CSRF error, try to refresh token and retry once
+                    const errorResponse = error?.response as { status?: number } | undefined;
+                    if (errorResponse?.status === 419 && !(error as { retried?: boolean }).retried) {
+                        console.warn('CSRF error in form submit, attempting refresh and retry...');
+
+                        if (windowWithRefresh.refreshCSRFToken) {
+                            const newToken = await windowWithRefresh.refreshCSRFToken();
+                            if (newToken) {
+                                // Retry submission
+                                router.post(
+                                    currentUrl,
+                                    {
+                                        skor_data: skorData.map(({ id, skor_didapat }) => ({ id, skor_didapat: skor_didapat || 0 })),
+                                        total_nilai: totalNilai,
+                                        action: isSubmit ? 'submit' : 'save',
+                                    },
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => {
+                                            toast({
+                                                title: 'Berhasil',
+                                                description: isSubmit ? 'Koreksi berhasil disubmit (final)' : 'Koreksi berhasil disimpan (draft)',
+                                                variant: 'success',
+                                            });
+                                            setIsSaving(false);
+                                            if (isSubmit) setIsSubmitDialogOpen(false);
+                                        },
+                                        onError: (retryError: Record<string, unknown>) => {
+                                            toast({
+                                                title: 'Gagal',
+                                                description: (retryError?.message as string) || 'Gagal menyimpan koreksi setelah refresh token',
+                                                variant: 'destructive',
+                                            });
+                                            setIsSaving(false);
+                                        },
+                                    }
+                                );
+                                return; // Exit early, retry is in progress
+                            }
+                        }
+                    }
+
                     toast({
                         title: 'Gagal',
-                        description: error?.message || 'Gagal menyimpan koreksi',
+                        description: (error?.message as string) || 'Gagal menyimpan koreksi',
                         variant: 'destructive',
                     });
                     setIsSaving(false);
@@ -298,7 +342,7 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
             <div className="flex flex-col gap-4 p-4">
                 {/* button kembali */}
                 <div>
-                    <Button variant="ghost" onClick={() => router.visit(`/koreksi`)} className="w-fit">
+                    <Button variant="ghost" onClick={() => router.visit('/koreksi')} className="w-fit">
                         <ArrowLeft />
                         Kembali
                     </Button>

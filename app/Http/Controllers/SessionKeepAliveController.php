@@ -126,7 +126,8 @@ class SessionKeepAliveController extends Controller
                 'updated_at' => $user->updated_at,
                 'current_time' => now()->timestamp,
                 'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent()
+                'user_agent' => $request->userAgent(),
+                'csrf_token' => csrf_token()
             ]
         ]);
     }
