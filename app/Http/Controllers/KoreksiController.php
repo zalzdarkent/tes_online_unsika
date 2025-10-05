@@ -472,8 +472,18 @@ class KoreksiController extends Controller
                         // Jika sudah ada skor, tambahkan ke total
                         $totalSkor += $jawab->skor_didapat;
                     } else {
-                        // Untuk soal esai yang belum dikoreksi, berikan skor 0
-                        $jawab->update(['skor_didapat' => 0]);
+                        // Untuk soal non-pilihan ganda yang belum dikoreksi
+                        $skorDidapat = 0;
+
+                        // Jika soal esai/lainnya dan jawaban kosong, otomatis berikan skor 0
+                        $jawabanPeserta = trim($jawab->jawaban ?? '');
+                        if (empty($jawabanPeserta)) {
+                            $skorDidapat = 0;
+                        }
+                        // Jika ada jawaban, tetap berikan skor 0 untuk auto-submit (teacher bisa edit manual nanti)
+
+                        $jawab->update(['skor_didapat' => $skorDidapat]);
+                        $totalSkor += $skorDidapat;
                     }
                 }
 

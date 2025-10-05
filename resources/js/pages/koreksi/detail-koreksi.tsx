@@ -84,23 +84,32 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
         return JSON.stringify(pesertaChoices) === JSON.stringify(benarChoices);
     };
 
-    // Auto-fill pilihan ganda
+    // Auto-fill pilihan ganda dan esai kosong
     useEffect(() => {
         const autoFilled = data.map((item) => {
-            if (['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal) && item.skor_didapat === null) {
-                const jawabanPeserta = (item.jawaban_peserta || '').toString();
-                const jawabanBenar = (item.jawaban_benar || '').toString();
+            if (item.skor_didapat === null) {
+                if (['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal)) {
+                    // Auto-fill pilihan ganda berdasarkan jawaban
+                    const jawabanPeserta = (item.jawaban_peserta || '').toString();
+                    const jawabanBenar = (item.jawaban_benar || '').toString();
 
-                let benar = false;
-                if (item.jenis_soal === 'pilihan_ganda') {
-                    // Untuk pilihan ganda biasa, urutan tetap penting
-                    benar = jawabanPeserta.toLowerCase().trim() === jawabanBenar.toLowerCase().trim();
-                } else if (item.jenis_soal === 'multi_choice') {
-                    // Untuk multi choice, urutan tidak penting
-                    benar = compareMultiChoiceAnswer(jawabanPeserta, jawabanBenar);
+                    let benar = false;
+                    if (item.jenis_soal === 'pilihan_ganda') {
+                        // Untuk pilihan ganda biasa, urutan tetap penting
+                        benar = jawabanPeserta.toLowerCase().trim() === jawabanBenar.toLowerCase().trim();
+                    } else if (item.jenis_soal === 'multi_choice') {
+                        // Untuk multi choice, urutan tidak penting
+                        benar = compareMultiChoiceAnswer(jawabanPeserta, jawabanBenar);
+                    }
+
+                    return { ...item, skor_didapat: benar ? item.skor_maksimal : 0 };
+                } else {
+                    // Auto-fill esai yang tidak diisi dengan skor 0
+                    const jawabanPeserta = (item.jawaban_peserta || '').toString().trim();
+                    if (!jawabanPeserta) {
+                        return { ...item, skor_didapat: 0 };
+                    }
                 }
-
-                return { ...item, skor_didapat: benar ? item.skor_maksimal : 0 };
             }
             return item;
         });
