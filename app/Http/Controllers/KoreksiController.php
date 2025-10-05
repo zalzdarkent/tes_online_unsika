@@ -13,12 +13,44 @@ use Inertia\Inertia;
 class KoreksiController extends Controller
 {
     /**
+     * Helper function untuk membandingkan jawaban multi choice (urutan tidak berpengaruh)
+     */
+    private function compareMultiChoiceAnswer(string $peserta, string $benar): bool
+    {
+        $pesertaClean = strtolower(trim($peserta));
+        $benarClean = strtolower(trim($benar));
+
+        // Jika single character (A, B, C, D), bandingkan langsung
+        if (strlen($pesertaClean) === 1 && strlen($benarClean) === 1) {
+            return $pesertaClean === $benarClean;
+        }
+
+        // Untuk multi choice, pisahkan berdasarkan koma, titik, atau spasi
+        $pesertaChoices = collect(preg_split('/[,.\s]+/', $pesertaClean))
+            ->map(fn($choice) => trim($choice))
+            ->filter(fn($choice) => !empty($choice))
+            ->sort()
+            ->values()
+            ->toArray();
+
+        $benarChoices = collect(preg_split('/[,.\s]+/', $benarClean))
+            ->map(fn($choice) => trim($choice))
+            ->filter(fn($choice) => !empty($choice))
+            ->sort()
+            ->values()
+            ->toArray();
+
+        // Bandingkan array yang sudah diurutkan
+        return json_encode($pesertaChoices) === json_encode($benarChoices);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $currentUser = Auth::user();
-        
+
         // Build query dasar
         $query = Jawaban::select(
             'id_user',
@@ -29,7 +61,7 @@ class KoreksiController extends Controller
         )
             ->with(['user:id,nama', 'jadwal:id,nama_jadwal'])
             ->groupBy('id_user', 'id_jadwal');
-        
+
         // Filter berdasarkan role
         if ($currentUser->role === 'teacher') {
             // Teacher hanya bisa melihat data dari jadwal yang mereka buat
@@ -38,7 +70,7 @@ class KoreksiController extends Controller
             });
         }
         // Admin bisa melihat semua data (tidak perlu filter tambahan)
-        
+
         $data = $query->get()
             ->map(function ($item) {
                 // Cek status koreksi dari tabel hasil_test_peserta
@@ -67,13 +99,13 @@ class KoreksiController extends Controller
         // Ambil jadwal untuk dropdown filter berdasarkan role
         $jadwalQuery = Jadwal::select('id', 'nama_jadwal')
             ->orderBy('nama_jadwal');
-        
+
         if ($currentUser->role === 'teacher') {
             // Teacher hanya bisa melihat jadwal yang mereka buat
             $jadwalQuery->where('user_id', $currentUser->id);
         }
         // Admin bisa melihat semua jadwal
-        
+
         $jadwalList = $jadwalQuery->get();
 
         return Inertia::render('koreksi/koreksi', [
@@ -104,18 +136,18 @@ class KoreksiController extends Controller
     public function show(string $userId, string $jadwalId)
     {
         $currentUser = Auth::user();
-        
+
         // Validasi akses: teacher hanya bisa melihat detail dari jadwal yang mereka buat
         if ($currentUser->role === 'teacher') {
             $jadwal = Jadwal::where('id', $jadwalId)
                 ->where('user_id', $currentUser->id)
                 ->first();
-            
+
             if (!$jadwal) {
                 return back()->with('error', 'Anda tidak memiliki akses untuk melihat koreksi ini.');
             }
         }
-        
+
         // Ambil semua jawaban dari tabel jawaban dengan join ke soal, user, dan jadwal
         $jawabanData = Jawaban::where('jawaban.id_user', $userId)
             ->where('jawaban.id_jadwal', $jadwalId)
@@ -191,15 +223,15 @@ class KoreksiController extends Controller
     {
         try {
             DB::beginTransaction();
-            
+
             $currentUser = Auth::user();
-            
+
             // Validasi akses: teacher hanya bisa update koreksi dari jadwal yang mereka buat
             if ($currentUser->role === 'teacher') {
                 $jadwal = Jadwal::where('id', $jadwalId)
                     ->where('user_id', $currentUser->id)
                     ->first();
-                
+
                 if (!$jadwal) {
                     return back()->with('error', 'Anda tidak memiliki akses untuk mengoreksi jadwal ini.');
                 }
@@ -271,15 +303,15 @@ class KoreksiController extends Controller
     {
         try {
             DB::beginTransaction();
-            
+
             $currentUser = Auth::user();
-            
+
             // Validasi akses: teacher hanya bisa hapus koreksi dari jadwal yang mereka buat
             if ($currentUser->role === 'teacher') {
                 $jadwal = Jadwal::where('id', $jadwalId)
                     ->where('user_id', $currentUser->id)
                     ->first();
-                
+
                 if (!$jadwal) {
                     return redirect()->route('koreksi.index')->with('error', 'Anda tidak memiliki akses untuk menghapus koreksi ini.');
                 }
@@ -317,20 +349,20 @@ class KoreksiController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $currentUser = Auth::user();
             $deletedCount = 0;
 
             foreach ($request->items as $item) {
                 $userId = $item['id_user'];
                 $jadwalId = $item['id_jadwal'];
-                
+
                 // Validasi akses: teacher hanya bisa hapus koreksi dari jadwal yang mereka buat
                 if ($currentUser->role === 'teacher') {
                     $jadwal = Jadwal::where('id', $jadwalId)
                         ->where('user_id', $currentUser->id)
                         ->first();
-                    
+
                     if (!$jadwal) {
                         continue; // Skip item ini jika tidak punya akses
                     }
@@ -373,7 +405,7 @@ class KoreksiController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             $currentUser = Auth::user();
             $successCount = 0;
             $errorMessages = [];
@@ -381,13 +413,13 @@ class KoreksiController extends Controller
             foreach ($request->items as $item) {
                 $userId = $item['id_user'];
                 $jadwalId = $item['id_jadwal'];
-                
+
                 // Validasi akses: teacher hanya bisa submit koreksi dari jadwal yang mereka buat
                 if ($currentUser->role === 'teacher') {
                     $jadwal = Jadwal::where('id', $jadwalId)
                         ->where('user_id', $currentUser->id)
                         ->first();
-                    
+
                     if (!$jadwal) {
                         continue; // Skip item ini jika tidak punya akses
                     }
@@ -418,13 +450,21 @@ class KoreksiController extends Controller
                 $totalSkor = 0;
                 foreach ($jawaban as $jawab) {
                     $soal = $jawab->soal;
-                    
+
                     // Jika belum ada skor dan soal adalah pilihan ganda, auto-koreksi
                     if ($jawab->skor_didapat === null && in_array($soal->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
-                        $jawabanPeserta = strtolower(trim($jawab->jawaban ?? ''));
-                        $jawabanBenar = strtolower(trim($soal->jawaban_benar ?? ''));
-                        $skorDidapat = ($jawabanPeserta === $jawabanBenar) ? $soal->skor : 0;
-                        
+                        $jawabanPeserta = $jawab->jawaban ?? '';
+                        $jawabanBenar = $soal->jawaban_benar ?? '';
+
+                        $skorDidapat = 0;
+                        if ($soal->jenis_soal === 'pilihan_ganda') {
+                            // Untuk pilihan ganda biasa, urutan tetap penting
+                            $skorDidapat = (strtolower(trim($jawabanPeserta)) === strtolower(trim($jawabanBenar))) ? $soal->skor : 0;
+                        } elseif ($soal->jenis_soal === 'multi_choice') {
+                            // Untuk multi choice, urutan tidak penting
+                            $skorDidapat = $this->compareMultiChoiceAnswer($jawabanPeserta, $jawabanBenar) ? $soal->skor : 0;
+                        }
+
                         // Update skor jawaban
                         $jawab->update(['skor_didapat' => $skorDidapat]);
                         $totalSkor += $skorDidapat;

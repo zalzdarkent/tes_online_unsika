@@ -56,14 +56,50 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
     const isSubmitted = status_koreksi === 'submitted';
     const { toast } = useToast();
 
+    // Function untuk membandingkan jawaban multi choice (urutan tidak berpengaruh)
+    const compareMultiChoiceAnswer = (peserta: string, benar: string): boolean => {
+        // Untuk pilihan ganda biasa, urutan penting
+        const pesertaClean = peserta.toLowerCase().trim();
+        const benarClean = benar.toLowerCase().trim();
+
+        // Jika single character (A, B, C, D), bandingkan langsung
+        if (pesertaClean.length === 1 && benarClean.length === 1) {
+            return pesertaClean === benarClean;
+        }
+
+        // Untuk multi choice, pisahkan berdasarkan koma, titik, atau spasi
+        const pesertaChoices = pesertaClean
+            .split(/[,.\s]+/)
+            .map(choice => choice.trim())
+            .filter(choice => choice.length > 0)
+            .sort();
+
+        const benarChoices = benarClean
+            .split(/[,.\s]+/)
+            .map(choice => choice.trim())
+            .filter(choice => choice.length > 0)
+            .sort();
+
+        // Bandingkan array yang sudah diurutkan
+        return JSON.stringify(pesertaChoices) === JSON.stringify(benarChoices);
+    };
+
     // Auto-fill pilihan ganda
     useEffect(() => {
         const autoFilled = data.map((item) => {
             if (['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal) && item.skor_didapat === null) {
-                // Case-insensitive comparison untuk pilihan ganda
-                const jawabanPeserta = (item.jawaban_peserta || '').toString().toLowerCase().trim();
-                const jawabanBenar = (item.jawaban_benar || '').toString().toLowerCase().trim();
-                const benar = jawabanPeserta === jawabanBenar;
+                const jawabanPeserta = (item.jawaban_peserta || '').toString();
+                const jawabanBenar = (item.jawaban_benar || '').toString();
+
+                let benar = false;
+                if (item.jenis_soal === 'pilihan_ganda') {
+                    // Untuk pilihan ganda biasa, urutan tetap penting
+                    benar = jawabanPeserta.toLowerCase().trim() === jawabanBenar.toLowerCase().trim();
+                } else if (item.jenis_soal === 'multi_choice') {
+                    // Untuk multi choice, urutan tidak penting
+                    benar = compareMultiChoiceAnswer(jawabanPeserta, jawabanBenar);
+                }
+
                 return { ...item, skor_didapat: benar ? item.skor_maksimal : 0 };
             }
             return item;
@@ -148,22 +184,43 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 header: 'Status',
                 cell: ({ row }) => {
                     const { jenis_soal, skor_didapat, skor_maksimal, jawaban_peserta, jawaban_benar } = row.original;
-                    let status: 'benar' | 'salah' | 'belum' = 'belum';
+                    let status: 'benar' | 'salah' | 'sebagian' | 'belum' = 'belum';
+
                     if (skor_didapat !== null) {
-                        if (['pilihan_ganda', 'multi_choice'].includes(jenis_soal)) {
-                            // Case-insensitive comparison untuk pilihan ganda
+                        if (jenis_soal === 'pilihan_ganda') {
+                            // Untuk pilihan ganda biasa, urutan tetap penting
                             const jawabanPeserta = (jawaban_peserta || '').toString().toLowerCase().trim();
                             const jawabanBenar = (jawaban_benar || '').toString().toLowerCase().trim();
                             status = jawabanPeserta === jawabanBenar ? 'benar' : 'salah';
+                        } else if (jenis_soal === 'multi_choice') {
+                            // Untuk multi choice, gunakan function pembanding khusus
+                            const isCorrect = compareMultiChoiceAnswer(
+                                jawaban_peserta || '',
+                                jawaban_benar || ''
+                            );
+                            status = isCorrect ? 'benar' : 'salah';
                         } else {
-                            status = skor_didapat === skor_maksimal ? 'benar' : 'salah';
+                            // Untuk soal esai dan lainnya, cek apakah skor sebagian
+                            if (skor_didapat === skor_maksimal) {
+                                status = 'benar';
+                            } else if (skor_didapat === 0) {
+                                status = 'salah';
+                            } else {
+                                status = 'sebagian'; // Skor di antara 0 dan maksimal
+                            }
                         }
                     }
 
-                    const label = { benar: 'Benar', salah: 'Salah', belum: 'Belum Dikoreksi' };
+                    const label = {
+                        benar: 'Benar',
+                        salah: 'Salah',
+                        sebagian: 'Sebagian Benar',
+                        belum: 'Belum Dikoreksi'
+                    };
                     const color = {
                         benar: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
                         salah: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+                        sebagian: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
                         belum: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
                     };
 
@@ -297,29 +354,63 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
     const handleSubmit = () => handleSave(true);
 
     const renderStatistik = () => {
-        const correct = skorData.filter(
-            (item) =>
-                item.skor_didapat !== null &&
-                (['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal)
-                    ? (item.jawaban_peserta || '').toString().toLowerCase().trim() === (item.jawaban_benar || '').toString().toLowerCase().trim()
-                    : item.skor_didapat === item.skor_maksimal),
-        ).length;
+        const correct = skorData.filter((item) => {
+            if (item.skor_didapat === null) return false;
 
-        const incorrect = skorData.filter(
-            (item) =>
-                item.skor_didapat !== null &&
-                (['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal)
-                    ? (item.jawaban_peserta || '').toString().toLowerCase().trim() !== (item.jawaban_benar || '').toString().toLowerCase().trim()
-                    : item.skor_didapat !== item.skor_maksimal),
-        ).length;
+            if (item.jenis_soal === 'pilihan_ganda') {
+                // Untuk pilihan ganda biasa
+                const jawabanPeserta = (item.jawaban_peserta || '').toString().toLowerCase().trim();
+                const jawabanBenar = (item.jawaban_benar || '').toString().toLowerCase().trim();
+                return jawabanPeserta === jawabanBenar;
+            } else if (item.jenis_soal === 'multi_choice') {
+                // Untuk multi choice, gunakan function pembanding khusus
+                return compareMultiChoiceAnswer(
+                    item.jawaban_peserta || '',
+                    item.jawaban_benar || ''
+                );
+            } else {
+                // Untuk soal esai dan lainnya - hanya yang dapat skor penuh
+                return item.skor_didapat === item.skor_maksimal;
+            }
+        }).length;
+
+        const incorrect = skorData.filter((item) => {
+            if (item.skor_didapat === null) return false;
+
+            if (item.jenis_soal === 'pilihan_ganda') {
+                // Untuk pilihan ganda biasa
+                const jawabanPeserta = (item.jawaban_peserta || '').toString().toLowerCase().trim();
+                const jawabanBenar = (item.jawaban_benar || '').toString().toLowerCase().trim();
+                return jawabanPeserta !== jawabanBenar;
+            } else if (item.jenis_soal === 'multi_choice') {
+                // Untuk multi choice, gunakan function pembanding khusus
+                return !compareMultiChoiceAnswer(
+                    item.jawaban_peserta || '',
+                    item.jawaban_benar || ''
+                );
+            } else {
+                // Untuk soal esai dan lainnya - hanya yang dapat skor 0
+                return item.skor_didapat === 0;
+            }
+        }).length;
+
+        const partial = skorData.filter((item) => {
+            if (item.skor_didapat === null) return false;
+
+            // Hanya untuk soal non-pilihan ganda yang skornya di antara 0 dan maksimal
+            if (!['pilihan_ganda', 'multi_choice'].includes(item.jenis_soal)) {
+                return item.skor_didapat > 0 && item.skor_didapat < item.skor_maksimal;
+            }
+            return false;
+        }).length;
 
         const ungraded = skorData.filter((item) => item.skor_didapat === null).length;
 
         const blocks = [
             { label: 'Jawaban Benar', value: correct, icon: <CheckCircle />, color: 'green' },
             { label: 'Jawaban Salah', value: incorrect, icon: <XCircle />, color: 'red' },
+            { label: 'Sebagian Benar', value: partial, icon: <CheckCircle />, color: 'blue' },
             { label: 'Belum Dikoreksi', value: ungraded, icon: <AlertCircleIcon />, color: 'yellow' },
-            { label: 'Total Soal', value: skorData.length, icon: <ClipboardList />, color: 'blue' },
         ];
 
         return (
@@ -332,6 +423,15 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                         <div className={`text-sm text-${color}-700 dark:text-${color}-300 dark:bg-${color}-900`}>{label}</div>
                     </div>
                 ))}
+                {/* Total Soal sebagai baris kedua */}
+                <div className="col-span-2 md:col-span-4">
+                    <div className="rounded-lg bg-gray-50 p-4 text-center dark:bg-gray-800">
+                        <div className="text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-center gap-2 text-2xl font-bold">
+                            <ClipboardList /> {skorData.length}
+                        </div>
+                        <div className="text-sm text-gray-700 dark:text-gray-300">Total Soal</div>
+                    </div>
+                </div>
             </div>
         );
     };
