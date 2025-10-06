@@ -23,7 +23,7 @@ class SessionCleanupCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Clean up expired sessions and show session statistics for Cloudflare session optimization';
+    protected $description = 'Clean up expired sessions and show session statistics';
 
     /**
      * Execute the console command.
@@ -34,7 +34,7 @@ class SessionCleanupCommand extends Command
         $dryRun = $this->option('dry-run');
         $showStats = $this->option('stats');
 
-        $this->info("🧹 Session Cleanup Tool for Cloudflare Optimization");
+        $this->info("🧹 Session Cleanup Tool");
         $this->info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
         if ($showStats) {
@@ -151,13 +151,6 @@ class SessionCleanupCommand extends Command
         $this->info("   Last 24 hours: {$last24Hours}");
         $this->info("   Last 7 days: {$last7Days}");
 
-        // Sessions with keep-alive data
-        $keepAliveSessions = DB::table('sessions')
-            ->where('payload', 'like', '%keep_alive_count%')
-            ->count();
-
-        $this->info("\n💓 Sessions with keep-alive activity: {$keepAliveSessions}");
-
         // Most active users
         $activeUsers = DB::table('sessions')
             ->select('user_id', DB::raw('COUNT(*) as session_count'))
@@ -185,13 +178,5 @@ class SessionCleanupCommand extends Command
             $avgSizeKB = round($avgSize->avg_size / 1024, 2);
             $this->info("\n💾 Average session payload size: {$avgSizeKB} KB");
         }
-
-        // Cloudflare optimization status
-        $this->info("\n☁️  Cloudflare Optimization Status:");
-        $this->info("   Session lifetime: " . config('session.lifetime') . " minutes");
-        $this->info("   Session driver: " . config('session.driver'));
-        $this->info("   Secure cookies: " . (config('session.secure') ? 'Yes' : 'No'));
-        $this->info("   HTTP only: " . (config('session.http_only') ? 'Yes' : 'No'));
-        $this->info("   Same site: " . config('session.same_site'));
     }
 }

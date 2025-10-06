@@ -44,11 +44,6 @@ Route::prefix('admin-bypass')->name('admin.bypass.')->group(function () {
 // Protected routes - requires authentication and email verification
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Session Keep-Alive routes untuk mencegah Cloudflare verification berulang
-    Route::post('keep-alive', [\App\Http\Controllers\SessionKeepAliveController::class, 'ping'])->name('session.keep-alive');
-    Route::get('session-info', [\App\Http\Controllers\SessionKeepAliveController::class, 'info'])->name('session.info');
-    Route::get('session-test', [\App\Http\Controllers\SessionKeepAliveController::class, 'test'])->name('session.test');
-
     // Dashboard routes
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('home', [DashboardController::class, 'index'])->name('home'); // alias
