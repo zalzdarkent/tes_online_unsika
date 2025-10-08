@@ -810,16 +810,23 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         </div>
                     </div>
 
-                    <div className="mt-1 flex items-center gap-4">
-                        <Checkbox
-                            checked={isShuffled}
-                            onCheckedChange={(value) => handleRandom(!!value, jadwal)}
-                            id={`acak-soal-${jadwal.id}`}
-                            disabled={loading}
-                        />
-                        <Label htmlFor={`acak-soal-${jadwal.id}`} className="font-bold text-muted-foreground hover:cursor-pointer">
-                            Acak Soal di Tampilan Peserta
-                        </Label>
+                    <div className="mt-1 flex flex-col gap-2">
+                        <div className="flex items-center gap-4">
+                            <Checkbox
+                                checked={isShuffled}
+                                onCheckedChange={(value) => handleRandom(!!value, jadwal)}
+                                id={`acak-soal-${jadwal.id}`}
+                                disabled={loading}
+                            />
+                            <Label htmlFor={`acak-soal-${jadwal.id}`} className="font-bold text-muted-foreground hover:cursor-pointer">
+                                Acak Soal & Jawaban di Tampilan Peserta
+                            </Label>
+                        </div>
+                        {isShuffled && (
+                            <div className="ml-6 text-sm text-blue-600 dark:text-blue-400">
+                                ✓ Urutan soal dan pilihan jawaban (A,B,C,D) akan diacak untuk setiap peserta
+                            </div>
+                        )}
                     </div>
 
                     <DataTable

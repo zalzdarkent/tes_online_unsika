@@ -158,12 +158,18 @@ class KoreksiController extends Controller
                 'jawaban.id',
                 'jawaban.jawaban as jawaban_peserta',
                 'jawaban.skor_didapat',
+                'soal.id as soal_id',
                 'soal.jenis_soal',
                 'soal.pertanyaan',
                 'soal.jawaban_benar',
                 'soal.skor as skor_maksimal',
+                'soal.opsi_a',
+                'soal.opsi_b',
+                'soal.opsi_c',
+                'soal.opsi_d',
                 'users.nama as nama_peserta',
-                'jadwal.nama_jadwal'
+                'jadwal.nama_jadwal',
+                'jadwal.is_shuffled'
             )
             ->orderBy('jawaban.id_soal', 'asc')
             ->get();
@@ -186,15 +192,52 @@ class KoreksiController extends Controller
         // Ambil info peserta dan jadwal dari record pertama
         $firstRecord = $jawabanData->first();
 
-        $data = $jawabanData->map(function ($item) {
+        $data = $jawabanData->map(function ($item) use ($userId) {
+            $jawabanBenar = $item->jawaban_benar;
+            $opsiToShow = [];
+
+            // Jika jadwal di-shuffle dan soal adalah pilihan ganda, gunakan jawaban dan opsi yang sudah di-shuffle
+            if ($item->is_shuffled && in_array($item->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
+                // Buat instance soal untuk menggunakan method getShuffledAnswers
+                $soal = new \App\Models\Soal();
+                $soal->id = $item->soal_id;
+                $soal->jenis_soal = $item->jenis_soal;
+                $soal->opsi_a = $item->opsi_a;
+                $soal->opsi_b = $item->opsi_b;
+                $soal->opsi_c = $item->opsi_c;
+                $soal->opsi_d = $item->opsi_d;
+                $soal->jawaban_benar = $item->jawaban_benar;
+
+                $shuffledAnswers = $soal->getShuffledAnswers($userId);
+                $jawabanBenar = $shuffledAnswers['jawaban_benar'];
+
+                // Tampilkan opsi yang sudah di-shuffle untuk referensi koreksi
+                $opsiToShow = [
+                    'A' => $shuffledAnswers['opsi_a'],
+                    'B' => $shuffledAnswers['opsi_b'],
+                    'C' => $shuffledAnswers['opsi_c'],
+                    'D' => $shuffledAnswers['opsi_d'],
+                ];
+            } else {
+                // Gunakan opsi asli
+                $opsiToShow = [
+                    'A' => $item->opsi_a,
+                    'B' => $item->opsi_b,
+                    'C' => $item->opsi_c,
+                    'D' => $item->opsi_d,
+                ];
+            }
+
             return [
                 'id' => $item->id,
                 'jenis_soal' => $item->jenis_soal,
                 'pertanyaan' => $item->pertanyaan,
-                'jawaban_benar' => $item->jawaban_benar,
+                'jawaban_benar' => $jawabanBenar,
                 'jawaban_peserta' => $item->jawaban_peserta,
                 'skor_maksimal' => $item->skor_maksimal,
-                'skor_didapat' => $item->skor_didapat
+                'skor_didapat' => $item->skor_didapat,
+                'opsi_shuffled' => $opsiToShow,
+                'is_shuffled' => $item->is_shuffled
             ];
         });
 
@@ -454,7 +497,17 @@ class KoreksiController extends Controller
                     // Jika belum ada skor dan soal adalah pilihan ganda, auto-koreksi
                     if ($jawab->skor_didapat === null && in_array($soal->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
                         $jawabanPeserta = $jawab->jawaban ?? '';
-                        $jawabanBenar = $soal->jawaban_benar ?? '';
+
+                        // Dapatkan jawaban benar yang sesuai dengan shuffle (jika ada)
+                        $jadwal = $soal->jadwal;
+                        if ($jadwal->is_shuffled && in_array($soal->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
+                            // Gunakan jawaban yang sudah di-shuffle untuk user ini
+                            $shuffledAnswers = $soal->getShuffledAnswers($hasilTest->id_user);
+                            $jawabanBenar = $shuffledAnswers['jawaban_benar'] ?? '';
+                        } else {
+                            // Gunakan jawaban asli
+                            $jawabanBenar = $soal->jawaban_benar ?? '';
+                        }
 
                         $skorDidapat = 0;
                         if ($soal->jenis_soal === 'pilihan_ganda') {

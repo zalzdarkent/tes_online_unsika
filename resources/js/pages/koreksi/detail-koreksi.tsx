@@ -32,6 +32,13 @@ interface JawabanDetail {
     jawaban_peserta: string;
     skor_maksimal: number;
     skor_didapat: number | null;
+    opsi_shuffled?: {
+        A?: string;
+        B?: string;
+        C?: string;
+        D?: string;
+    };
+    is_shuffled?: boolean;
 }
 
 interface Props {
@@ -167,6 +174,31 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 header: 'Jawaban Benar',
                 cell: ({ row }) => {
                     const jawaban = row.getValue('jawaban_benar') as string;
+                    const data = row.original;
+                    const isShuffled = data.is_shuffled && ['pilihan_ganda', 'multi_choice'].includes(data.jenis_soal);
+
+                    if (isShuffled && data.opsi_shuffled) {
+                        // Tampilkan jawaban benar dengan konteks opsi yang di-shuffle
+                        const jawabanKey = jawaban.toUpperCase();
+                        const opsiText = data.opsi_shuffled[jawabanKey as keyof typeof data.opsi_shuffled];
+
+                        return (
+                            <div className="max-w-xs space-y-1">
+                                <div className="font-medium text-green-600 dark:text-green-400">
+                                    {jawaban.toUpperCase()}
+                                </div>
+                                {opsiText && (
+                                    <div className="text-xs text-muted-foreground border-l-2 border-green-200 pl-2">
+                                        {opsiText}
+                                    </div>
+                                )}
+                                <div className="text-xs text-blue-600 dark:text-blue-400">
+                                    ⚡ Jawaban diacak untuk peserta ini
+                                </div>
+                            </div>
+                        );
+                    }
+
                     return (
                         <div className="max-w-xs break-words whitespace-pre-wrap">
                             {jawaban}
@@ -179,12 +211,36 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 header: 'Jawaban Peserta',
                 cell: ({ row }) => {
                     const jawaban = row.original.jawaban_peserta;
-                    return jawaban ? (
+                    const data = row.original;
+                    const isShuffled = data.is_shuffled && ['pilihan_ganda', 'multi_choice'].includes(data.jenis_soal);
+
+                    if (!jawaban) {
+                        return <span className="text-muted-foreground italic">Tidak diisi</span>;
+                    }
+
+                    if (isShuffled && data.opsi_shuffled && jawaban.length === 1) {
+                        // Tampilkan jawaban peserta dengan konteks opsi yang di-shuffle
+                        const jawabanKey = jawaban.toUpperCase();
+                        const opsiText = data.opsi_shuffled[jawabanKey as keyof typeof data.opsi_shuffled];
+
+                        return (
+                            <div className="max-w-xs space-y-1">
+                                <div className="font-medium">
+                                    {jawaban.toUpperCase()}
+                                </div>
+                                {opsiText && (
+                                    <div className="text-xs text-muted-foreground border-l-2 border-gray-300 pl-2">
+                                        {opsiText}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+
+                    return (
                         <div className="max-w-xs break-words whitespace-pre-wrap">
                             {jawaban}
                         </div>
-                    ) : (
-                        <span className="text-muted-foreground italic">Tidak diisi</span>
                     );
                 },
             },

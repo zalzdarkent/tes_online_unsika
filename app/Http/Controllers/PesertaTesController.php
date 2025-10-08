@@ -376,17 +376,13 @@ class PesertaTesController extends Controller
 
             return Inertia::render('peserta/soal/index', [
                 'jadwal' => $jadwal,
-                'soal' => $soalData->map(function ($s) {
-                    return [
+                'soal' => $soalData->map(function ($s) use ($user, $jadwal) {
+                    $soalData = [
                         'id' => $s->id,
                         'id_jadwal' => $s->id_jadwal,
                         'jenis_soal' => $s->jenis_soal,
                         'tipe_jawaban' => $s->tipe_jawaban,
                         'pertanyaan' => $s->pertanyaan,
-                        'opsi_a' => $s->opsi_a,
-                        'opsi_b' => $s->opsi_b,
-                        'opsi_c' => $s->opsi_c,
-                        'opsi_d' => $s->opsi_d,
                         'media' => $s->media,
                         'skala_min' => $s->skala_min,
                         'skala_maks' => $s->skala_maks,
@@ -394,6 +390,21 @@ class PesertaTesController extends Controller
                         'skala_label_maks' => $s->skala_label_maks,
                         'equation' => $s->equation,
                     ];
+
+                    // Jika jadwal di-shuffle, maka jawaban juga otomatis di-shuffle
+                    if ($jadwal->is_shuffled && in_array($s->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
+                        $shuffledAnswers = $s->getShuffledAnswers($user->id);
+                        $soalData = array_merge($soalData, $shuffledAnswers);
+                    } else {
+                        // Gunakan opsi asli
+                        $soalData['opsi_a'] = $s->opsi_a;
+                        $soalData['opsi_b'] = $s->opsi_b;
+                        $soalData['opsi_c'] = $s->opsi_c;
+                        $soalData['opsi_d'] = $s->opsi_d;
+                        $soalData['jawaban_benar'] = $s->jawaban_benar;
+                    }
+
+                    return $soalData;
                 }),
                 'end_time_timestamp' => $endTimeTimestamp,
                 'jawaban_tersimpan' => $jawaban,

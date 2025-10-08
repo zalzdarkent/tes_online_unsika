@@ -83,6 +83,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('jadwal/{jadwal}', [JadwalController::class, 'update'])->name('jadwal.update');
         Route::delete('jadwal/{jadwal}', [JadwalController::class, 'destroy'])->name('jadwal.destroy');
         Route::put('/jadwal/{jadwal}/shuffle', [JadwalController::class, 'shuffle'])->name('jadwal.shuffle');
+        Route::put('/jadwal/{jadwal}/shuffle-answers', [JadwalController::class, 'shuffleAnswers'])->name('jadwal.shuffle-answers');
 
 
         Route::get('jadwal/{jadwal}/soal', [JadwalController::class, 'soal'])->name('jadwal.soal');
