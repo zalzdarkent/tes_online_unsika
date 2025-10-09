@@ -487,4 +487,14 @@ class JadwalController extends Controller
             'is_shuffled' => $jadwal->is_shuffled,
         ]);
     }
+
+    public function shuffleAnswers(Jadwal $jadwal)
+    {
+        $jadwal->is_answer_shuffled = !$jadwal->is_answer_shuffled;
+        $jadwal->save();
+
+        return redirect()->back()->with([
+            'is_answer_shuffled' => $jadwal->is_answer_shuffled,
+        ]);
+    }
 }

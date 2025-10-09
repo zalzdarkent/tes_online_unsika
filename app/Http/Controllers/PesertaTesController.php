@@ -391,8 +391,8 @@ class PesertaTesController extends Controller
                         'equation' => $s->equation,
                     ];
 
-                    // Jika jadwal di-shuffle, maka jawaban juga otomatis di-shuffle
-                    if ($jadwal->is_shuffled && in_array($s->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
+                    // Jika shuffle jawaban diaktifkan, maka jawaban di-shuffle
+                    if ($jadwal->is_answer_shuffled && in_array($s->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
                         $shuffledAnswers = $s->getShuffledAnswers($user->id);
                         $soalData = array_merge($soalData, $shuffledAnswers);
                     } else {

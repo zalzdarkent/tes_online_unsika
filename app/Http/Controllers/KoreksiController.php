@@ -500,7 +500,7 @@ class KoreksiController extends Controller
 
                         // Dapatkan jawaban benar yang sesuai dengan shuffle (jika ada)
                         $jadwal = $soal->jadwal;
-                        if ($jadwal->is_shuffled && in_array($soal->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
+                        if ($jadwal->is_answer_shuffled && in_array($soal->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
                             // Gunakan jawaban yang sudah di-shuffle untuk user ini
                             $shuffledAnswers = $soal->getShuffledAnswers($hasilTest->id_user);
                             $jawabanBenar = $shuffledAnswers['jawaban_benar'] ?? '';
