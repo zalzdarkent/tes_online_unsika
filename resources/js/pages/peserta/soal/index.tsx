@@ -10,9 +10,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import AntiScreenshot from '@/components/anti-screenshot';
 import RichTextViewer from '@/components/rich-text-viewer';
-import { SessionManager } from '@/components/session-manager';
 import { toast } from '@/hooks/use-toast';
-import { useSessionKeepAlive } from '@/hooks/use-session-keepalive';
 import { PesertaTesPageProps } from '@/types/page-props/peserta-tes';
 import { Head, router } from '@inertiajs/react';
 import 'katex/dist/katex.min.css';
@@ -44,23 +42,6 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     const [timeUpSubmitted, setTimeUpSubmitted] = useState(false);
 
     const lastSavedAnswersRef = useRef<Record<number, string>>({});
-
-    // Session Keep-Alive khusus untuk halaman tes (ping setiap 90 detik)
-    const { manualPing } = useSessionKeepAlive({
-        enabled: true,
-        interval: 90000, // 90 detik - sangat agresif untuk halaman tes
-        endpoint: '/keep-alive',
-        onError: (error) => {
-            console.warn('Session keep-alive error during test:', error);
-            // Jika ada error session, coba manual ping
-            setTimeout(() => {
-                manualPing();
-            }, 5000);
-        },
-        onSuccess: () => {
-            console.log('Session kept alive during test');
-        }
-    });
 
     const calculateTimeLeft = useCallback(() => {
         const now = Date.now();
@@ -534,13 +515,6 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                     </AlertDialogContent>
                 </AlertDialog>
             )}
-
-            {/* Session Manager khusus untuk halaman tes */}
-            <SessionManager
-                enabled={true}
-                interval={90000} // 90 detik - sangat agresif untuk halaman tes
-                showStatus={process.env.NODE_ENV === 'development'} // Tampilkan status di development
-            />
         </>
     );
 }

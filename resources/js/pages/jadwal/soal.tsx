@@ -104,6 +104,7 @@ interface JadwalData {
     tanggal_mulai: string;
     tanggal_berakhir: string;
     is_shuffled: boolean;
+    is_answer_shuffled: boolean;
 }
 
 interface SoalPageProps {
@@ -119,6 +120,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
     const [isShuffled, setIsShuffled] = useState<boolean>(!!jadwal.is_shuffled);
+    const [isAnswerShuffled, setIsAnswerShuffled] = useState<boolean>(!!jadwal.is_answer_shuffled);
     const [loading, setLoading] = useState(false);
 
     const handleRandom = (value: boolean, jadwal: JadwalData) => {
@@ -138,7 +140,7 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                     });
                     setLoading(false);
                 },
-                onError: (e) => {
+                onError: () => {
                     toast({
                         variant: 'destructive',
                         title: 'Gagal!',
@@ -146,6 +148,36 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                     });
                     setLoading(false);
                     setIsShuffled(!value);
+                },
+            },
+        );
+    };
+
+    const handleAnswerShuffle = (value: boolean, jadwal: JadwalData) => {
+        setIsAnswerShuffled(value);
+        setLoading(true);
+
+        router.put(
+            route('jadwal.shuffle-answers', jadwal.id),
+            { is_answer_shuffled: value },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast({
+                        variant: 'success',
+                        title: 'Berhasil!',
+                        description: 'Pengaturan acak jawaban berhasil disimpan',
+                    });
+                    setLoading(false);
+                },
+                onError: () => {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Gagal!',
+                        description: 'Gagal mengacak jawaban, silakan coba lagi',
+                    });
+                    setLoading(false);
+                    setIsAnswerShuffled(!value);
                 },
             },
         );
@@ -810,16 +842,40 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         </div>
                     </div>
 
-                    <div className="mt-1 flex items-center gap-4">
-                        <Checkbox
-                            checked={isShuffled}
-                            onCheckedChange={(value) => handleRandom(!!value, jadwal)}
-                            id={`acak-soal-${jadwal.id}`}
-                            disabled={loading}
-                        />
-                        <Label htmlFor={`acak-soal-${jadwal.id}`} className="font-bold text-muted-foreground hover:cursor-pointer">
-                            Acak Soal di Tampilan Peserta
-                        </Label>
+                    <div className="mt-1 flex flex-col gap-3">
+                        <div className="flex items-center gap-4">
+                            <Checkbox
+                                checked={isShuffled}
+                                onCheckedChange={(value) => handleRandom(!!value, jadwal)}
+                                id={`acak-soal-${jadwal.id}`}
+                                disabled={loading}
+                            />
+                            <Label htmlFor={`acak-soal-${jadwal.id}`} className="font-bold text-muted-foreground hover:cursor-pointer">
+                                Acak Urutan Soal di Tampilan Peserta
+                            </Label>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <Checkbox
+                                checked={isAnswerShuffled}
+                                onCheckedChange={(value) => handleAnswerShuffle(!!value, jadwal)}
+                                id={`acak-jawaban-${jadwal.id}`}
+                                disabled={loading}
+                            />
+                            <Label htmlFor={`acak-jawaban-${jadwal.id}`} className="font-bold text-muted-foreground hover:cursor-pointer">
+                                Acak Urutan Jawaban (A,B,C,D) di Tampilan Peserta
+                            </Label>
+                        </div>
+
+                        {(isShuffled || isAnswerShuffled) && (
+                            <div className="ml-6 rounded-md bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                <div className="font-medium mb-1">Pengaturan Aktif:</div>
+                                <ul className="space-y-1 text-xs">
+                                    {isShuffled && <li>✓ Urutan soal akan diacak untuk setiap peserta</li>}
+                                    {isAnswerShuffled && <li>✓ Urutan pilihan jawaban (A,B,C,D) akan diacak untuk setiap peserta</li>}
+                                </ul>
+                            </div>
+                        )}
                     </div>
 
                     <DataTable

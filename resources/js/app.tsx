@@ -14,7 +14,7 @@ const token = document.head.querySelector('meta[name="csrf-token"]');
 if (token) {
     const tokenValue = token.getAttribute('content');
     axios.defaults.headers.common['X-CSRF-TOKEN'] = tokenValue;
-    console.log('CSRF token set:', tokenValue);
+    // console.log('CSRF token set:', tokenValue);
 } else {
     console.error('CSRF token not found: https://laravel.com/docs/csrf#csrf-x-csrf-token');
 }

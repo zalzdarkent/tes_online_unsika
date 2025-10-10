@@ -93,7 +93,7 @@ services:
     volumes:
       - ./php-production.ini:/usr/local/etc/php/conf.d/php-production.ini
     ports:
-      - "8080:80"
+      - "5090:80"
     networks:
       - laravel
     depends_on:

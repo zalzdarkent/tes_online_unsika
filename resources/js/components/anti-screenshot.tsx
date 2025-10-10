@@ -101,6 +101,11 @@ export default function AntiScreenshot({
 
         // Mendeteksi kombinasi tombol screenshot
         const handleKeyDown = (event: KeyboardEvent) => {
+            // Abaikan zoom shortcuts yang legitimate
+            if ((event.ctrlKey || event.metaKey) && (event.key === '=' || event.key === '+' || event.key === '-' || event.key === '0')) {
+                return; // Allow zoom shortcuts
+            }
+
             // Deteksi khusus Windows + S dan Windows + Shift + S
             if (event.key === 's' || event.key === 'S') {
                 if (event.metaKey || event.getModifierState('OS')) {
@@ -168,6 +173,14 @@ export default function AntiScreenshot({
 
         // Mendeteksi right click untuk context menu
         const handleContextMenu = (event: MouseEvent) => {
+            // Abaikan jika di dalam modal image viewer (untuk zoom controls)
+            const target = event.target as Element;
+            const isInImageModal = target.closest('[role="dialog"]') !== null;
+
+            if (isInImageModal) {
+                return; // Allow context menu dalam modal image
+            }
+
             event.preventDefault();
             event.stopPropagation();
 
@@ -181,23 +194,56 @@ export default function AntiScreenshot({
         };
 
         // Mendeteksi perubahan fokus window (mungkin karena screenshot tools)
+        // Tapi abaikan jika disebabkan oleh zoom atau modal dialog
         const handleBlur = () => {
+            // Abaikan blur jika ada modal yang terbuka
+            const hasOpenModal = document.querySelector('[role="dialog"]') !== null;
+            const hasOpenDropdown = document.querySelector('[data-state="open"]') !== null;
+
+            if (hasOpenModal || hasOpenDropdown) {
+                return;
+            }
+
             detectionCountRef.current += 1;
 
-            if (detectionCountRef.current > 2) {
+            // Lebih toleran - butuh lebih banyak pelanggaran berturut-turut
+            if (detectionCountRef.current > 5) {
                 handleScreenshotDetected('window_focus_change', 'blur_detection');
             }
 
-            // Reset counter setelah 5 detik
+            // Reset counter setelah 10 detik (lebih lama)
             setTimeout(() => {
                 detectionCountRef.current = 0;
-            }, 5000);
+            }, 10000);
         };
 
         // Mendeteksi resize window yang tidak normal
+        // Tapi abaikan zoom browser yang legitimate
+        let lastZoomLevel = window.devicePixelRatio;
         const handleResize = () => {
-            const suspiciousResize = window.outerWidth !== window.innerWidth + 16 ||
-                                  window.outerHeight !== window.innerHeight + 39;
+            const currentZoomLevel = window.devicePixelRatio;
+            const zoomChanged = Math.abs(currentZoomLevel - lastZoomLevel) > 0.1;
+
+            // Jika zoom level berubah, itu kemungkinan zoom browser yang legitimate
+            if (zoomChanged) {
+                lastZoomLevel = currentZoomLevel;
+                return;
+            }
+
+            // Abaikan jika ada modal yang terbuka
+            const hasOpenModal = document.querySelector('[role="dialog"]') !== null;
+            if (hasOpenModal) {
+                return;
+            }
+
+            // Hanya deteksi resize yang sangat mencurigakan
+            const suspiciousResize = (
+                Math.abs(window.outerWidth - window.innerWidth) > 50 ||
+                Math.abs(window.outerHeight - window.innerHeight) > 100
+            ) && (
+                window.outerWidth < 300 ||
+                window.outerHeight < 200
+            );
 
             if (suspiciousResize) {
                 handleScreenshotDetected('window_resize', 'suspicious_resize');

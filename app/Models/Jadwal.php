@@ -20,7 +20,8 @@ class Jadwal extends Model
         'user_id',
         'id_jadwal_sebelumnya',
         'kategori_tes_id',
-        'is_shuffled'
+        'is_shuffled',
+        'is_answer_shuffled'
     ];
 
     protected $casts = [
