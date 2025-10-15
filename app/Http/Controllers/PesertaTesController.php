@@ -401,8 +401,12 @@ class PesertaTesController extends Controller
                         $soalData['opsi_b'] = $s->opsi_b;
                         $soalData['opsi_c'] = $s->opsi_c;
                         $soalData['opsi_d'] = $s->opsi_d;
-                        $soalData['jawaban_benar'] = $s->jawaban_benar;
                     }
+                    
+                    // Selalu tambahkan jawaban_benar dalam bentuk value asli (bukan opsi yang di-shuffle)
+                    $soalData['jawaban_benar'] = $s->getJawabanBenarValue();
+                    // Juga tambahkan opsi asli untuk debugging
+                    $soalData['jawaban_benar_opsi'] = $s->jawaban_benar;
 
                     return $soalData;
                 }),
@@ -410,7 +414,9 @@ class PesertaTesController extends Controller
                 'jawaban_tersimpan' => $jawaban,
                 'user' => [
                     'id' => Auth::user()->id,
-                    'name' => Auth::user()->name,
+                    'username' => Auth::user()->username,
+                    'nama' => Auth::user()->nama,
+                    'email' => Auth::user()->email,
                 ],
             ]);
         } catch (\Exception $e) {

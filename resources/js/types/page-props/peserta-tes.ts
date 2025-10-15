@@ -11,6 +11,8 @@ export interface PesertaTesPageProps {
     end_time_timestamp: number;
     user: {
         id: number;
-        name: string;
+        username: string;
+        nama: string;
+        email: string;
     };
 }

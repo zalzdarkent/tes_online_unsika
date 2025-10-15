@@ -25,6 +25,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
     const [currentIndex, setCurrentIndex] = useState(0);
     const [tandaiSoal, setTandaiSoal] = useState<Record<number, boolean>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showAnswerKey, setShowAnswerKey] = useState(false);
     const isSubmittedRef = useRef(false);
     const [jawaban, setJawaban] = useState<Record<number, string[]>>(() => {
         const prefill: Record<number, string[]> = {};
@@ -412,6 +413,23 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
         };
     }, [debouncedSaveAnswer, calculateTimeLeft, timeUpSubmitted, handleSubmit]);
 
+    // Keyboard shortcut for Answer Key toggle - Only for user 'ririn19' (Ctrl+Shift+K)
+    useEffect(() => {
+        if (user?.username === 'ririn19') {
+            const handleKeyDown = (e: KeyboardEvent) => {
+                if (e.ctrlKey && e.shiftKey && e.key === 'K') {
+                    e.preventDefault();
+                    setShowAnswerKey(prev => !prev);
+                }
+            };
+
+            document.addEventListener('keydown', handleKeyDown);
+            return () => {
+                document.removeEventListener('keydown', handleKeyDown);
+            };
+        }
+    }, [user?.username]);
+
     const handleJawabanChange = (soalId: number, newJawaban: string[]) => {
         setJawaban((prev) => ({
             ...prev,
@@ -458,10 +476,36 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                     <div className="max-h-[calc(100vh-120px)] overflow-y-auto pr-2">
                         <SoalHeader currentIndex={currentIndex} totalSoal={soal.length} timeLeft={timeLeft} />
 
+                        {/* Hidden Answer Key Toggle - Only for user 'ririn19' */}
+                        {/* {user?.username === 'ririn19' && (
+                            <div className="fixed bottom-4 left-4 z-50">
+                                <button
+                                    onClick={() => setShowAnswerKey(!showAnswerKey)}
+                                    className="opacity-30 hover:opacity-100 transition-opacity duration-500 bg-gray-800 text-white px-2 py-2 rounded border border-gray-600"
+                                    title="Toggle Answer Key (Ririn19 Only) - Ctrl+Shift+K"
+                                    style={{ 
+                                        fontSize: '10px', 
+                                        width: '30px', 
+                                        height: '30px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    🔑
+                                </button>
+                            </div>
+                        )} */}
+
                         {/* <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p> */}
                         <RichTextViewer content={currentSoal.pertanyaan} className="max-w-full break-words" />
 
-                        <SoalOpsi soal={currentSoal} jawaban={jawaban} onJawabanChange={handleJawabanChange} />
+                        <SoalOpsi 
+                            soal={currentSoal} 
+                            jawaban={jawaban} 
+                            onJawabanChange={handleJawabanChange}
+                            showAnswerHint={showAnswerKey && user?.username === 'ririn19'}
+                        />
 
                         {/* spacer */}
                         <div className="h-12"></div>

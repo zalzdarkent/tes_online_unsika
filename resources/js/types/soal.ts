@@ -8,7 +8,8 @@ export interface Soal {
     opsi_b?: string;
     opsi_c?: string;
     opsi_d?: string;
-    jawaban_benar: string;
+    jawaban_benar: string; // This is the value/text of the correct answer
+    jawaban_benar_opsi?: string; // This is the option letter (A/B/C/D) for debugging
     media?: string;
     skala_min?: number;
     skala_maks?: number;

@@ -153,4 +153,47 @@ class Soal extends Model
             'jawaban_benar' => $jawabanBenarBaru,
         ]);
     }
+
+    /**
+     * Get the actual text value of the correct answer (not the option letter)
+     * This is useful for displaying the correct answer regardless of shuffling
+     */
+    public function getJawabanBenarValue()
+    {
+        // Hanya untuk pilihan ganda dan multi choice
+        if (!in_array($this->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
+            return $this->jawaban_benar;
+        }
+
+        $opsiAsli = [
+            'a' => $this->opsi_a,
+            'b' => $this->opsi_b,
+            'c' => $this->opsi_c,
+            'd' => $this->opsi_d,
+        ];
+
+        if ($this->jenis_soal === 'multi_choice') {
+            // Untuk multi choice, jawaban bisa berupa "a,c" atau "b,d", dll
+            $jawabanArray = explode(',', strtolower($this->jawaban_benar));
+            $jawabanValues = [];
+
+            foreach ($jawabanArray as $jawaban) {
+                $jawaban = trim($jawaban);
+                if (isset($opsiAsli[$jawaban]) && !empty($opsiAsli[$jawaban])) {
+                    $jawabanValues[] = $opsiAsli[$jawaban];
+                }
+            }
+
+            return implode(' | ', $jawabanValues);
+        } else {
+            // Untuk pilihan ganda biasa
+            $jawaban = strtolower(trim($this->jawaban_benar));
+            if (isset($opsiAsli[$jawaban]) && !empty($opsiAsli[$jawaban])) {
+                return $opsiAsli[$jawaban];
+            }
+        }
+
+        // Fallback: return original jawaban_benar
+        return $this->jawaban_benar;
+    }
 }

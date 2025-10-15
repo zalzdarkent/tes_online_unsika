@@ -11,15 +11,27 @@ interface SoalOpsiProps {
     soal: Soal;
     jawaban: Record<number, string[]>;
     onJawabanChange: (soalId: number, jawaban: string[]) => void;
+    showAnswerHint?: boolean; // New prop for showing answer hints
 }
 
-const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
+const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange, showAnswerHint = false }) => {
     const opsi = [
         { label: 'A', text: s.opsi_a },
         { label: 'B', text: s.opsi_b },
         { label: 'C', text: s.opsi_c },
         { label: 'D', text: s.opsi_d },
     ].filter((o) => o.text !== undefined);
+
+    // Function to check if an option contains the correct answer
+    const isCorrectAnswer = (optionText: string) => {
+        if (!showAnswerHint || !s.jawaban_benar) return false;
+        
+        // For multiple choice, jawaban_benar might be "option1 | option2"
+        const correctAnswers = s.jawaban_benar.split('|').map(ans => ans.trim().toLowerCase());
+        return correctAnswers.some(correctAns => 
+            optionText && optionText.toLowerCase().trim() === correctAns
+        );
+    };
 
     if (s.jenis_soal === 'pilihan_ganda') {
         return (
@@ -37,6 +49,8 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
                 >
                     {opsi.map((o, i) => {
                         const isSelected = jawaban[s.id]?.[0] === o.label;
+                        const isCorrect = isCorrectAnswer(o.text);
+                        
                         return (
                             <div
                                 key={i}
@@ -45,7 +59,7 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
                                 }}
                                 className={`flex cursor-pointer items-start gap-4 rounded-md border px-4 py-3 transition-all hover:bg-muted/70 ${
                                     isSelected ? 'border-primary' : 'border-muted'
-                                }`}
+                                } ${isCorrect ? 'relative' : ''}`}
                             >
                                 <RadioGroupItem value={o.label} id={`soal_${s.id}_${o.label}`} className="pointer-events-none flex-none" />
                                 <Label
@@ -54,6 +68,13 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
                                 >
                                     {o.label}. {o.text}
                                 </Label>
+                                {/* Subtle hint for correct answer */}
+                                {isCorrect && (
+                                    <div 
+                                        className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-muted border border-muted-foreground/20"
+                                        title="Hint"
+                                    />
+                                )}
                             </div>
                         );
                     })}
@@ -70,13 +91,14 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
                 {opsi.map((o, i) => {
                     const selected = jawaban[s.id] || [];
                     const isSelected = selected.includes(o.label);
+                    const isCorrect = isCorrectAnswer(o.text);
 
                     return (
                         <div
                             key={i}
                             className={`flex cursor-pointer items-start gap-4 rounded-md border px-4 py-3 transition-all hover:bg-muted/70 ${
                                 isSelected ? 'border-primary bg-muted' : 'border-muted'
-                            }`}
+                            } ${isCorrect ? 'relative' : ''}`}
                         >
                             <Checkbox
                                 id={`soal_${s.id}_${o.label}`}
@@ -92,6 +114,13 @@ const SoalOpsi: FC<SoalOpsiProps> = ({ soal: s, jawaban, onJawabanChange }) => {
                             >
                                 {o.label}. {o.text}
                             </Label>
+                            {/* Subtle hint for correct answer */}
+                            {isCorrect && (
+                                <div 
+                                    className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-muted border border-muted-foreground/20"
+                                    title="Hint"
+                                />
+                            )}
                         </div>
                     );
                 })}
