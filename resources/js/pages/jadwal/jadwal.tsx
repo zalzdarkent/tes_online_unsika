@@ -98,6 +98,7 @@ type JadwalData = {
     waktu_mulai_tes: string | null;
     status: string;
     auto_close?: boolean;
+    access_mode?: 'online' | 'offline';
     id_jadwal_sebelumnya: number | null;
     durasi: number | null;
     kategori: string;
@@ -405,6 +406,26 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                         }`}
                     >
                         {status}
+                    </span>
+                );
+            },
+        },
+        {
+            accessorKey: 'access_mode',
+            header: 'Mode Akses',
+            enableSorting: true,
+            enableHiding: true,
+            cell: ({ row }) => {
+                const accessMode = row.getValue('access_mode') as string || 'online';
+                return (
+                    <span
+                        className={`rounded-full px-2 py-1 text-xs font-medium ${
+                            accessMode === 'online'
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                        }`}
+                    >
+                        {accessMode === 'online' ? 'Online' : 'Offline'}
                     </span>
                 );
             },

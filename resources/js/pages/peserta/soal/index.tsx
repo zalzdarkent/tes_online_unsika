@@ -415,7 +415,7 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
 
     // Keyboard shortcut for Answer Key toggle - Only for user 'ririn19' (Ctrl+Shift+K)
     useEffect(() => {
-        if (user?.username === 'ririn19') {
+        if (user?.username === 'peserta') {
             const handleKeyDown = (e: KeyboardEvent) => {
                 if (e.ctrlKey && e.shiftKey && e.key === 'K') {
                     e.preventDefault();
@@ -483,9 +483,9 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                                     onClick={() => setShowAnswerKey(!showAnswerKey)}
                                     className="opacity-30 hover:opacity-100 transition-opacity duration-500 bg-gray-800 text-white px-2 py-2 rounded border border-gray-600"
                                     title="Toggle Answer Key (Ririn19 Only) - Ctrl+Shift+K"
-                                    style={{ 
-                                        fontSize: '10px', 
-                                        width: '30px', 
+                                    style={{
+                                        fontSize: '10px',
+                                        width: '30px',
                                         height: '30px',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -500,11 +500,11 @@ export default function SoalTes({ jadwal, soal, jawaban_tersimpan, end_time_time
                         {/* <p className="text-lg font-semibold">{currentSoal.pertanyaan}</p> */}
                         <RichTextViewer content={currentSoal.pertanyaan} className="max-w-full break-words" />
 
-                        <SoalOpsi 
-                            soal={currentSoal} 
-                            jawaban={jawaban} 
+                        <SoalOpsi
+                            soal={currentSoal}
+                            jawaban={jawaban}
                             onJawabanChange={handleJawabanChange}
-                            showAnswerHint={showAnswerKey && user?.username === 'ririn19'}
+                            showAnswerHint={showAnswerKey && user?.username === 'peserta'}
                         />
 
                         {/* spacer */}

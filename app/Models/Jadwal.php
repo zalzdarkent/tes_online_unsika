@@ -15,6 +15,7 @@ class Jadwal extends Model
         'tanggal_berakhir',
         'waktu_mulai_tes',
         'status',
+        'access_mode',
         'auto_close',
         'durasi',
         'user_id',

@@ -17,6 +17,7 @@ type JadwalData = {
     waktu_mulai_tes: string | null;
     // status: string; // status tidak perlu diinput manual
     auto_close?: boolean;
+    access_mode?: 'online' | 'offline';
     id_jadwal_sebelumnya: number | null;
     kategori_tes_id: number | null;
     durasi: number | null;
@@ -73,6 +74,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
         tanggal_berakhir: '',
         waktu_mulai_tes: '',
         auto_close: true as boolean,
+        access_mode: 'online' as 'online' | 'offline',
         id_jadwal_sebelumnya: null as number | null,
         kategori_tes_id: null as number | null,
         durasi: null as number | null,
@@ -152,6 +154,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
             setData('waktu_mulai_tes', jadwal.waktu_mulai_tes || '');
             // status tidak perlu di-set manual
             setData('auto_close', jadwal.auto_close ?? true);
+            setData('access_mode', jadwal.access_mode || 'online');
             setData('id_jadwal_sebelumnya', jadwal.id_jadwal_sebelumnya || null);
             setData('kategori_tes_id', jadwal.kategori_tes_id || null);
             setData('durasi', jadwal.durasi || null);
@@ -300,6 +303,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
             tanggal_mulai,
             tanggal_berakhir,
             auto_close: data.auto_close,
+            access_mode: data.access_mode,
             id_jadwal_sebelumnya: data.id_jadwal_sebelumnya,
             kategori_tes_id: data.kategori_tes_id,
             durasi: data.durasi,
@@ -498,7 +502,7 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <div>
                                 <Label htmlFor={`${mode}_kategori_tes_id`}>Kategori Tes</Label>
                                 <Select
@@ -537,6 +541,39 @@ export default function JadwalFormModal({ mode, trigger, jadwal, allJadwal, kate
                                 />
                                 {errors.durasi && <InputError message={errors.durasi} />}
                                 <div className="mt-1 text-xs text-muted-foreground">Maksimal 1440 menit (24 jam)</div>
+                            </div>
+                            <div>
+                                <Label htmlFor={`${mode}_access_mode`}>Mode Akses</Label>
+                                <Select
+                                    value={data.access_mode}
+                                    onValueChange={(value: 'online' | 'offline') => setData('access_mode', value)}
+                                    disabled={processing}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Pilih mode akses" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="online">
+                                            <div className="flex flex-col">
+                                                <span className="font-medium text-green-600">Online</span>
+                                                {/* <span className="text-xs text-muted-foreground">Dapat diakses dari mana saja</span> */}
+                                            </div>
+                                        </SelectItem>
+                                        <SelectItem value="offline">
+                                            <div className="flex flex-col">
+                                                <span className="font-medium text-orange-600">Offline</span>
+                                                {/* <span className="text-xs text-muted-foreground">Hanya dari jaringan kampus</span> */}
+                                            </div>
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {errors.access_mode && <InputError message={errors.access_mode} />}
+                                {/* <div className="mt-1 text-xs text-muted-foreground">
+                                    {data.access_mode === 'online' ?
+                                        'Tes dapat diakses dari mana saja' :
+                                        'Tes hanya dapat diakses dari jaringan kampus'
+                                    }
+                                </div> */}
                             </div>
                         </div>
 
