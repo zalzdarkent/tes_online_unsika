@@ -538,7 +538,7 @@ class PesertaTesController extends Controller
                         $soalData['opsi_c'] = $s->opsi_c;
                         $soalData['opsi_d'] = $s->opsi_d;
                     }
-                    
+
                     // Selalu tambahkan jawaban_benar dalam bentuk value asli (bukan opsi yang di-shuffle)
                     $soalData['jawaban_benar'] = $s->getJawabanBenarValue();
                     // Juga tambahkan opsi asli untuk debugging

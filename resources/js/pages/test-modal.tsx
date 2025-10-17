@@ -18,7 +18,7 @@ export default function TestAccessDeniedModal() {
             <p className="text-muted-foreground">
                 Click the button below to test the Access Denied Modal component.
             </p>
-            
+
             <Button onClick={() => setShowModal(true)}>
                 Show Access Denied Modal
             </Button>

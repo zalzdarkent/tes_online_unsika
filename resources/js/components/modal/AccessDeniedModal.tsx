@@ -74,8 +74,8 @@ export default function AccessDeniedModal({
                                             <Wifi className="h-4 w-4 text-green-600" />
                                         )}
                                         <span className={`text-sm font-medium ${
-                                            accessMode === 'offline' 
-                                                ? 'text-orange-600 dark:text-orange-400' 
+                                            accessMode === 'offline'
+                                                ? 'text-orange-600 dark:text-orange-400'
                                                 : 'text-green-600 dark:text-green-400'
                                         }`}>
                                             {accessMode === 'offline' ? 'Offline (Kampus Only)' : 'Online'}

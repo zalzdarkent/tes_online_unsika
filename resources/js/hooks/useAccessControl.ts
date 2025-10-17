@@ -32,7 +32,7 @@ export default function useAccessControl(): UseAccessControlReturn {
     const [accessDeniedData, setAccessDeniedData] = useState<AccessDeniedError | null>(null);
 
     const isAccessDeniedError = (data: unknown): data is AccessDeniedError => {
-        return typeof data === 'object' && data !== null && 
+        return typeof data === 'object' && data !== null &&
                'error' in data && (data as AccessDeniedError).error === 'OFFLINE_MODE_RESTRICTED';
     };
 
@@ -44,7 +44,7 @@ export default function useAccessControl(): UseAccessControlReturn {
         // Handle Inertia error responses
         if (hasErrorResponse(error) && error.response?.status === 403) {
             const errorData = error.response.data;
-            
+
             if (isAccessDeniedError(errorData)) {
                 setAccessDeniedData(errorData);
                 setShowAccessDeniedModal(true);
@@ -55,7 +55,7 @@ export default function useAccessControl(): UseAccessControlReturn {
         // Handle Axios error responses
         if (error instanceof AxiosError && error.response?.status === 403) {
             const errorData = error.response.data;
-            
+
             if (isAccessDeniedError(errorData)) {
                 setAccessDeniedData(errorData);
                 setShowAccessDeniedModal(true);
