@@ -84,16 +84,31 @@ export default function DaftarTes({ jadwal }: Props) {
             { id_jadwal },
             {
                 onError: (errors) => {
-                    try {
-                        handleAccessDenied(errors);
-                    } catch {
-                        // If not an access control error, show normal toast
-                        toast({
-                            variant: 'destructive',
-                            title: 'Gagal memulai tes',
-                            description: errors.error || 'Terjadi kesalahan saat memulai tes',
-                        });
+                    // Check if this is an access control error
+                    if (errors.error === 'OFFLINE_MODE_RESTRICTED' && errors.error_data) {
+                        try {
+                            const errorData = JSON.parse(errors.error_data);
+                            handleAccessDenied({
+                                error: 'OFFLINE_MODE_RESTRICTED',
+                                details: {
+                                    client_ip: errorData.client_ip,
+                                    test_name: errorData.test_name,
+                                    access_mode: errorData.access_mode
+                                },
+                                message: errorData.message
+                            });
+                            return;
+                        } catch (parseError) {
+                            console.error('Failed to parse error data:', parseError);
+                        }
                     }
+                    
+                    // If not an access control error, show normal toast
+                    toast({
+                        variant: 'destructive',
+                        title: 'Gagal memulai tes',
+                        description: errors.error || 'Terjadi kesalahan saat memulai tes',
+                    });
                 },
             },
         );
@@ -105,16 +120,31 @@ export default function DaftarTes({ jadwal }: Props) {
             { id_jadwal },
             {
                 onError: (errors) => {
-                    try {
-                        handleAccessDenied(errors);
-                    } catch {
-                        // If not an access control error, show normal toast
-                        toast({
-                            variant: 'destructive',
-                            title: 'Gagal melanjutkan tes',
-                            description: errors.error || 'Terjadi kesalahan saat melanjutkan tes',
-                        });
+                    // Check if this is an access control error
+                    if (errors.error === 'OFFLINE_MODE_RESTRICTED' && errors.error_data) {
+                        try {
+                            const errorData = JSON.parse(errors.error_data);
+                            handleAccessDenied({
+                                error: 'OFFLINE_MODE_RESTRICTED',
+                                details: {
+                                    client_ip: errorData.client_ip,
+                                    test_name: errorData.test_name,
+                                    access_mode: errorData.access_mode
+                                },
+                                message: errorData.message
+                            });
+                            return;
+                        } catch (parseError) {
+                            console.error('Failed to parse error data:', parseError);
+                        }
                     }
+                    
+                    // If not an access control error, show normal toast
+                    toast({
+                        variant: 'destructive',
+                        title: 'Gagal melanjutkan tes',
+                        description: errors.error || 'Terjadi kesalahan saat melanjutkan tes',
+                    });
                 },
             },
         );

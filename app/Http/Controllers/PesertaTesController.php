@@ -340,15 +340,15 @@ class PesertaTesController extends Controller
 
                 // Check IP access for offline mode
                 if (!in_array($clientIP, $allowedIPs)) {
-                    return response()->json([
+                    return back()->withErrors([
                         'error' => 'OFFLINE_MODE_RESTRICTED',
-                        'details' => [
+                        'error_data' => json_encode([
                             'client_ip' => $clientIP,
                             'test_name' => $jadwal->nama_jadwal,
-                            'access_mode' => 'offline'
-                        ],
-                        'message' => 'Tes ini dikonfigurasi untuk mode offline dan hanya dapat diakses dari jaringan kampus universitas. IP Address Anda (' . $clientIP . ') tidak terdaftar dalam jaringan yang diizinkan.'
-                    ], 403);
+                            'access_mode' => 'offline',
+                            'message' => 'Tes ini dikonfigurasi untuk mode offline dan hanya dapat diakses dari jaringan kampus universitas. IP Address Anda (' . $clientIP . ') tidak terdaftar dalam jaringan yang diizinkan.'
+                        ])
+                    ]);
                 }
             }
 
@@ -932,15 +932,15 @@ class PesertaTesController extends Controller
 
                 // Check IP access for offline mode
                 if (!in_array($clientIP, $allowedIPs)) {
-                    return response()->json([
+                    return back()->withErrors([
                         'error' => 'OFFLINE_MODE_RESTRICTED',
-                        'details' => [
+                        'error_data' => json_encode([
                             'client_ip' => $clientIP,
                             'test_name' => $jadwal->nama_jadwal,
-                            'access_mode' => 'offline'
-                        ],
-                        'message' => 'Tes ini dikonfigurasi untuk mode offline dan hanya dapat diakses dari jaringan kampus universitas. IP Address Anda (' . $clientIP . ') tidak terdaftar dalam jaringan yang diizinkan.'
-                    ], 403);
+                            'access_mode' => 'offline',
+                            'message' => 'Tes ini dikonfigurasi untuk mode offline dan hanya dapat diakses dari jaringan kampus universitas. IP Address Anda (' . $clientIP . ') tidak terdaftar dalam jaringan yang diizinkan.'
+                        ])
+                    ]);
                 }
             }
 

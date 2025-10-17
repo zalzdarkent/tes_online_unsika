@@ -41,10 +41,17 @@ export default function useAccessControl(): UseAccessControlReturn {
     };
 
     const handleAccessDenied = useCallback((error: HandleableError) => {
+        // Handle direct AccessDeniedError objects (from frontend)
+        if (isAccessDeniedError(error)) {
+            setAccessDeniedData(error);
+            setShowAccessDeniedModal(true);
+            return;
+        }
+
         // Handle Inertia error responses
         if (hasErrorResponse(error) && error.response?.status === 403) {
             const errorData = error.response.data;
-
+            
             if (isAccessDeniedError(errorData)) {
                 setAccessDeniedData(errorData);
                 setShowAccessDeniedModal(true);
@@ -55,7 +62,7 @@ export default function useAccessControl(): UseAccessControlReturn {
         // Handle Axios error responses
         if (error instanceof AxiosError && error.response?.status === 403) {
             const errorData = error.response.data;
-
+            
             if (isAccessDeniedError(errorData)) {
                 setAccessDeniedData(errorData);
                 setShowAccessDeniedModal(true);
@@ -63,18 +70,9 @@ export default function useAccessControl(): UseAccessControlReturn {
             }
         }
 
-        // Handle direct AccessDeniedError objects
-        if (isAccessDeniedError(error)) {
-            setAccessDeniedData(error);
-            setShowAccessDeniedModal(true);
-            return;
-        }
-
         // If it's not an access control error, let it bubble up
         throw error;
-    }, []);
-
-    const closeAccessDeniedModal = useCallback(() => {
+    }, []);    const closeAccessDeniedModal = useCallback(() => {
         setShowAccessDeniedModal(false);
         setAccessDeniedData(null);
     }, []);
