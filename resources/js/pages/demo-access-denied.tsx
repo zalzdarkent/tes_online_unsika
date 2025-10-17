@@ -28,14 +28,14 @@ export default function TestAccessDeniedPage() {
                             <strong>Sebelum:</strong> Error muncul sebagai plain text JSON response yang tidak user-friendly
                         </p>
                     </div>
-                    
+
                     <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
                         <p className="text-sm text-green-800 dark:text-green-200">
                             <strong>Sesudah:</strong> Modal professional dengan ShadCN UI, informasi lengkap, dan guidance yang jelas
                         </p>
                     </div>
 
-                    <Button 
+                    <Button
                         onClick={() => setShowModal(true)}
                         className="w-full"
                         size="lg"

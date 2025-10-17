@@ -51,7 +51,7 @@ export default function useAccessControl(): UseAccessControlReturn {
         // Handle Inertia error responses
         if (hasErrorResponse(error) && error.response?.status === 403) {
             const errorData = error.response.data;
-            
+
             if (isAccessDeniedError(errorData)) {
                 setAccessDeniedData(errorData);
                 setShowAccessDeniedModal(true);
@@ -62,7 +62,7 @@ export default function useAccessControl(): UseAccessControlReturn {
         // Handle Axios error responses
         if (error instanceof AxiosError && error.response?.status === 403) {
             const errorData = error.response.data;
-            
+
             if (isAccessDeniedError(errorData)) {
                 setAccessDeniedData(errorData);
                 setShowAccessDeniedModal(true);

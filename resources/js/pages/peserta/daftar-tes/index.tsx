@@ -102,7 +102,7 @@ export default function DaftarTes({ jadwal }: Props) {
                             console.error('Failed to parse error data:', parseError);
                         }
                     }
-                    
+
                     // If not an access control error, show normal toast
                     toast({
                         variant: 'destructive',
@@ -138,7 +138,7 @@ export default function DaftarTes({ jadwal }: Props) {
                             console.error('Failed to parse error data:', parseError);
                         }
                     }
-                    
+
                     // If not an access control error, show normal toast
                     toast({
                         variant: 'destructive',
