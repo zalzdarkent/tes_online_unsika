@@ -1,8 +1,10 @@
 import ConfirmDialogWrapper from '@/components/modal/ConfirmDialogWrapper';
+import AccessDeniedModal from '@/components/modal/AccessDeniedModal';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
+import useAccessControl from '@/hooks/useAccessControl';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { BreadcrumbItem } from '@/types';
@@ -62,8 +64,9 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFields }: Props) {
+export default function DaftarTes({ jadwal }: Props) {
     const { props } = usePage<{ errors?: Record<string, string> }>();
+    const { showAccessDeniedModal, accessDeniedData, handleAccessDenied, closeAccessDeniedModal } = useAccessControl();
 
     useEffect(() => {
         if (props.errors?.error) {
@@ -81,11 +84,16 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
             { id_jadwal },
             {
                 onError: (errors) => {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Gagal memulai tes',
-                        description: errors.error,
-                    });
+                    try {
+                        handleAccessDenied(errors);
+                    } catch {
+                        // If not an access control error, show normal toast
+                        toast({
+                            variant: 'destructive',
+                            title: 'Gagal memulai tes',
+                            description: errors.error || 'Terjadi kesalahan saat memulai tes',
+                        });
+                    }
                 },
             },
         );
@@ -97,11 +105,16 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
             { id_jadwal },
             {
                 onError: (errors) => {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Gagal melanjutkan tes',
-                        description: errors.error,
-                    });
+                    try {
+                        handleAccessDenied(errors);
+                    } catch {
+                        // If not an access control error, show normal toast
+                        toast({
+                            variant: 'destructive',
+                            title: 'Gagal melanjutkan tes',
+                            description: errors.error || 'Terjadi kesalahan saat melanjutkan tes',
+                        });
+                    }
                 },
             },
         );
@@ -463,6 +476,18 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
                     />
                 </div>
             </TooltipProvider>
+
+            {/* Access Denied Modal */}
+            {showAccessDeniedModal && accessDeniedData && (
+                <AccessDeniedModal
+                    isOpen={showAccessDeniedModal}
+                    onClose={closeAccessDeniedModal}
+                    testName={accessDeniedData.details.test_name}
+                    clientIP={accessDeniedData.details.client_ip}
+                    accessMode={accessDeniedData.details.access_mode}
+                    message={accessDeniedData.message}
+                />
+            )}
         </AppLayout>
     );
 }
