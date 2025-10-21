@@ -74,7 +74,7 @@ services:
     image: mysql:8.0
     container_name: laravel-mysql
     restart: unless-stopped
-    command: --innodb-buffer-pool-size=2G --innodb-log-file-size=256M --innodb-log-buffer-size=64M --max-connections=200 --innodb-flush-log-at-trx-commit=2 --innodb-flush-method=O_DIRECT --query-cache-size=256M --innodb-read-io-threads=8 --innodb-write-io-threads=8
+    command: --innodb-buffer-pool-size=128M --innodb-log-file-size=16M --innodb-log-buffer-size=8M --max-connections=30 --skip-performance-schema
     environment:
       MYSQL_DATABASE: sql_onlinetest
       MYSQL_ROOT_PASSWORD: TpFBSyz35Fmc2ALT
