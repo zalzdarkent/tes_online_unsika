@@ -76,7 +76,6 @@ Sistem Tes Online UNSIKA adalah platform komprehensif yang dirancang khusus untu
 🗄️ MySQL/PostgreSQL // Database relational untuk data persistence  
 🔄 Laravel Queue    // Background job processing
 📡 Inertia.js       // Server-side rendering dengan React
-🔭 Telescope        // Debugging dan monitoring tools
 ```
 
 ### **Frontend Stack**
