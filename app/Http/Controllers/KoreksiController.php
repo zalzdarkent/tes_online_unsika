@@ -45,13 +45,96 @@ class KoreksiController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of jadwal tes yang bisa dikoreksi.
      */
     public function index()
     {
         $currentUser = Auth::user();
 
-        // Build query dasar
+        // Ambil jadwal yang ada jawaban peserta untuk dikoreksi
+        $jadwalQuery = Jadwal::select('id', 'nama_jadwal', 'user_id', 'created_at')
+            ->whereHas('jawaban') // Hanya jadwal yang sudah ada jawaban peserta
+            ->withCount([
+                'jawaban as total_peserta' => function ($query) {
+                    $query->select(DB::raw('count(distinct id_user)'));
+                },
+                'jawaban as total_sudah_dikoreksi' => function ($query) {
+                    $query->select(DB::raw('count(distinct id_user)'))
+                          ->whereExists(function ($subquery) {
+                              $subquery->select(DB::raw(1))
+                                       ->from('hasil_test_peserta as htp')
+                                       ->whereColumn('htp.id_user', 'jawaban.id_user')
+                                       ->whereColumn('htp.id_jadwal', 'jawaban.id_jadwal')
+                                       ->where('htp.status_koreksi', 'submitted');
+                          });
+                },
+                'jawaban as total_draft' => function ($query) {
+                    $query->select(DB::raw('count(distinct id_user)'))
+                          ->whereExists(function ($subquery) {
+                              $subquery->select(DB::raw(1))
+                                       ->from('hasil_test_peserta as htp')
+                                       ->whereColumn('htp.id_user', 'jawaban.id_user')
+                                       ->whereColumn('htp.id_jadwal', 'jawaban.id_jadwal')
+                                       ->where('htp.status_koreksi', 'draft');
+                          });
+                }
+            ]);
+
+        // Filter berdasarkan role
+        if ($currentUser->role === 'teacher') {
+            // Teacher hanya bisa melihat jadwal yang mereka buat
+            $jadwalQuery->where('user_id', $currentUser->id);
+        }
+        // Admin bisa melihat semua jadwal
+
+        $data = $jadwalQuery->orderBy('created_at', 'desc')->get()
+            ->map(function ($jadwal) {
+                $totalBelumDikoreksi = $jadwal->total_peserta - $jadwal->total_sudah_dikoreksi - $jadwal->total_draft;
+
+                return [
+                    'id' => $jadwal->id,
+                    'nama_jadwal' => $jadwal->nama_jadwal,
+                    'total_peserta' => $jadwal->total_peserta,
+                    'total_sudah_dikoreksi' => $jadwal->total_sudah_dikoreksi,
+                    'total_draft' => $jadwal->total_draft,
+                    'total_belum_dikoreksi' => $totalBelumDikoreksi,
+                    'created_at' => $jadwal->created_at,
+                ];
+            });
+
+        return Inertia::render('koreksi/koreksi', [
+            'data' => $data
+        ]);
+    }
+
+    /**
+     * Display daftar peserta yang mengikuti jadwal tertentu untuk dikoreksi.
+     */
+    public function peserta(string $jadwalId)
+    {
+        $currentUser = Auth::user();
+
+        // Validasi akses: teacher hanya bisa melihat peserta dari jadwal yang mereka buat
+        if ($currentUser->role === 'teacher') {
+            $jadwal = Jadwal::where('id', $jadwalId)
+                ->where('user_id', $currentUser->id)
+                ->first();
+
+            if (!$jadwal) {
+                return redirect()->route('koreksi.index')
+                    ->with('error', 'Anda tidak memiliki akses untuk melihat koreksi jadwal ini.');
+            }
+        }
+
+        // Ambil informasi jadwal
+        $jadwalInfo = Jadwal::select('id', 'nama_jadwal')->find($jadwalId);
+        
+        if (!$jadwalInfo) {
+            return redirect()->route('koreksi.index')
+                ->with('error', 'Jadwal tidak ditemukan.');
+        }
+
+        // Build query untuk peserta yang mengikuti jadwal ini
         $query = Jawaban::select(
             'id_user',
             'id_jadwal',
@@ -59,17 +142,9 @@ class KoreksiController extends Controller
             DB::raw('MIN(created_at) as waktu_ujian'),
             DB::raw('SUM(skor_didapat) as total_skor')
         )
-            ->with(['user:id,nama', 'jadwal:id,nama_jadwal'])
+            ->with(['user:id,nama'])
+            ->where('id_jadwal', $jadwalId)
             ->groupBy('id_user', 'id_jadwal');
-
-        // Filter berdasarkan role
-        if ($currentUser->role === 'teacher') {
-            // Teacher hanya bisa melihat data dari jadwal yang mereka buat
-            $query->whereHas('jadwal', function ($q) use ($currentUser) {
-                $q->where('user_id', $currentUser->id);
-            });
-        }
-        // Admin bisa melihat semua data (tidak perlu filter tambahan)
 
         $data = $query->get()
             ->map(function ($item) {
@@ -87,7 +162,6 @@ class KoreksiController extends Controller
                     'id_user' => $item->id_user,
                     'id_jadwal' => $item->id_jadwal,
                     'nama_peserta' => $item->user->nama,
-                    'nama_jadwal' => $item->jadwal->nama_jadwal,
                     'total_soal' => $item->total_soal,
                     'waktu_ujian' => $item->waktu_ujian,
                     // Total skor langsung dari SUM(skor_didapat) di tabel jawaban
@@ -96,25 +170,173 @@ class KoreksiController extends Controller
                 ];
             });
 
-        // Ambil jadwal untuk dropdown filter berdasarkan role
-        $jadwalQuery = Jadwal::select('id', 'nama_jadwal')
-            ->orderBy('nama_jadwal');
-
-        if ($currentUser->role === 'teacher') {
-            // Teacher hanya bisa melihat jadwal yang mereka buat
-            $jadwalQuery->where('user_id', $currentUser->id);
-        }
-        // Admin bisa melihat semua jadwal
-
-        $jadwalList = $jadwalQuery->get();
-
-        return Inertia::render('koreksi/koreksi', [
+        return Inertia::render('koreksi/peserta-koreksi', [
             'data' => $data,
-            'jadwalList' => $jadwalList
+            'jadwal' => $jadwalInfo
         ]);
     }
 
     /**
+     * Display statistik koreksi untuk jadwal tertentu.
+     */
+    public function statistik(string $jadwalId)
+    {
+        $currentUser = Auth::user();
+
+        // Validasi akses: teacher hanya bisa melihat statistik dari jadwal yang mereka buat
+        if ($currentUser->role === 'teacher') {
+            $jadwal = Jadwal::where('id', $jadwalId)
+                ->where('user_id', $currentUser->id)
+                ->first();
+
+            if (!$jadwal) {
+                return redirect()->route('koreksi.index')
+                    ->with('error', 'Anda tidak memiliki akses untuk melihat statistik jadwal ini.');
+            }
+        }
+
+        // Ambil informasi jadwal dengan total soal
+        $jadwalInfo = Jadwal::select('id', 'nama_jadwal', 'created_at')
+            ->withCount('soal as total_soal_jadwal')
+            ->find($jadwalId);
+        
+        if (!$jadwalInfo) {
+            return redirect()->route('koreksi.index')
+                ->with('error', 'Jadwal tidak ditemukan.');
+        }
+
+        // Statistik umum
+        $totalPeserta = Jawaban::where('id_jadwal', $jadwalId)
+            ->distinct('id_user')
+            ->count();
+
+        $totalSudahDikoreksi = HasilTestPeserta::where('id_jadwal', $jadwalId)
+            ->where('status_koreksi', 'submitted')
+            ->count();
+
+        $totalDraft = HasilTestPeserta::where('id_jadwal', $jadwalId)
+            ->where('status_koreksi', 'draft')
+            ->count();
+
+        $totalBelumDikoreksi = $totalPeserta - $totalSudahDikoreksi - $totalDraft;
+
+        // Distribusi skor (hanya yang sudah final)
+        $distribusiSkor = HasilTestPeserta::where('id_jadwal', $jadwalId)
+            ->where('status_koreksi', 'submitted')
+            ->select('total_nilai')
+            ->get()
+            ->groupBy(function($item) {
+                $nilai = $item->total_nilai;
+                if ($nilai >= 80) return 'A (80-100)';
+                if ($nilai >= 70) return 'B (70-79)';
+                if ($nilai >= 60) return 'C (60-69)';
+                if ($nilai >= 50) return 'D (50-59)';
+                return 'E (0-49)';
+            })
+            ->map(function($group) {
+                return $group->count();
+            });
+
+        // Top 10 peserta dengan skor tertinggi
+        $topPeserta = HasilTestPeserta::where('id_jadwal', $jadwalId)
+            ->where('status_koreksi', 'submitted')
+            ->join('users', 'hasil_test_peserta.id_user', '=', 'users.id')
+            ->select('users.nama', 'hasil_test_peserta.total_nilai', 'hasil_test_peserta.total_skor')
+            ->orderBy('hasil_test_peserta.total_nilai', 'desc')
+            ->take(10)
+            ->get();
+
+        // Rata-rata per soal (untuk mengidentifikasi soal yang sulit)
+        $rataRataPerSoal = Jawaban::where('jawaban.id_jadwal', $jadwalId)
+            ->join('soal', 'jawaban.id_soal', '=', 'soal.id')
+            ->whereExists(function($query) {
+                $query->select(DB::raw(1))
+                      ->from('hasil_test_peserta as htp')
+                      ->whereColumn('htp.id_user', 'jawaban.id_user')
+                      ->whereColumn('htp.id_jadwal', 'jawaban.id_jadwal')
+                      ->where('htp.status_koreksi', 'submitted');
+            })
+            ->select(
+                'soal.id',
+                'soal.pertanyaan',
+                'soal.skor as skor_maksimal',
+                DB::raw('AVG(jawaban.skor_didapat) as rata_rata_skor'),
+                DB::raw('COUNT(*) as total_jawaban'),
+                DB::raw('SUM(CASE WHEN jawaban.skor_didapat = soal.skor THEN 1 ELSE 0 END) as jawaban_benar'),
+                DB::raw('ROUND((SUM(CASE WHEN jawaban.skor_didapat = soal.skor THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as persentase_benar')
+            )
+            ->groupBy('soal.id', 'soal.pertanyaan', 'soal.skor')
+            ->orderBy('persentase_benar', 'asc')
+            ->get();
+
+        // Timeline koreksi (per hari selama 30 hari terakhir)
+        $timelineKoreksi = HasilTestPeserta::where('id_jadwal', $jadwalId)
+            ->where('status_koreksi', 'submitted')
+            ->where('updated_at', '>=', now()->subDays(30))
+            ->select(
+                DB::raw('DATE(updated_at) as tanggal'),
+                DB::raw('COUNT(*) as jumlah_koreksi')
+            )
+            ->groupBy('tanggal')
+            ->orderBy('tanggal')
+            ->get();
+
+        // Statistik waktu pengerjaan
+        $waktuPengerjaan = Jawaban::where('jawaban.id_jadwal', $jadwalId)
+            ->select(
+                'jawaban.id_user',
+                DB::raw('MIN(jawaban.created_at) as mulai_tes'),
+                DB::raw('MAX(jawaban.created_at) as selesai_tes'),
+                DB::raw('TIMESTAMPDIFF(MINUTE, MIN(jawaban.created_at), MAX(jawaban.created_at)) as durasi_menit')
+            )
+            ->groupBy('jawaban.id_user')
+            ->get();
+
+        $avgWaktuPengerjaan = $waktuPengerjaan->avg('durasi_menit');
+        $minWaktuPengerjaan = $waktuPengerjaan->min('durasi_menit');
+        $maxWaktuPengerjaan = $waktuPengerjaan->max('durasi_menit');
+
+        // Kualitas jawaban berdasarkan jenis soal
+        $kualitasPerJenisSoal = Jawaban::where('jawaban.id_jadwal', $jadwalId)
+            ->join('soal', 'jawaban.id_soal', '=', 'soal.id')
+            ->whereExists(function($query) {
+                $query->select(DB::raw(1))
+                      ->from('hasil_test_peserta as htp')
+                      ->whereColumn('htp.id_user', 'jawaban.id_user')
+                      ->whereColumn('htp.id_jadwal', 'jawaban.id_jadwal')
+                      ->where('htp.status_koreksi', 'submitted');
+            })
+            ->select(
+                'soal.jenis_soal',
+                DB::raw('COUNT(*) as total_jawaban'),
+                DB::raw('AVG(jawaban.skor_didapat) as rata_rata_skor'),
+                DB::raw('AVG(soal.skor) as rata_rata_skor_maksimal'),
+                DB::raw('ROUND((AVG(jawaban.skor_didapat) / AVG(soal.skor)) * 100, 2) as persentase_pencapaian')
+            )
+            ->groupBy('soal.jenis_soal')
+            ->get();
+
+        return Inertia::render('koreksi/statistik-koreksi', [
+            'jadwal' => $jadwalInfo,
+            'statistikUmum' => [
+                'total_peserta' => $totalPeserta,
+                'total_sudah_dikoreksi' => $totalSudahDikoreksi,
+                'total_draft' => $totalDraft,
+                'total_belum_dikoreksi' => $totalBelumDikoreksi,
+                'persentase_selesai' => $totalPeserta > 0 ? round(($totalSudahDikoreksi / $totalPeserta) * 100, 2) : 0,
+            ],
+            'distribusiSkor' => $distribusiSkor,
+            'topPeserta' => $topPeserta,
+            'rataRataPerSoal' => $rataRataPerSoal,
+            'timelineKoreksi' => $timelineKoreksi,
+            'waktuPengerjaan' => [
+                'rata_rata' => round($avgWaktuPengerjaan ?? 0, 2),
+                'tercepat' => $minWaktuPengerjaan ?? 0,
+                'terlama' => $maxWaktuPengerjaan ?? 0,
+            ],
+            'kualitasPerJenisSoal' => $kualitasPerJenisSoal,
+        ]);
+    }    /**
      * Show the form for creating a new resource.
      */
     public function create()

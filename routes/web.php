@@ -129,6 +129,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Koreksi Management
         Route::prefix('koreksi')->name('koreksi.')->group(function () {
             Route::get('/', [KoreksiController::class, 'index'])->name('index');
+            Route::get('jadwal/{jadwalId}/peserta', [KoreksiController::class, 'peserta'])->name('peserta');
+            Route::get('jadwal/{jadwalId}/statistik', [KoreksiController::class, 'statistik'])->name('statistik');
             Route::get('{userId}/{jadwalId}', [KoreksiController::class, 'show'])->name('detail');
             Route::post('{userId}/{jadwalId}', [KoreksiController::class, 'update'])->name('update');
             Route::delete('{userId}/{jadwalId}', [KoreksiController::class, 'destroy'])->name('destroy');
