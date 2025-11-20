@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { type BreadcrumbItem } from '@/types';
@@ -165,7 +164,24 @@ export default function StatistikKoreksi({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Statistik Koreksi - ${jadwal.nama_jadwal}`} />
+            <Head title={`Statistik Koreksi - ${jadwal.nama_jadwal}`}>
+                <style>{`
+                    @keyframes shine {
+                        0% { transform: translateX(-100%); }
+                        100% { transform: translateX(100%); }
+                    }
+                    @keyframes progressPulse {
+                        0%, 100% { opacity: 0.8; }
+                        50% { opacity: 1; }
+                    }
+                    @keyframes bounceIn {
+                        0% { transform: scale(0.3); opacity: 0; }
+                        50% { transform: scale(1.05); }
+                        70% { transform: scale(0.9); }
+                        100% { transform: scale(1); opacity: 1; }
+                    }
+                `}</style>
+            </Head>
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 {/* Header */}
                 <div className="flex items-center gap-4">
@@ -247,7 +263,7 @@ export default function StatistikKoreksi({
                 </div>
 
                 {/* Progress Koreksi */}
-                <Card>
+                <Card className="overflow-hidden">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <TrendingUp className="h-5 w-5 text-green-600" />
@@ -258,18 +274,54 @@ export default function StatistikKoreksi({
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                             <div className="flex justify-between text-sm">
-                                <span>Sudah Dikoreksi ({statistikUmum.total_sudah_dikoreksi})</span>
-                                <span className="font-medium">{typeof statistikUmum.persentase_selesai === 'number'
+                                <span className="font-medium">Sudah Dikoreksi ({statistikUmum.total_sudah_dikoreksi})</span>
+                                <span className="font-bold text-green-600">{typeof statistikUmum.persentase_selesai === 'number'
                                     ? statistikUmum.persentase_selesai.toFixed(1)
                                     : parseFloat(statistikUmum.persentase_selesai || '0').toFixed(1)
                                 }%</span>
                             </div>
-                            <Progress value={typeof statistikUmum.persentase_selesai === 'number'
-                                ? statistikUmum.persentase_selesai
-                                : parseFloat(statistikUmum.persentase_selesai || '0')
-                            } className="h-3" />
+
+                            {/* Custom animated progress bar */}
+                            <div className="relative w-full h-8 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                                {/* Background gradient */}
+                                <div className="absolute inset-0 bg-gradient-to-r from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-green-800/20"></div>
+
+                                {/* Progress fill with animation */}
+                                <div
+                                    className="absolute top-0 left-0 h-full rounded-full transition-all duration-[2500ms] ease-out"
+                                    style={{
+                                        width: `${typeof statistikUmum.persentase_selesai === 'number'
+                                            ? statistikUmum.persentase_selesai
+                                            : parseFloat(statistikUmum.persentase_selesai || '0')
+                                        }%`,
+                                        background: 'linear-gradient(135deg, #10b981, #059669, #047857)',
+                                        boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(16, 185, 129, 0.1)',
+                                        animation: 'progressPulse 2s ease-in-out infinite alternate'
+                                    }}
+                                >
+                                    {/* Moving shine effect */}
+                                    <div
+                                        className="absolute inset-0 rounded-full"
+                                        style={{
+                                            background: 'linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.7) 50%, transparent 70%)',
+                                            backgroundSize: '200% 100%',
+                                            animation: 'shine 3s ease-in-out infinite'
+                                        }}
+                                    ></div>
+
+                                    {/* Top highlight */}
+                                    <div className="absolute top-1 left-2 right-2 h-1 bg-white/20 rounded-full"></div>
+                                </div>
+
+                                {/* Progress text overlay */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-sm font-bold text-gray-800 dark:text-gray-100 drop-shadow-lg">
+                                        {statistikUmum.total_sudah_dikoreksi} / {statistikUmum.total_peserta} peserta
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

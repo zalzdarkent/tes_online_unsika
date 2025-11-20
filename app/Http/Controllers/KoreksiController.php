@@ -315,15 +315,6 @@ class KoreksiController extends Controller
         $minWaktuPengerjaan = $durasiValid->min() ?: 0;
         $maxWaktuPengerjaan = $durasiValid->max() ?: 0;
 
-        // Debug: Log durasi untuk troubleshooting
-        logger()->info("Debug Waktu Pengerjaan - Jadwal ID: $jadwalId", [
-            'total_durasi' => $durasiValid->count(),
-            'durasi_values' => $durasiValid->toArray(),
-            'avg' => $avgWaktuPengerjaan,
-            'min' => $minWaktuPengerjaan,
-            'max' => $maxWaktuPengerjaan
-        ]);
-
         // Kualitas jawaban berdasarkan jenis soal
         $kualitasPerJenisSoal = Jawaban::where('jawaban.id_jadwal', $jadwalId)
             ->join('soal', 'jawaban.id_soal', '=', 'soal.id')

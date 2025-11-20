@@ -7,6 +7,42 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Custom Progress Bar Animations */
+@keyframes progressFill {
+    0% {
+        width: 0%;
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes progressShine {
+    0% {
+        background-position: -100% 0;
+    }
+    100% {
+        background-position: 100% 0;
+    }
+}
+
+.progress-shine {
+    background-image: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    background-size: 50% 100%;
+    background-repeat: no-repeat;
+    animation: progressShine 3s ease-in-out infinite;
+}
+
+.progress-fill-animation {
+    animation: progressFill 2s ease-out forwards;
+}
+
 @theme {
     --font-sans:
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
