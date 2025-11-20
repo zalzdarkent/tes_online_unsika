@@ -128,7 +128,7 @@ class KoreksiController extends Controller
 
         // Ambil informasi jadwal
         $jadwalInfo = Jadwal::select('id', 'nama_jadwal')->find($jadwalId);
-        
+
         if (!$jadwalInfo) {
             return redirect()->route('koreksi.index')
                 ->with('error', 'Jadwal tidak ditemukan.');
@@ -199,7 +199,7 @@ class KoreksiController extends Controller
         $jadwalInfo = Jadwal::select('id', 'nama_jadwal', 'created_at')
             ->withCount('soal as total_soal_jadwal')
             ->find($jadwalId);
-        
+
         if (!$jadwalInfo) {
             return redirect()->route('koreksi.index')
                 ->with('error', 'Jadwal tidak ditemukan.');

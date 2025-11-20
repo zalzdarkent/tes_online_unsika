@@ -192,8 +192,8 @@ export default function StatistikKoreksi({
                         <CardContent>
                             <div className="text-2xl font-bold">{statistikUmum.total_sudah_dikoreksi}</div>
                             <p className="text-xs text-green-100 mt-1">
-                                {typeof statistikUmum.persentase_selesai === 'number' 
-                                    ? statistikUmum.persentase_selesai.toFixed(1) 
+                                {typeof statistikUmum.persentase_selesai === 'number'
+                                    ? statistikUmum.persentase_selesai.toFixed(1)
                                     : parseFloat(statistikUmum.persentase_selesai || '0').toFixed(1)
                                 }% selesai
                             </p>
@@ -242,13 +242,13 @@ export default function StatistikKoreksi({
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
                                 <span>Sudah Dikoreksi ({statistikUmum.total_sudah_dikoreksi})</span>
-                                <span className="font-medium">{typeof statistikUmum.persentase_selesai === 'number' 
-                                    ? statistikUmum.persentase_selesai.toFixed(1) 
+                                <span className="font-medium">{typeof statistikUmum.persentase_selesai === 'number'
+                                    ? statistikUmum.persentase_selesai.toFixed(1)
                                     : parseFloat(statistikUmum.persentase_selesai || '0').toFixed(1)
                                 }%</span>
                             </div>
-                            <Progress value={typeof statistikUmum.persentase_selesai === 'number' 
-                                ? statistikUmum.persentase_selesai 
+                            <Progress value={typeof statistikUmum.persentase_selesai === 'number'
+                                ? statistikUmum.persentase_selesai
                                 : parseFloat(statistikUmum.persentase_selesai || '0')
                             } className="h-3" />
                         </div>
@@ -323,7 +323,7 @@ export default function StatistikKoreksi({
                                                 <div>
                                                     <p className="font-medium">{peserta.nama}</p>
                                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                        Skor: {typeof peserta.total_skor === 'number' 
+                                                        Skor: {typeof peserta.total_skor === 'number'
                                                             ? peserta.total_skor
                                                             : parseFloat(peserta.total_skor || '0')
                                                         }
@@ -332,7 +332,7 @@ export default function StatistikKoreksi({
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-lg font-bold text-green-600">
-                                                    {typeof peserta.total_nilai === 'number' 
+                                                    {typeof peserta.total_nilai === 'number'
                                                         ? peserta.total_nilai.toFixed(1)
                                                         : parseFloat(peserta.total_nilai || '0').toFixed(1)
                                                     }
@@ -369,24 +369,24 @@ export default function StatistikKoreksi({
                                 <ResponsiveContainer width="100%" height={300}>
                                     <LineChart data={timelineKoreksi}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis 
-                                            dataKey="tanggal" 
+                                        <XAxis
+                                            dataKey="tanggal"
                                             tick={{ fontSize: 12 }}
                                             tickFormatter={(value) => new Date(value).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}
                                         />
                                         <YAxis />
-                                        <Tooltip 
-                                            labelFormatter={(value) => new Date(value).toLocaleDateString('id-ID', { 
-                                                weekday: 'long', 
-                                                year: 'numeric', 
-                                                month: 'long', 
-                                                day: 'numeric' 
+                                        <Tooltip
+                                            labelFormatter={(value) => new Date(value).toLocaleDateString('id-ID', {
+                                                weekday: 'long',
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric'
                                             })}
                                         />
-                                        <Line 
-                                            type="monotone" 
-                                            dataKey="jumlah_koreksi" 
-                                            stroke="#3b82f6" 
+                                        <Line
+                                            type="monotone"
+                                            dataKey="jumlah_koreksi"
+                                            stroke="#3b82f6"
                                             strokeWidth={2}
                                             dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
                                         />
@@ -500,16 +500,16 @@ export default function StatistikKoreksi({
                                             </p>
                                             <div className="flex items-center gap-4 text-xs text-gray-600">
                                                 <span>{soal.jawaban_benar} dari {soal.total_jawaban} benar</span>
-                                                <span>Rata-rata skor: {typeof soal.rata_rata_skor === 'number' 
-                                                    ? soal.rata_rata_skor.toFixed(1) 
+                                                <span>Rata-rata skor: {typeof soal.rata_rata_skor === 'number'
+                                                    ? soal.rata_rata_skor.toFixed(1)
                                                     : parseFloat(soal.rata_rata_skor || '0').toFixed(1)
                                                 }/{soal.skor_maksimal}</span>
                                             </div>
                                         </div>
                                         <div className="text-right ml-4">
                                             <div className="text-lg font-bold text-red-600">
-                                                {typeof soal.persentase_benar === 'number' 
-                                                    ? soal.persentase_benar.toFixed(1) 
+                                                {typeof soal.persentase_benar === 'number'
+                                                    ? soal.persentase_benar.toFixed(1)
                                                     : parseFloat(soal.persentase_benar || '0').toFixed(1)
                                                 }%
                                             </div>
