@@ -298,6 +298,7 @@ export default function StatistikKoreksi({
                                             outerRadius={80}
                                             fill="#8884d8"
                                             dataKey="count"
+                                            nameKey="grade"
                                             label
                                         >
                                             {distribusiData.map((entry, index) => (
@@ -305,9 +306,9 @@ export default function StatistikKoreksi({
                                             ))}
                                         </Pie>
                                         <Tooltip
-                                            formatter={(value, name) => [
+                                            formatter={(value: number, name: string) => [
                                                 `${value} peserta`,
-                                                `Grade ${String(name)}`
+                                                `Grade ${name}`
                                             ]}
                                         />
                                     </PieChart>
