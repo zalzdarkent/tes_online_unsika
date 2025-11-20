@@ -227,11 +227,11 @@ class KoreksiController extends Controller
             ->get()
             ->groupBy(function($item) {
                 $nilai = $item->total_nilai;
-                if ($nilai >= 80) return 'A (80-100)';
-                if ($nilai >= 70) return 'B (70-79)';
-                if ($nilai >= 60) return 'C (60-69)';
-                if ($nilai >= 50) return 'D (50-59)';
-                return 'E (0-49)';
+                if ($nilai >= 85) return 'A';
+                if ($nilai >= 70) return 'B';
+                if ($nilai >= 60) return 'C';
+                if ($nilai >= 50) return 'D';
+                return 'E';
             })
             ->map(function($group) {
                 return $group->count();

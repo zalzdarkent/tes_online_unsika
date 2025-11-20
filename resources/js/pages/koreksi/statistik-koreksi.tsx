@@ -105,6 +105,29 @@ export default function StatistikKoreksi({
     waktuPengerjaan,
     kualitasPerJenisSoal,
 }: Props) {
+    // Helper functions
+    const formatDuration = (minutes: number) => {
+        const hours = Math.floor(minutes / 60);
+        const mins = Math.round(minutes % 60);
+        return hours > 0 ? `${hours}j ${mins}m` : `${mins}m`;
+    };
+
+    const formatPertanyaan = (pertanyaan: string, maxLength = 60) => {
+        return pertanyaan.length > maxLength ? pertanyaan.substring(0, maxLength) + '...' : pertanyaan;
+    };
+
+    const formatJenisSoal = (jenisSoal: string) => {
+        const mapping: Record<string, string> = {
+            'pilihan_ganda': 'Pilihan Ganda',
+            'multi_choice': 'Multi Choice',
+            'essay': 'Essay',
+            'isian_singkat': 'Isian Singkat',
+            'benar_salah': 'Benar/Salah',
+            'skala_likert': 'Skala Likert'
+        };
+        return mapping[jenisSoal] || jenisSoal.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    };
+
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Koreksi Peserta',
@@ -126,6 +149,12 @@ export default function StatistikKoreksi({
         count,
     }));
 
+    // Transform data kualitas per jenis soal dengan format yang lebih baik
+    const kualitasDataFormatted = kualitasPerJenisSoal.map(item => ({
+        ...item,
+        jenis_soal: formatJenisSoal(item.jenis_soal)
+    }));
+
     const soalTersulit = rataRataPerSoal
         .sort((a, b) => {
             const aPersentase = typeof a.persentase_benar === 'number' ? a.persentase_benar : parseFloat(a.persentase_benar || '0');
@@ -133,16 +162,6 @@ export default function StatistikKoreksi({
             return aPersentase - bPersentase;
         })
         .slice(0, 5);
-
-    const formatDuration = (minutes: number) => {
-        const hours = Math.floor(minutes / 60);
-        const mins = Math.round(minutes % 60);
-        return hours > 0 ? `${hours}j ${mins}m` : `${mins}m`;
-    };
-
-    const formatPertanyaan = (pertanyaan: string, maxLength = 60) => {
-        return pertanyaan.length > maxLength ? pertanyaan.substring(0, maxLength) + '...' : pertanyaan;
-    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -285,7 +304,12 @@ export default function StatistikKoreksi({
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip formatter={(value, name) => [`${value} peserta`, `Grade ${name}`]} />
+                                        <Tooltip
+                                            formatter={(value, name) => [
+                                                `${value} peserta`,
+                                                `Grade ${String(name)}`
+                                            ]}
+                                        />
                                     </PieChart>
                                 </ResponsiveContainer>
                             ) : (
@@ -412,9 +436,9 @@ export default function StatistikKoreksi({
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {kualitasPerJenisSoal.length > 0 ? (
+                            {kualitasDataFormatted.length > 0 ? (
                                 <ResponsiveContainer width="100%" height={300}>
-                                    <BarChart data={kualitasPerJenisSoal} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                    <BarChart data={kualitasDataFormatted} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis dataKey="jenis_soal" tick={{ fontSize: 12 }} />
                                         <YAxis domain={[0, 100]} />
