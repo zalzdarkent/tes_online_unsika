@@ -281,20 +281,48 @@ class KoreksiController extends Controller
             ->orderBy('tanggal')
             ->get();
 
-        // Statistik waktu pengerjaan
-        $waktuPengerjaan = Jawaban::where('jawaban.id_jadwal', $jadwalId)
+        // Statistik waktu pengerjaan - ambil dari hasil_test_peserta yang lebih akurat
+        $waktuPengerjaan = HasilTestPeserta::where('id_jadwal', $jadwalId)
+            ->where('status_koreksi', 'submitted')
+            ->whereNotNull('waktu_mulai_tes')
+            ->whereNotNull('waktu_submit')
             ->select(
-                'jawaban.id_user',
-                DB::raw('MIN(jawaban.created_at) as mulai_tes'),
-                DB::raw('MAX(jawaban.created_at) as selesai_tes'),
-                DB::raw('TIMESTAMPDIFF(MINUTE, MIN(jawaban.created_at), MAX(jawaban.created_at)) as durasi_menit')
+                DB::raw('TIMESTAMPDIFF(MINUTE, waktu_mulai_tes, waktu_submit) as durasi_menit')
             )
-            ->groupBy('jawaban.id_user')
             ->get();
 
-        $avgWaktuPengerjaan = $waktuPengerjaan->avg('durasi_menit');
-        $minWaktuPengerjaan = $waktuPengerjaan->min('durasi_menit');
-        $maxWaktuPengerjaan = $waktuPengerjaan->max('durasi_menit');
+        // Filter durasi yang valid
+        $durasiValid = $waktuPengerjaan->pluck('durasi_menit')->filter(function($durasi) {
+            return $durasi >= 1; // Minimal 1 menit
+        });
+
+        // Jika tidak ada data dari hasil_test_peserta, fallback ke jawaban
+        if ($durasiValid->isEmpty()) {
+            $waktuPengerjaanFallback = Jawaban::where('jawaban.id_jadwal', $jadwalId)
+                ->select(
+                    'jawaban.id_user',
+                    DB::raw('GREATEST(1, TIMESTAMPDIFF(MINUTE, MIN(jawaban.created_at), MAX(jawaban.created_at))) as durasi_menit')
+                )
+                ->groupBy('jawaban.id_user')
+                ->get();
+
+            $durasiValid = $waktuPengerjaanFallback->pluck('durasi_menit')->filter(function($durasi) {
+                return $durasi >= 1;
+            });
+        }
+
+        $avgWaktuPengerjaan = $durasiValid->avg() ?: 0;
+        $minWaktuPengerjaan = $durasiValid->min() ?: 0;
+        $maxWaktuPengerjaan = $durasiValid->max() ?: 0;
+
+        // Debug: Log durasi untuk troubleshooting
+        logger()->info("Debug Waktu Pengerjaan - Jadwal ID: $jadwalId", [
+            'total_durasi' => $durasiValid->count(),
+            'durasi_values' => $durasiValid->toArray(),
+            'avg' => $avgWaktuPengerjaan,
+            'min' => $minWaktuPengerjaan,
+            'max' => $maxWaktuPengerjaan
+        ]);
 
         // Kualitas jawaban berdasarkan jenis soal
         $kualitasPerJenisSoal = Jawaban::where('jawaban.id_jadwal', $jadwalId)
