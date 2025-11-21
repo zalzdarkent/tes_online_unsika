@@ -184,7 +184,7 @@ export default function StatistikKoreksi({
             </Head>
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 {/* Header */}
-                <div className="flex items-center gap-4">
+                <div className="space-y-4">
                     <Button
                         variant="outline"
                         onClick={() => router.visit(`/koreksi/jadwal/${jadwal.id}/peserta`)}
@@ -193,7 +193,7 @@ export default function StatistikKoreksi({
                         <ArrowLeft className="h-4 w-4" />
                         Kembali
                     </Button>
-                    <div className="flex-1">
+                    <div>
                         <div className="flex items-center gap-2">
                             <BarChart3 className="h-6 w-6 text-blue-600" />
                             <h1 className="text-2xl font-bold">Statistik Koreksi</h1>
