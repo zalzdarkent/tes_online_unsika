@@ -98,6 +98,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Get all question banks owned by the user
+     */
+    public function questionBanks()
+    {
+        return $this->hasMany(QuestionBank::class);
+    }
+
+    /**
+     * Get all permission requests sent by user
+     */
+    public function sentPermissionRequests()
+    {
+        return $this->hasMany(QuestionBankPermission::class, 'requester_id');
+    }
+
+    /**
+     * Get all permission requests received by user
+     */
+    public function receivedPermissionRequests()
+    {
+        return $this->hasMany(QuestionBankPermission::class, 'owner_id');
+    }
+
+    /**
      * Check apakah profil lengkap untuk mengikuti tes
      */
     public function isProfileComplete(): bool

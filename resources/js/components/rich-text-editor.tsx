@@ -1,4 +1,3 @@
-import Underline from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useEffect, useState } from 'react';
@@ -12,7 +11,7 @@ export default function RichTextEditor({ value, onChange }: Props) {
     const [selectionUpdateFlag, setSelectionUpdateFlag] = useState(0);
 
     const editor = useEditor({
-        extensions: [StarterKit, Underline],
+        extensions: [StarterKit],
         content: value,
         onUpdate({ editor }) {
             onChange(editor.getHTML());

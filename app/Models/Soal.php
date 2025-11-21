@@ -10,6 +10,7 @@ class Soal extends Model
 
     protected $fillable = [
         'id_jadwal',
+        'question_bank_id',
         'urutan_soal',
         'jenis_soal',
         'pertanyaan',
@@ -43,6 +44,11 @@ class Soal extends Model
     public function jadwal()
     {
         return $this->belongsTo('App\Models\Jadwal', 'id_jadwal');
+    }
+
+    public function questionBank()
+    {
+        return $this->belongsTo(QuestionBank::class);
     }
 
     public function user()

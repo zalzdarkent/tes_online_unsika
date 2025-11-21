@@ -13,6 +13,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
+        title: 'Bank Soal',
+        href: '/bank-soal',
+        icon: null,
+    },
+    {
         title: 'Jadwal Tes',
         href: '/jadwal',
         icon: null,
