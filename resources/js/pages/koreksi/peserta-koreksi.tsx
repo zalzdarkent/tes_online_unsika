@@ -326,8 +326,8 @@ export default function PesertaKoreksi({ data, jadwal }: Props) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Koreksi Peserta - ${jadwal.nama_jadwal}`} />
-            <div className="flex h-full flex-1 flex-col gap-4 p-4">
-                <div className="flex items-center gap-4">
+            <div className="h-full flex-1 space-y-4 p-4">
+                <div className="space-y-4">
                     <Button
                         variant="outline"
                         onClick={() => router.visit('/koreksi')}
@@ -336,7 +336,7 @@ export default function PesertaKoreksi({ data, jadwal }: Props) {
                         <ArrowLeft className="h-4 w-4" />
                         Kembali
                     </Button>
-                    <div>
+                    <div className="space-y-2">
                         <h2 className="text-2xl font-bold">Koreksi Peserta</h2>
                         <p className="text-gray-600 dark:text-gray-400">
                             Jadwal Tes: <span className="font-medium">{jadwal.nama_jadwal}</span>
