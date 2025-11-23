@@ -285,7 +285,7 @@ class QuestionBankController extends Controller
         // Only owner can delete
         if ($questionBank->user_id !== $user->id) {
             return redirect()->route('bank-soal.index')
-                ->withErrors(['error' => 'Anda hanya bisa menghapus soal milik sendiri']);
+                ->withErrors(['error' => 'Soal ini tidak dapat dihapus karena bukan milik Anda']);
         }
 
         // Delete media file

@@ -12,8 +12,8 @@ import JadwalLayout from '@/layouts/jadwal/layout';
 import CreateQuestionModal from '@/components/bank-soal/CreateQuestionModalNew';
 import { Head, Link, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Eye, Pencil, PlusIcon, Trash2, Search, Globe } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { Eye, Pencil, PlusIcon, Trash2, Search, Globe, Lock } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 type QuestionBankData = {
     id: number;
@@ -99,43 +99,36 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
     const [difficultyFilter, setDifficultyFilter] = useState(filters.difficulty || 'all');
     const [jenisFilter, setJenisFilter] = useState(filters.jenis_soal || 'all');
     const [ownershipFilter, setOwnershipFilter] = useState(filters.ownership || 'all');
-
-    // Apply filters immediately
-    const applyFilters = useCallback(() => {
-        const params = {
-            search: searchTerm || undefined,
-            kategori: kategoriFilter !== 'all' ? kategoriFilter : undefined,
-            difficulty: difficultyFilter !== 'all' ? difficultyFilter : undefined,
-            jenis_soal: jenisFilter !== 'all' ? jenisFilter : undefined,
-            ownership: ownershipFilter !== 'all' ? ownershipFilter : undefined
-        };
-
-        // Remove empty params
-        const filteredParams = Object.fromEntries(
-            Object.entries(params).filter(([, value]) => value !== undefined && value !== '')
-        );
-
-        console.log('Applying filters:', filteredParams); // Debug log
-
-        router.get('/bank-soal', filteredParams, {
-            preserveState: true,
-            preserveScroll: true
-        });
-    }, [searchTerm, kategoriFilter, difficultyFilter, jenisFilter, ownershipFilter]);
+    const isFirstMount = useRef(true);
 
     // Debounced search for text input only
     useEffect(() => {
+        if (isFirstMount.current) {
+            isFirstMount.current = false;
+            return;
+        }
+
         const timer = setTimeout(() => {
-            applyFilters();
+            const params = {
+                search: searchTerm || undefined,
+                kategori: kategoriFilter !== 'all' ? kategoriFilter : undefined,
+                difficulty: difficultyFilter !== 'all' ? difficultyFilter : undefined,
+                jenis_soal: jenisFilter !== 'all' ? jenisFilter : undefined,
+                ownership: ownershipFilter !== 'all' ? ownershipFilter : undefined
+            };
+
+            const filteredParams = Object.fromEntries(
+                Object.entries(params).filter(([, value]) => value !== undefined && value !== '')
+            );
+
+            router.get('/bank-soal', filteredParams, {
+                preserveState: true,
+                preserveScroll: true
+            });
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchTerm, applyFilters]); // Include applyFilters dependency
-
-    // Immediate filter for dropdowns
-    useEffect(() => {
-        applyFilters();
-    }, [kategoriFilter, difficultyFilter, jenisFilter, ownershipFilter, applyFilters]);
+    }, [searchTerm, kategoriFilter, difficultyFilter, jenisFilter, ownershipFilter]);
 
     const handleDeleteSingle = (question: QuestionBankData) => {
         setSelectedQuestion(question);
@@ -154,12 +147,15 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                 setDeleteDialog(false);
                 setSelectedQuestion(null);
             },
-            onError: () => {
+            onError: (errors) => {
+                const errorMessage = errors?.error || 'Gagal menghapus soal';
                 toast({
                     variant: 'destructive',
                     title: 'Error',
-                    description: 'Gagal menghapus soal',
+                    description: errorMessage,
                 });
+                setDeleteDialog(false);
+                setSelectedQuestion(null);
             }
         });
     };
@@ -215,19 +211,31 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                     <div className="space-y-1">
                         <div className="font-medium">{question.title}</div>
                         <div className="text-xs text-gray-500 line-clamp-1">
-                            {question.pertanyaan.replace(/<[^>]*>/g, '')}
+                            {(() => {
+                                const cleanText = question.pertanyaan.replace(/<[^>]*>/g, '');
+                                return cleanText.length > 100 ? cleanText.substring(0, 100) + '...' : cleanText;
+                            })()}
                         </div>
                         <div className="flex items-center gap-1">
                             <Badge variant="outline" className="text-xs">
                                 {JENIS_SOAL_LABELS[question.jenis_soal as keyof typeof JENIS_SOAL_LABELS]}
                             </Badge>
-                            {question.is_public && (
+                            {question.is_public ? (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger>
                                             <Globe className="h-3 w-3 text-blue-500" />
                                         </TooltipTrigger>
                                         <TooltipContent>Public</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            ) : (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Lock className="h-3 w-3 text-red-500" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>Private</TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
