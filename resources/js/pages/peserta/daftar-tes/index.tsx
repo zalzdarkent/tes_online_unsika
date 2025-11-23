@@ -10,7 +10,8 @@ import { formatDateTime } from '@/lib/format-date';
 import { BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Echo from '@/lib/echo';
 
 interface JadwalData {
     id: number;
@@ -65,8 +66,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function DaftarTes({ jadwal }: Props) {
-    const { props } = usePage<{ errors?: Record<string, string> }>();
+    const { props } = usePage<{ errors?: Record<string, string>; auth: { user: { id: number } } }>();
     const { showAccessDeniedModal, accessDeniedData, handleAccessDenied, closeAccessDeniedModal } = useAccessControl();
+    const [jadwalList, setJadwalList] = useState<JadwalData[]>(jadwal);
 
     useEffect(() => {
         if (props.errors?.error) {
@@ -77,6 +79,106 @@ export default function DaftarTes({ jadwal }: Props) {
             });
         }
     }, [props.errors]);
+
+    // Real-time listener for registration status updates and continue test permission
+    useEffect(() => {
+        const userId = props.auth.user.id;
+        console.log('📡 [Daftar Tes] Subscribing to real-time channels for user:', userId);
+
+        // Listen to registration status changes (approval/rejection)
+        const registrationChannel = Echo.channel(`peserta.${userId}.registrations`)
+            .listen('.peserta.registered', (event: any) => {
+                console.log('✅ [Daftar Tes] New registration event received:', event);
+                console.log('   - Jadwal:', event.registration?.jadwal?.nama_jadwal);
+
+                // Update the specific jadwal in the list - user just registered
+                setJadwalList(prevList =>
+                    prevList.map(j =>
+                        j.id === event.registration.id_jadwal
+                            ? {
+                                ...j,
+                                status_pendaftaran: 'menunggu',
+                                sudah_daftar: true,
+                                bisa_mulai_tes: false
+                            }
+                            : j
+                    )
+                );
+            })
+            .listen('.registration.status.updated', (event: any) => {
+                console.log('✅ [Daftar Tes] Registration status updated event received:', event);
+                console.log('   - Jadwal:', event.jadwal?.nama_jadwal);
+                console.log('   - Status:', event.status);
+
+                // Update the specific jadwal in the list
+                setJadwalList(prevList =>
+                    prevList.map(j =>
+                        j.id === event.jadwal.id
+                            ? {
+                                ...j,
+                                status_pendaftaran: event.status,
+                                sudah_daftar: true,
+                                bisa_mulai_tes: event.status === 'disetujui',
+                                dapat_mulai_tes_sekarang: event.status === 'disetujui' // Set true jika disetujui
+                            }
+                            : j
+                    )
+                );
+
+                // Show notification
+                if (event.status === 'disetujui') {
+                    toast({
+                        title: 'Pendaftaran Disetujui',
+                        description: `Pendaftaran Anda untuk tes "${event.jadwal.nama_jadwal}" telah disetujui. Anda dapat memulai tes sesuai jadwal.`,
+                    });
+                } else if (event.status === 'ditolak') {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Pendaftaran Ditolak',
+                        description: `Pendaftaran Anda untuk tes "${event.jadwal.nama_jadwal}" ditolak.`,
+                    });
+                }
+            });
+
+        // Listen to continue test permission
+        const testChannel = Echo.channel(`peserta.${userId}.test`)
+            .listen('.test.continue.allowed', (event: any) => {
+                console.log('✅ [Daftar Tes] Continue test allowed event received:', event);
+                console.log('   - Jadwal:', event.jadwal?.nama_jadwal);
+
+                // Update the specific jadwal in the list
+                setJadwalList(prevList =>
+                    prevList.map(j =>
+                        j.id === event.jadwal.id && j.hasil_test
+                            ? {
+                                ...j,
+                                hasil_test: {
+                                    ...j.hasil_test,
+                                    boleh_dilanjutkan: true
+                                }
+                            }
+                            : j
+                    )
+                );
+
+                // Show notification
+                toast({
+                    title: 'Izin Melanjutkan Tes',
+                    description: `Anda telah diizinkan melanjutkan tes "${event.jadwal.nama_jadwal}".`,
+                });
+            });
+
+        console.log('✅ [Daftar Tes] Successfully subscribed to channels:');
+        console.log('   - peserta.' + userId + '.registrations');
+        console.log('   - peserta.' + userId + '.test');
+
+        // Cleanup on unmount
+        return () => {
+            console.log('🔌 [Daftar Tes] Unsubscribing from channels for user:', userId);
+            Echo.leaveChannel(`peserta.${userId}.registrations`);
+            Echo.leaveChannel(`peserta.${userId}.test`);
+        };
+    }, [props.auth.user.id]);
 
     const handleStart = (id_jadwal: number) => {
         router.post(
@@ -498,7 +600,7 @@ export default function DaftarTes({ jadwal }: Props) {
 
                     <DataTable
                         columns={columns}
-                        data={jadwal}
+                        data={jadwalList}
                         searchColumn="nama_jadwal"
                         searchPlaceholder="Cari tes..."
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Tidak ada jadwal tes yang tersedia saat ini.</div>}

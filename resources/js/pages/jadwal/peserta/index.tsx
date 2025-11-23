@@ -22,7 +22,8 @@ import ViolationAlert from '@/components/violation-alert';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { Check, MoreHorizontal, Play, Trash2, UserPlus, X, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Echo from '@/lib/echo';
 
 interface JadwalData {
     id: number;
@@ -89,6 +90,89 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
     const [selectedPeserta, setSelectedPeserta] = useState<number[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [pesertaList, setPesertaList] = useState<PesertaTerdaftarData[]>(pesertaTerdaftar);
+
+    // Setup real-time listeners
+    useEffect(() => {
+        console.log('📡 [Peserta Terdaftar] Subscribing to real-time channels for jadwal:', jadwal.id);
+
+        // Listen untuk peserta baru mendaftar
+        const pesertaChannel = Echo.channel(`jadwal.${jadwal.id}.peserta`);
+
+        pesertaChannel.listen('.peserta.registered', (event: any) => {
+            console.log('✅ [Peserta Terdaftar] New registration event received:', event);
+            console.log('   - Peserta:', event.registration?.peserta?.nama);
+
+            // Tambahkan peserta baru ke list
+            setPesertaList(prev => [event.registration, ...prev]);
+
+            toast({
+                title: 'Pendaftaran Baru!',
+                description: `${event.registration.peserta.nama} telah mendaftar ke tes ini.`,
+            });
+        });
+
+        // Listen untuk update status registrasi
+        pesertaChannel.listen('.registration.status.updated', (event: any) => {
+            console.log('✅ [Peserta Terdaftar] Registration status updated:', event);
+            console.log('   - Peserta:', event.registration?.peserta?.nama);
+            console.log('   - Status:', event.status);
+
+            // Update status peserta di list
+            setPesertaList(prev =>
+                prev.map(p =>
+                    p.id === event.registration.id ? event.registration : p
+                )
+            );
+        });
+
+        // Listen untuk izin melanjutkan tes
+        pesertaChannel.listen('.test.continue.allowed', (event: any) => {
+            console.log('✅ [Peserta Terdaftar] Continue test allowed:', event);
+            console.log('   - Peserta:', event.registration?.peserta?.nama);
+
+            // Update data peserta yang diizinkan lanjut
+            setPesertaList(prev =>
+                prev.map(p =>
+                    p.id === event.registration.id ? event.registration : p
+                )
+            );
+
+            toast({
+                title: 'Izin Diberikan',
+                description: `${event.registration.peserta.nama} diizinkan melanjutkan tes.`,
+            });
+        });
+
+        // Listen untuk violation
+        const violationChannel = Echo.channel(`jadwal.${jadwal.id}.violations`);
+
+        violationChannel.listen('.violation.detected', (event: any) => {
+            console.log('⚠️ [Peserta Terdaftar] Violation detected:', event);
+            console.log('   - Peserta ID:', event.peserta_id);
+
+            // Tampilkan notifikasi tanpa reload
+            toast({
+                variant: 'destructive',
+                title: 'Pelanggaran Terdeteksi!',
+                description: `Pelanggaran terdeteksi pada peserta ID ${event.peserta_id}`,
+            });
+        });        console.log('✅ [Peserta Terdaftar] Successfully subscribed to channels:');
+        console.log('   - jadwal.' + jadwal.id + '.peserta');
+        console.log('   - jadwal.' + jadwal.id + '.violations');
+
+        // Cleanup on unmount
+        return () => {
+            console.log('🔌 [Peserta Terdaftar] Unsubscribing from channels for jadwal:', jadwal.id);
+            Echo.leaveChannel(`jadwal.${jadwal.id}.peserta`);
+            Echo.leaveChannel(`jadwal.${jadwal.id}.violations`);
+        };
+    }, [jadwal.id, toast]);
+
+    // Update pesertaList when prop changes
+    useEffect(() => {
+        setPesertaList(pesertaTerdaftar);
+    }, [pesertaTerdaftar]);
 
     // Alert Dialog States
     const [alertDialog, setAlertDialog] = useState<{
@@ -722,7 +806,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
 
                     <DataTable
                         columns={columns}
-                        data={pesertaTerdaftar}
+                        data={pesertaList}
                         searchColumn="peserta_nama"
                         searchPlaceholder="Cari peserta..."
                         customBulkActions={[

@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\JadwalPeserta;
 use App\Models\Jadwal;
 use App\Models\User;
+use App\Events\PesertaRegisteredEvent;
+use App\Events\RegistrationStatusUpdatedEvent;
+use App\Events\ContinueTestAllowedEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -91,7 +94,7 @@ class JadwalPesertaController extends Controller
 
         // Daftar ke jadwal
         try {
-            JadwalPeserta::create([
+            $registration = JadwalPeserta::create([
                 'id_jadwal' => $request->id_jadwal,
                 'id_peserta' => $user->id,
                 'status' => 'menunggu',
@@ -99,7 +102,20 @@ class JadwalPesertaController extends Controller
                 'tanggal_daftar' => now(),
             ]);
 
-            return redirect()->back()->with('success', 'Pendaftaran berhasil! Menunggu persetujuan dari penyelenggara tes.');
+            // Load relationship untuk broadcast
+            $registration->load(['peserta', 'jadwal']);
+
+            // Broadcast event ke channel jadwal
+            Log::info('Broadcasting PesertaRegisteredEvent', [
+                'jadwal_id' => $request->id_jadwal,
+                'peserta_id' => $user->id,
+                'peserta_name' => $user->nama
+            ]);
+
+            broadcast(new PesertaRegisteredEvent($request->id_jadwal, $registration));
+
+            // Redirect back with success message and reload inertia data
+            return redirect()->back();
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.']);
         }
@@ -180,6 +196,17 @@ class JadwalPesertaController extends Controller
             'approved_by' => $user->id,
         ]);
 
+        // Load relationships untuk broadcast
+        $registration->load(['peserta', 'approver', 'jadwal']);
+
+        // Broadcast event ke channel peserta dan jadwal
+        broadcast(new RegistrationStatusUpdatedEvent(
+            $registration->id_peserta,
+            $jadwalId,
+            'disetujui',
+            $registration
+        ));
+
         return redirect()->back()->with('success', 'Peserta berhasil disetujui.');
     }
 
@@ -206,6 +233,17 @@ class JadwalPesertaController extends Controller
             'approved_by' => $user->id,
             'keterangan' => $request->keterangan,
         ]);
+
+        // Load relationships untuk broadcast
+        $registration->load(['peserta', 'approver', 'jadwal']);
+
+        // Broadcast event ke channel peserta dan jadwal
+        broadcast(new RegistrationStatusUpdatedEvent(
+            $registration->id_peserta,
+            $jadwalId,
+            'ditolak',
+            $registration
+        ));
 
         return redirect()->back()->with('success', 'Peserta ditolak.');
     }
@@ -343,6 +381,16 @@ class JadwalPesertaController extends Controller
             'diizinkan_lanjut_pada' => now(),
             'diizinkan_oleh' => $user->id
         ]);
+
+        // Load relationships untuk broadcast
+        $registration->load(['peserta', 'hasil_test']);
+
+        // Broadcast event ke channel peserta dan jadwal
+        broadcast(new ContinueTestAllowedEvent(
+            $registration->id_peserta,
+            $jadwalId,
+            $registration
+        ));
 
         return redirect()->back()->with('success', 'Peserta diizinkan melanjutkan tes.');
     }
