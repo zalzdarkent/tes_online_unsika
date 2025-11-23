@@ -20,18 +20,9 @@ class QuestionBankController extends Controller
     {
         $user = Auth::user();
 
-        // Debug log untuk melihat filter yang diterima
-        Log::info('QuestionBank Filter Debug:', [
-            'kategori' => $request->get('kategori'),
-            'difficulty' => $request->get('difficulty'),
-            'jenis_soal' => $request->get('jenis_soal'),
-            'ownership' => $request->get('ownership'),
-            'search' => $request->get('search')
-        ]);
-
-        // Query dasar untuk soal yang bisa diakses user
+        // Query dasar - hanya tampilkan soal milik user yang sedang login
         $query = QuestionBank::with(['user', 'kategori'])
-            ->accessibleBy($user->id);
+            ->where('user_id', $user->id);
 
         // Filter berdasarkan kategori jika ada
         if ($request->filled('kategori')) {
@@ -57,25 +48,6 @@ class QuestionBankController extends Controller
             });
         }
 
-        // Filter kepemilikan
-        $ownership = $request->get('ownership', 'all'); // all, mine, shared, public
-        switch ($ownership) {
-            case 'mine':
-                $query->where('user_id', $user->id);
-                break;
-            case 'shared':
-                $query->where('user_id', '!=', $user->id)
-                      ->whereHas('permissions', function ($q) use ($user) {
-                          $q->where('requester_id', $user->id)
-                            ->where('status', 'active');
-                      });
-                break;
-            case 'public':
-                $query->where('is_public', true)
-                      ->where('user_id', '!=', $user->id);
-                break;
-        }
-
         $questionBanks = $query->withCount('soals as actual_usage_count')
             ->orderBy('created_at', 'desc')
             ->paginate(15)
@@ -87,7 +59,7 @@ class QuestionBankController extends Controller
         return Inertia::render('bank-soal/index', [
             'questionBanks' => $questionBanks,
             'kategoriList' => $kategoriList,
-            'filters' => $request->only(['kategori', 'difficulty', 'jenis_soal', 'search', 'ownership'])
+            'filters' => $request->only(['kategori', 'difficulty', 'jenis_soal', 'search'])
         ]);
     }
 

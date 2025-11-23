@@ -61,7 +61,6 @@ type QuestionBankProps = {
         difficulty?: string;
         jenis_soal?: string;
         search?: string;
-        ownership?: string;
     };
 };
 
@@ -98,7 +97,6 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
     const [kategoriFilter, setKategoriFilter] = useState(filters.kategori || 'all');
     const [difficultyFilter, setDifficultyFilter] = useState(filters.difficulty || 'all');
     const [jenisFilter, setJenisFilter] = useState(filters.jenis_soal || 'all');
-    const [ownershipFilter, setOwnershipFilter] = useState(filters.ownership || 'all');
     const isFirstMount = useRef(true);
 
     // Debounced search for text input only
@@ -113,8 +111,7 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                 search: searchTerm || undefined,
                 kategori: kategoriFilter !== 'all' ? kategoriFilter : undefined,
                 difficulty: difficultyFilter !== 'all' ? difficultyFilter : undefined,
-                jenis_soal: jenisFilter !== 'all' ? jenisFilter : undefined,
-                ownership: ownershipFilter !== 'all' ? ownershipFilter : undefined
+                jenis_soal: jenisFilter !== 'all' ? jenisFilter : undefined
             };
 
             const filteredParams = Object.fromEntries(
@@ -128,7 +125,7 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchTerm, kategoriFilter, difficultyFilter, jenisFilter, ownershipFilter]);
+    }, [searchTerm, kategoriFilter, difficultyFilter, jenisFilter]);
 
     const handleDeleteSingle = (question: QuestionBankData) => {
         setSelectedQuestion(question);
@@ -283,13 +280,6 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
             )
         },
         {
-            accessorKey: 'user.name',
-            header: 'Pembuat',
-            cell: ({ row }) => (
-                <span className="text-sm">{row.original.user.nama}</span>
-            )
-        },
-        {
             id: 'actions',
             header: 'Aksi',
             cell: ({ row }) => {
@@ -369,7 +359,7 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                         </div>
 
                         {/* Filters */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                             {/* Search */}
                             <div className="lg:col-span-2">
                                 <div className="relative">
@@ -426,19 +416,6 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                                     <SelectItem value="essay_audio">Essay Audio</SelectItem>
                                     <SelectItem value="skala">Skala</SelectItem>
                                     <SelectItem value="equation">Equation</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            {/* Ownership Filter */}
-                            <Select value={ownershipFilter} onValueChange={setOwnershipFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Semua" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Semua</SelectItem>
-                                    <SelectItem value="mine">Milik Saya</SelectItem>
-                                    <SelectItem value="shared">Dibagikan</SelectItem>
-                                    <SelectItem value="public">Public</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
