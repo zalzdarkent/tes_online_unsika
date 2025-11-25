@@ -2,10 +2,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { type SharedData } from '@/types';
 import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Edit, Globe, Lock, User, Calendar, Target, BarChart3 } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { ArrowLeft, Edit, Globe, Lock, User, Calendar, Target, BarChart3, AlertTriangle } from 'lucide-react';
 import { BlockMath, InlineMath } from 'react-katex';
 import 'katex/dist/katex.min.css';
 
@@ -70,6 +71,9 @@ const JENIS_SOAL_LABELS = {
 };
 
 export default function BankSoalShow({ questionBank }: QuestionBankShowProps) {
+    const page = usePage<SharedData>();
+    const appEnv = page.props.app_env;
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('id-ID', {
             year: 'numeric',
@@ -171,6 +175,22 @@ export default function BankSoalShow({ questionBank }: QuestionBankShowProps) {
             <Head title={`Detail Soal - ${questionBank.title}`} />
             <AppLayout>
                 <JadwalLayout>
+                    {/* Production Warning Banner */}
+                    {appEnv === 'production' && (
+                        <div className="mb-6 bg-gradient-to-r from-red-100 to-orange-100 border border-red-200 rounded-lg p-4 flex items-center gap-3 shadow-sm">
+                            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                            <div className="flex-1">
+                                <div className="font-semibold text-red-800">Production Environment</div>
+                                <div className="text-sm text-red-700">
+                                    Anda sedang menggunakan fitur Bank Soal di environment production. Pastikan data yang dimasukkan sudah benar.
+                                </div>
+                            </div>
+                            <div className="px-2 py-1 bg-red-200 text-red-800 text-xs font-medium rounded-full">
+                                PROD
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-6">
                         {/* Header */}
                         <div className="flex items-center justify-between">

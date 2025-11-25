@@ -2,8 +2,8 @@ import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 
 const sidebarNavItems: NavItem[] = [
@@ -16,6 +16,7 @@ const sidebarNavItems: NavItem[] = [
         title: 'Bank Soal',
         href: '/bank-soal',
         icon: null,
+        roles: ['admin'], // Hanya admin yang bisa akses bank soal
     },
     {
         title: 'Jadwal Tes',
@@ -30,7 +31,25 @@ export default function JadwalLayout({ children }: PropsWithChildren) {
         return null;
     }
 
+    const page = usePage<SharedData>();
+    const user = page.props.auth.user;
+    const appEnv = page.props.app_env;
     const currentPath = window.location.pathname;
+
+    // Filter menu berdasarkan role dan environment
+    const filteredNavItems = sidebarNavItems.filter(item => {
+        // Jika item adalah Bank Soal
+        if (item.href === '/bank-soal') {
+            // Di production, hanya admin yang bisa akses
+            if (appEnv === 'production') {
+                return user?.role === 'admin';
+            }
+            // Di development/local, admin bisa akses
+            return user?.role === 'admin';
+        }
+        // Menu lain tetap ditampilkan
+        return true;
+    });
 
     return (
         <div className="px-4 py-6">
@@ -40,7 +59,7 @@ export default function JadwalLayout({ children }: PropsWithChildren) {
                 {/* aside content */}
                 <aside className="w-full shrink-0 lg:w-32">
                     <nav className="flex flex-col space-y-1 space-x-0">
-                        {sidebarNavItems.map((item, index) => (
+                        {filteredNavItems.map((item, index) => (
                             <Button
                                 key={`${item.href}-${index}`}
                                 size="sm"
@@ -52,6 +71,11 @@ export default function JadwalLayout({ children }: PropsWithChildren) {
                             >
                                 <Link href={item.href} prefetch>
                                     {item.title}
+                                    {item.href === '/bank-soal' && appEnv === 'production' && (
+                                        <span className="ml-2 text-xs bg-red-100 text-red-800 px-1.5 py-0.5 rounded-full">
+                                            PROD
+                                        </span>
+                                    )}
                                 </Link>
                             </Button>
                         ))}

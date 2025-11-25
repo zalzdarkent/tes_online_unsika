@@ -7,12 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { type SharedData } from '@/types';
 import AppLayout from '@/layouts/app-layout';
 import JadwalLayout from '@/layouts/jadwal/layout';
 import CreateQuestionModal from '@/components/bank-soal/CreateQuestionModalNew';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Eye, Pencil, PlusIcon, Trash2, Search, Globe, Lock } from 'lucide-react';
+import { Eye, Pencil, PlusIcon, Trash2, Search, Globe, Lock, AlertTriangle } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 type QuestionBankData = {
@@ -90,6 +91,9 @@ const JENIS_SOAL_LABELS = {
 
 export default function BankSoalIndex({ questionBanks, kategoriList, filters }: QuestionBankProps) {
     const { toast } = useToast();
+    const page = usePage<SharedData>();
+    const appEnv = page.props.app_env; // Get environment from shared props
+
     const [deleteDialog, setDeleteDialog] = useState(false);
     const [createModal, setCreateModal] = useState(false);
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionBankData | null>(null);
@@ -345,6 +349,22 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
             <Head title="Bank Soal" />
             <AppLayout>
                 <JadwalLayout>
+                    {/* Production Warning Banner */}
+                    {appEnv === 'production' && (
+                        <div className="mb-6 bg-gradient-to-r from-red-100 to-orange-100 border border-red-200 rounded-lg p-4 flex items-center gap-3 shadow-sm">
+                            <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                            <div className="flex-1">
+                                <div className="font-semibold text-red-800">Production Environment</div>
+                                <div className="text-sm text-red-700">
+                                    Anda sedang menggunakan fitur Bank Soal di environment production. Pastikan data yang dimasukkan sudah benar.
+                                </div>
+                            </div>
+                            <div className="px-2 py-1 bg-red-200 text-red-800 text-xs font-medium rounded-full">
+                                PROD
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-6">
                         {/* Header & Actions */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
