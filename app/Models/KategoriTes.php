@@ -31,6 +31,14 @@ class KategoriTes extends Model
     }
 
     /**
+     * Get all question banks in this category
+     */
+    public function questionBanks()
+    {
+        return $this->hasMany(QuestionBank::class, 'kategori_tes_id');
+    }
+
+    /**
      * Scope untuk mengambil kategori milik user tertentu
      */
     public function scopeByUser($query, $userId)

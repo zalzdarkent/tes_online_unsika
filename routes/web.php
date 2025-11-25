@@ -8,6 +8,7 @@ use App\Http\Controllers\KategoriTesController;
 use App\Http\Controllers\KoreksiController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PesertaTesController;
+use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViolationController;
@@ -72,6 +73,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('kategori', KategoriTesController::class);
         Route::post('kategori/bulk-destroy', [KategoriTesController::class, 'bulkDestroy'])
             ->name('kategori.bulk-destroy')
+            ->middleware('bulk.throttle');
+
+        // Bank Soal Management
+        Route::resource('bank-soal', QuestionBankController::class);
+        Route::post('bank-soal/bulk-destroy', [QuestionBankController::class, 'bulkDestroy'])
+            ->name('bank-soal.bulk-destroy')
             ->middleware('bulk.throttle');
 
         // Jadwal Management

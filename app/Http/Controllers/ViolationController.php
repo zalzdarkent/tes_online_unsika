@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ScreenshotViolation;
+use App\Events\ViolationDetectedEvent;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -43,6 +44,13 @@ class ViolationController extends Controller
                 'detection_method' => $validated['detection_method'],
                 'ip_address' => $request->ip(),
             ]);
+
+            // Broadcast violation event untuk real-time update
+            broadcast(new ViolationDetectedEvent(
+                $validated['jadwal_id'],
+                Auth::id(),
+                $violation
+            ));
 
             return response()->json([
                 'success' => true,

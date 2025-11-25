@@ -5,6 +5,7 @@ import axios from 'axios';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
+import './lib/echo'; // Import Echo configuration
 
 // Konfigurasi axios untuk CSRF token
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
