@@ -108,6 +108,25 @@ services:
     networks:
       - laravel
 
+  reverb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-reverb
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan reverb:start --host=0.0.0.0 --port=4090
+    ports:
+      - "4090:4090"
+    volumes:
+      - .:/var/www
+      - ./php-production.ini:/usr/local/etc/php/conf.d/php-production.ini
+    depends_on:
+      - app
+      - redis
+    networks:
+      - laravel
+
 volumes:
   mysql-data:
 
