@@ -16,7 +16,7 @@ const sidebarNavItems: NavItem[] = [
         title: 'Bank Soal',
         href: '/bank-soal',
         icon: null,
-        roles: ['admin'], // Hanya admin yang bisa akses bank soal
+        roles: ['admin', 'teacher'], // Admin dan guru bisa akses bank soal
     },
     {
         title: 'Jadwal Tes',
@@ -40,12 +40,12 @@ export default function JadwalLayout({ children }: PropsWithChildren) {
     const filteredNavItems = sidebarNavItems.filter(item => {
         // Jika item adalah Bank Soal
         if (item.href === '/bank-soal') {
-            // Di production, hanya admin yang bisa akses
+            // Di production, admin dan guru bisa akses
             if (appEnv === 'production') {
-                return user?.role === 'admin';
+                return user?.role === 'admin' || user?.role === 'teacher';
             }
-            // Di development/local, admin bisa akses
-            return user?.role === 'admin';
+            // Di development/local, admin dan guru bisa akses
+            return user?.role === 'admin' || user?.role === 'teacher';
         }
         // Menu lain tetap ditampilkan
         return true;
@@ -73,7 +73,7 @@ export default function JadwalLayout({ children }: PropsWithChildren) {
                                     {item.title}
                                     {item.href === '/bank-soal' && appEnv === 'production' && (
                                         <span className="ml-2 text-xs bg-red-100 text-red-800 px-1.5 py-0.5 rounded-full">
-                                            PROD
+                                            DEV
                                         </span>
                                     )}
                                 </Link>

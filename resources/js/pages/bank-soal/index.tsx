@@ -370,7 +370,7 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                                 </div>
                             </div>
                             <div className="px-2 py-1 bg-red-200 text-red-800 text-xs font-medium rounded-full">
-                                PROD
+                                DEV
                             </div>
                         </div>
                     )}
@@ -382,11 +382,11 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                                 <h2 className="text-2xl font-bold">Bank Soal</h2>
                                 <p className="text-gray-600 dark:text-gray-400 mt-1">Kelola dan atur koleksi soal Anda</p>
                             </div>
-                            <Button onClick={() => setCreateModal(true)} className="cursor-pointer">
-                                <PlusIcon className="mr-2 h-4 w-4" />
-                                Tambah Soal
-                            </Button>
                             <div className="flex gap-2">
+                                <Button onClick={() => setCreateModal(true)} className="cursor-pointer">
+                                    <PlusIcon className="mr-2 h-4 w-4" />
+                                    Tambah Soal
+                                </Button>
                                 <Button variant="outline" onClick={() => setImportModal(true)} className="cursor-pointer">
                                     <Upload className="mr-2 h-4 w-4" />
                                     Import Excel
