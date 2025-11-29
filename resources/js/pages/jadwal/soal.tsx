@@ -1,5 +1,6 @@
 import SoalFormModal from '@/components/modal/SoalFormModal';
 import SoalImportModal from '@/components/modal/SoalImportModal';
+import PickFromBankModal from '@/components/bank-soal/PickFromBankModal';
 import RichTextViewer from '@/components/rich-text-viewer';
 import {
     AlertDialog,
@@ -26,7 +27,7 @@ import { ColumnDef, Row } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import 'katex/dist/katex.min.css';
-import { Edit, Eye, FileSpreadsheet, Plus, Trash2 } from 'lucide-react';
+import { Edit, Eye, FileSpreadsheet, Plus, Trash2, BookOpen, Save } from 'lucide-react';
 import { useState } from 'react';
 import { BlockMath } from 'react-katex';
 
@@ -110,15 +111,34 @@ interface JadwalData {
 interface SoalPageProps {
     jadwal: JadwalData;
     soal: SoalData[];
+    questionBanks?: QuestionBankData[];
 }
 
-export default function SoalPage({ jadwal, soal }: SoalPageProps) {
+type QuestionBankData = {
+    id: number;
+    title: string;
+    pertanyaan: string;
+    jenis_soal: string;
+    difficulty_level: string;
+    skor: number;
+    user: {
+        id: number;
+        nama: string;
+    };
+    kategori?: {
+        id: number;
+        nama: string;
+    };
+};
+
+export default function SoalPage({ jadwal, soal, questionBanks = [] }: SoalPageProps) {
     const { toast } = useToast();
     const [selectedSoal, setSelectedSoal] = useState<SoalData | null>(null);
     const [showDetail, setShowDetail] = useState(false);
     const [editSoal, setEditSoal] = useState<SoalData | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
+    const [showPickModal, setShowPickModal] = useState(false);
     const [isShuffled, setIsShuffled] = useState<boolean>(!!jadwal.is_shuffled);
     const [isAnswerShuffled, setIsAnswerShuffled] = useState<boolean>(!!jadwal.is_answer_shuffled);
     const [loading, setLoading] = useState(false);
@@ -264,6 +284,32 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                     }
                 },
             },
+        );
+    };
+
+    // Handler untuk simpan ke bank soal
+    const handleSaveToBank = (selectedData: SoalData[]) => {
+        const selectedIds = selectedData.map((item) => item.id);
+        
+        router.post(
+            '/bank-soal/store-from-soal',
+            { soal_ids: selectedIds },
+            {
+                onSuccess: () => {
+                    toast({
+                        variant: 'success',
+                        title: 'Berhasil!',
+                        description: `${selectedData.length} soal berhasil disimpan ke Bank Soal.`,
+                    });
+                },
+                onError: () => {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Gagal!',
+                        description: 'Gagal menyimpan soal ke Bank Soal.',
+                    });
+                },
+            }
         );
     };
 
@@ -839,6 +885,10 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                                     window.location.reload();
                                 }}
                             />
+                            <Button variant="outline" className="cursor-pointer" onClick={() => setShowPickModal(true)}>
+                                <BookOpen className="mr-2 h-4 w-4" />
+                                Ambil dari Bank Soal
+                            </Button>
                         </div>
                     </div>
 
@@ -886,6 +936,14 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                         emptyMessage={<div className="w-full py-8 text-center text-gray-500">Belum ada soal untuk jadwal ini.</div>}
                         showExportButton
                         onBulkDelete={handleBulkDelete}
+                        customBulkActions={[
+                            {
+                                label: 'Simpan ke Bank Soal',
+                                icon: <Save className="h-4 w-4" />,
+                                action: handleSaveToBank,
+                                variant: 'outline'
+                            }
+                        ]}
                         exportFilename={`soal-${jadwal.nama_jadwal}`}
                         initialColumnVisibility={{
                             opsi_a: false,
@@ -915,6 +973,14 @@ export default function SoalPage({ jadwal, soal }: SoalPageProps) {
                             }}
                         />
                     )}
+
+                    {/* Pick From Bank Modal */}
+                    <PickFromBankModal
+                        open={showPickModal}
+                        onClose={() => setShowPickModal(false)}
+                        jadwalId={jadwal.id}
+                        questionBanks={questionBanks}
+                    />
                 </div>
             </JadwalLayout>
         </AppLayout>

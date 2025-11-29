@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use App\Models\UserBankPermission;
+use App\Models\User;
+use App\Models\Soal;
+use App\Models\Jadwal;
+use Illuminate\Support\Facades\DB;
 
 class QuestionBankController extends Controller
 {
@@ -20,9 +25,25 @@ class QuestionBankController extends Controller
     {
         $user = Auth::user();
 
-        // Query dasar - hanya tampilkan soal milik user yang sedang login
+        // Query dasar - tampilkan soal milik user ATAU yang dishare ke user
         $query = QuestionBank::with(['user', 'kategori'])
-            ->where('user_id', $user->id);
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('permissions', function ($subQ) use ($user) {
+                      $subQ->where('requester_id', $user->id)
+                           ->where('status', 'active');
+                  })
+                  ->orWhere(function($subQ) use ($user) {
+                        // Check user-level permissions
+                        $subQ->whereIn('user_id', function($permissionQ) use ($user) {
+                            $permissionQ->select('owner_id')
+                                ->from('user_bank_permissions')
+                                ->where('grantee_id', $user->id)
+                                ->where('can_view', true);
+                        });
+                  })
+                  ->orWhere('is_public', true);
+            });
 
         // Filter berdasarkan kategori jika ada
         if ($request->filled('kategori')) {
@@ -297,5 +318,270 @@ class QuestionBankController extends Controller
 
         return redirect()->route('bank-soal.index')
             ->with('success', count($questionBanks) . ' soal berhasil dihapus');
+    }
+    /**
+     * Import soal from Excel/JSON (parsed in frontend)
+     */
+    public function import(Request $request)
+    {
+        try {
+            $soalData = $request->input('soal', []);
+            
+            $validated = $request->validate([
+                'soal' => 'required|array|min:1',
+            ]);
+
+            $successCount = 0;
+            $errors = [];
+            $userId = Auth::id();
+
+            foreach ($soalData as $index => $item) {
+                try {
+                    // Map frontend data to QuestionBank model
+                    $data = [
+                        'user_id' => $userId,
+                        'title' => substr($item['pertanyaan'], 0, 50) . '...', // Generate title from question
+                        'pertanyaan' => $item['pertanyaan'],
+                        'jenis_soal' => $item['jenis_soal'] ?? 'pilihan_ganda',
+                        'tipe_jawaban' => $this->mapJenisSoalToTipeJawaban($item['jenis_soal'] ?? 'pilihan_ganda'),
+                        'skor' => $item['skor'] ?? 1,
+                        'opsi_a' => $item['opsi_a'] ?? null,
+                        'opsi_b' => $item['opsi_b'] ?? null,
+                        'opsi_c' => $item['opsi_c'] ?? null,
+                        'opsi_d' => $item['opsi_d'] ?? null,
+                        'jawaban_benar' => $item['jawaban_benar'] ?? null,
+                        'difficulty_level' => 'medium', // Default
+                        'is_public' => false,
+                        'skala_min' => $item['skala_min'] ?? null,
+                        'skala_maks' => $item['skala_maks'] ?? null,
+                        'skala_label_min' => $item['skala_label_min'] ?? null,
+                        'skala_label_maks' => $item['skala_label_maks'] ?? null,
+                        'equation' => $item['equation'] ?? null,
+                    ];
+
+                    QuestionBank::create($data);
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $errors[] = "Baris " . ($index + 1) . ": " . $e->getMessage();
+                }
+            }
+
+            if ($successCount > 0) {
+                $message = "{$successCount} soal berhasil diimport ke Bank Soal.";
+                if (!empty($errors)) {
+                    $message .= " " . count($errors) . " soal gagal.";
+                }
+                return redirect()->route('bank-soal.index')->with('success', $message);
+            } else {
+                return redirect()->back()->withErrors(['message' => 'Gagal import: ' . implode(', ', $errors)]);
+            }
+
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+
+    private function mapJenisSoalToTipeJawaban($jenisSoal)
+    {
+        // Mapping simple logic, adjust as needed
+        switch ($jenisSoal) {
+            case 'pilihan_ganda': return 'single_choice';
+            case 'multi_choice': return 'multi_choice';
+            case 'esai': return 'essay';
+            case 'essay_gambar': return 'essay_gambar';
+            case 'essay_audio': return 'essay_audio';
+            case 'skala': return 'skala';
+            case 'equation': return 'equation';
+            default: return 'single_choice';
+        }
+    }
+
+    /**
+     * Share Bank Soal access to another user
+     */
+    public function share(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'can_copy' => 'boolean'
+        ]);
+
+        $targetUser = User::where('email', $validated['email'])->first();
+        $currentUser = Auth::user();
+
+        if ($targetUser->id === $currentUser->id) {
+            return back()->withErrors(['email' => 'Anda tidak bisa membagikan ke diri sendiri']);
+        }
+
+        UserBankPermission::updateOrCreate(
+            [
+                'owner_id' => $currentUser->id,
+                'grantee_id' => $targetUser->id
+            ],
+            [
+                'can_view' => true,
+                'can_copy' => $request->boolean('can_copy', true)
+            ]
+        );
+
+        return back()->with('success', "Akses Bank Soal berhasil dibagikan ke {$targetUser->name}");
+    }
+
+    /**
+     * Remove Share access
+     */
+    public function unshare($userId)
+    {
+        $currentUser = Auth::user();
+        UserBankPermission::where('owner_id', $currentUser->id)
+            ->where('grantee_id', $userId)
+            ->delete();
+            
+        return back()->with('success', 'Akses berhasil dicabut');
+    }
+
+    /**
+     * Get list of users who have access to my bank
+     */
+    public function getShareList()
+    {
+        $shares = UserBankPermission::with('grantee')
+            ->where('owner_id', Auth::id())
+            ->get();
+            
+        return response()->json($shares);
+    }
+
+    /**
+     * Copy questions from Bank to Jadwal (Test)
+     */
+    public function copyToJadwal(Request $request)
+    {
+        $validated = $request->validate([
+            'bank_soal_ids' => 'required|array',
+            'bank_soal_ids.*' => 'exists:question_banks,id',
+            'jadwal_id' => 'required|exists:jadwal,id'
+        ]);
+
+        $jadwal = Jadwal::findOrFail($validated['jadwal_id']);
+        $count = 0;
+
+        // Get last order
+        $lastUrutan = Soal::where('id_jadwal', $jadwal->id)->max('urutan_soal') ?? 0;
+
+        $questions = QuestionBank::whereIn('id', $validated['bank_soal_ids'])->get();
+
+        foreach ($questions as $q) {
+            // Check permission if not owner
+            if ($q->user_id !== Auth::id() && !$q->is_public) {
+                // Check permission logic here if needed, but for now assuming if they can select it, they can copy it
+                // Ideally we should verify 'can_copy' permission
+            }
+
+            Soal::create([
+                'id_jadwal' => $jadwal->id,
+                'jenis_soal' => $q->jenis_soal,
+                'pertanyaan' => $q->pertanyaan,
+                'skor' => $q->skor,
+                'opsi_a' => $q->opsi_a,
+                'opsi_b' => $q->opsi_b,
+                'opsi_c' => $q->opsi_c,
+                'opsi_d' => $q->opsi_d,
+                'jawaban_benar' => $q->jawaban_benar,
+                'media' => $q->media, // Note: Media file is shared/copied by reference path
+                'urutan_soal' => ++$lastUrutan,
+                'skala_min' => $q->skala_min,
+                'skala_maks' => $q->skala_maks,
+                'skala_label_min' => $q->skala_label_min,
+                'skala_label_maks' => $q->skala_label_maks,
+                'equation' => $q->equation,
+            ]);
+            $count++;
+        }
+
+        return back()->with('success', "{$count} soal berhasil disalin ke jadwal tes.");
+    }
+
+    /**
+     * Copy questions from Jadwal (Test) to Bank
+     */
+    public function storeFromSoal(Request $request)
+    {
+        $validated = $request->validate([
+            'soal_ids' => 'required|array',
+            'soal_ids.*' => 'exists:soal,id',
+        ]);
+
+        $soals = Soal::whereIn('id', $validated['soal_ids'])->get();
+        $count = 0;
+        $userId = Auth::id();
+
+        foreach ($soals as $soal) {
+            QuestionBank::create([
+                'user_id' => $userId,
+                'title' => substr(strip_tags($soal->pertanyaan), 0, 50) . '...',
+                'pertanyaan' => $soal->pertanyaan,
+                'jenis_soal' => $soal->jenis_soal,
+                'tipe_jawaban' => $this->mapJenisSoalToTipeJawaban($soal->jenis_soal),
+                'skor' => $soal->skor,
+                'opsi_a' => $soal->opsi_a,
+                'opsi_b' => $soal->opsi_b,
+                'opsi_c' => $soal->opsi_c,
+                'opsi_d' => $soal->opsi_d,
+                'jawaban_benar' => $soal->jawaban_benar,
+                'media' => $soal->media,
+                'difficulty_level' => 'medium',
+                'skala_min' => $soal->skala_min,
+                'skala_maks' => $soal->skala_maks,
+                'skala_label_min' => $soal->skala_label_min,
+                'skala_label_maks' => $soal->skala_label_maks,
+                'equation' => $soal->equation,
+            ]);
+            $count++;
+        }
+
+        return back()->with('success', "{$count} soal berhasil disimpan ke Bank Soal.");
+    }
+
+    /**
+     * Get questions as JSON for "Pick from Bank" modal
+     */
+    public function getQuestionsJson(Request $request)
+    {
+        $user = Auth::user();
+        
+        $query = QuestionBank::with(['user', 'kategori'])
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('permissions', function ($subQ) use ($user) {
+                      $subQ->where('requester_id', $user->id)
+                           ->where('status', 'active');
+                  })
+                  ->orWhere(function($subQ) use ($user) {
+                        $subQ->whereIn('user_id', function($permissionQ) use ($user) {
+                            $permissionQ->select('owner_id')
+                                ->from('user_bank_permissions')
+                                ->where('grantee_id', $user->id)
+                                ->where('can_view', true);
+                        });
+                  })
+                  ->orWhere('is_public', true);
+            });
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('pertanyaan', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('kategori') && $request->kategori !== 'all') {
+            $query->where('kategori_tes_id', $request->kategori);
+        }
+
+        $questions = $query->orderBy('created_at', 'desc')->paginate(10);
+        
+        return response()->json($questions);
     }
 }

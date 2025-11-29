@@ -78,6 +78,14 @@ class QuestionBank extends Model
     }
 
     /**
+     * Get all users this question bank is shared with
+     */
+    public function sharedWith(): HasMany
+    {
+        return $this->hasMany(UserBankPermission::class, 'owner_id', 'user_id');
+    }
+
+    /**
      * Get actual usage count from soal table
      */
     public function getActualUsageCountAttribute(): int

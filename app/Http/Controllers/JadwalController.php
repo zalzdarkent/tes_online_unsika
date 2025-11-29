@@ -23,9 +23,26 @@ class JadwalController extends Controller
 
         $soal = $jadwal->soal()->orderBy('urutan_soal', 'asc')->orderBy('created_at', 'asc')->get();
 
+        // Get question banks accessible by user (owned + shared + public)
+        $questionBanks = \App\Models\QuestionBank::with(['user', 'kategori'])
+            ->where(function ($query) use ($userId) {
+                // Own questions
+                $query->where('user_id', $userId)
+                    // Public questions
+                    ->orWhere('is_public', true)
+                    // Shared questions (via user_bank_permissions)
+                    ->orWhereHas('sharedWith', function ($q) use ($userId) {
+                        $q->where('grantee_id', $userId)
+                          ->where('can_view', true);
+                    });
+            })
+            ->select('id', 'title', 'pertanyaan', 'jenis_soal', 'difficulty_level', 'skor', 'user_id', 'kategori_tes_id')
+            ->get();
+
         return inertia('jadwal/soal', [
             'jadwal' => $jadwal,
             'soal' => $soal,
+            'questionBanks' => $questionBanks,
         ]);
     }
 

@@ -77,6 +77,7 @@ interface DataTableProps<TData, TValue> {
   onFilterChange?: (filterId: string, selectedValues: (string | number | boolean)[]) => void
   activeFilters?: Record<string, (string | number | boolean)[]>
   enableResponsiveHiding?: boolean // New prop to enable/disable responsive column hiding
+  onSelectionChange?: (selectedRows: TData[]) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -95,7 +96,8 @@ export function DataTable<TData, TValue>({
   filters = [],
   onFilterChange,
   activeFilters = {},
-  enableResponsiveHiding = true // Default to true for backward compatibility
+  enableResponsiveHiding = true, // Default to true for backward compatibility
+  onSelectionChange
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -434,7 +436,7 @@ export function DataTable<TData, TValue>({
           </div>
         )}
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

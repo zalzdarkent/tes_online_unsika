@@ -13,8 +13,10 @@ import JadwalLayout from '@/layouts/jadwal/layout';
 import CreateQuestionModal from '@/components/bank-soal/CreateQuestionModalNew';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Eye, Pencil, PlusIcon, Trash2, Search, Globe, Lock, AlertTriangle } from 'lucide-react';
+import { Eye, Pencil, PlusIcon, Trash2, Search, Globe, Lock, AlertTriangle, Upload, Share2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import BankSoalImportModal from '@/components/bank-soal/BankSoalImportModal';
+import ShareBankModal from '@/components/bank-soal/ShareBankModal';
 
 type QuestionBankData = {
     id: number;
@@ -96,6 +98,8 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
 
     const [deleteDialog, setDeleteDialog] = useState(false);
     const [createModal, setCreateModal] = useState(false);
+    const [importModal, setImportModal] = useState(false);
+    const [shareModal, setShareModal] = useState(false);
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionBankData | null>(null);
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [kategoriFilter, setKategoriFilter] = useState(filters.kategori || 'all');
@@ -210,7 +214,14 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                 const question = row.original;
                 return (
                     <div className="space-y-1">
-                        <div className="font-medium">{question.title}</div>
+                        <div className="font-medium">
+                            {question.title}
+                            {question.user.id !== page.props.auth.user.id && (
+                                <Badge variant="outline" className="ml-2 border-blue-200 bg-blue-50 text-blue-700 text-[10px]">
+                                    Shared by {question.user.nama}
+                                </Badge>
+                            )}
+                        </div>
                         <div className="text-xs text-gray-500 line-clamp-1">
                             {(() => {
                                 const cleanText = question.pertanyaan.replace(/<[^>]*>/g, '');
@@ -376,6 +387,16 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                                 <PlusIcon className="mr-2 h-4 w-4" />
                                 Tambah Soal
                             </Button>
+                            <div className="flex gap-2">
+                                <Button variant="outline" onClick={() => setImportModal(true)} className="cursor-pointer">
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Import Excel
+                                </Button>
+                                <Button variant="outline" onClick={() => setShareModal(true)} className="cursor-pointer">
+                                    <Share2 className="mr-2 h-4 w-4" />
+                                    Share Bank
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Filters */}
@@ -485,6 +506,21 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                             open={createModal}
                             onClose={() => setCreateModal(false)}
                             kategoriList={kategoriList}
+                        />
+
+                        {/* Import Modal */}
+                        <BankSoalImportModal
+                            open={importModal}
+                            onOpenChange={setImportModal}
+                            onSuccess={() => {
+                                router.reload({ only: ['questionBanks'] });
+                            }}
+                        />
+
+                        {/* Share Modal */}
+                        <ShareBankModal
+                            open={shareModal}
+                            onClose={() => setShareModal(false)}
                         />
                     </div>
                 </JadwalLayout>

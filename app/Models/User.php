@@ -122,6 +122,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get all bank permissions owned by user (shared to others)
+     */
+    public function ownedBankPermissions()
+    {
+        return $this->hasMany(UserBankPermission::class, 'owner_id');
+    }
+
+    /**
+     * Get all bank permissions granted to user (shared by others)
+     */
+    public function grantedBankPermissions()
+    {
+        return $this->hasMany(UserBankPermission::class, 'grantee_id');
+    }
+
+    /**
      * Check apakah profil lengkap untuk mengikuti tes
      */
     public function isProfileComplete(): bool
