@@ -36,7 +36,6 @@ type QuestionBankData = {
         id: number;
         nama: string;
     };
-    tags?: string[];
     created_at: string;
     updated_at: string;
 };

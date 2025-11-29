@@ -46,7 +46,6 @@ class QuestionBankSeeder extends Seeder
             'equation' => null,
             'skor' => 10,
             'difficulty_level' => 'easy',
-            'tags' => json_encode(['matematika', 'penjumlahan', 'dasar']),
             'is_public' => true,
             'usage_count' => 5,
             'user_id' => $firstUser->id,
@@ -68,7 +67,6 @@ class QuestionBankSeeder extends Seeder
             'equation' => null,
             'skor' => 20,
             'difficulty_level' => 'medium',
-            'tags' => json_encode(['sejarah', 'indonesia', 'sumpah pemuda']),
             'is_public' => false,
             'usage_count' => 3,
             'user_id' => $firstUser->id,
@@ -90,7 +88,6 @@ class QuestionBankSeeder extends Seeder
             'equation' => null,
             'skor' => 15,
             'difficulty_level' => 'medium',
-            'tags' => json_encode(['fisika', 'hukum newton', 'gaya']),
             'is_public' => true,
             'usage_count' => 8,
             'user_id' => $firstUser->id,
@@ -116,7 +113,6 @@ class QuestionBankSeeder extends Seeder
                 'equation' => null,
                 'skor' => 10,
                 'difficulty_level' => 'easy',
-                'tags' => json_encode(['english', 'grammar', 'present perfect']),
                 'is_public' => false,
                 'usage_count' => 2,
                 'user_id' => $secondUser->id,
@@ -138,7 +134,6 @@ class QuestionBankSeeder extends Seeder
                 'equation' => null,
                 'skor' => 25,
                 'difficulty_level' => 'hard',
-                'tags' => json_encode(['programming', 'oop', 'concepts']),
                 'is_public' => true,
                 'usage_count' => 12,
                 'user_id' => $secondUser->id,
@@ -165,7 +160,6 @@ class QuestionBankSeeder extends Seeder
                 'equation' => '\\int x^2 dx',
                 'skor' => 30,
                 'difficulty_level' => 'expert',
-                'tags' => json_encode(['matematika', 'integral', 'kalkulus']),
                 'is_public' => false,
                 'usage_count' => 1,
                 'user_id' => $thirdUser->id,
@@ -174,6 +168,7 @@ class QuestionBankSeeder extends Seeder
                 'updated_at' => now(),
             ];
         }
+
 
         // Insert ke database
         DB::table('question_banks')->insert($questionBanks);

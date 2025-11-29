@@ -29,7 +29,6 @@ class QuestionBank extends Model
         'skala_label_maks',
         'skor',
         'difficulty_level',
-        'tags',
         'is_public',
         'usage_count',
         'user_id',
@@ -37,7 +36,6 @@ class QuestionBank extends Model
     ];
 
     protected $casts = [
-        'tags' => 'array',
         'is_public' => 'boolean',
         'usage_count' => 'integer',
         'skor' => 'integer',

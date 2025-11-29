@@ -321,12 +321,10 @@ export default function BankSoalImportModal({ trigger, open = false, onOpenChang
                                     />
                                 </div>
                                 <Button asChild className="w-full sm:w-auto">
-                                    <div>
-                                        <Download />
-                                        <a href={route('soal.template')} download>
-                                            Download Template
-                                        </a>
-                                    </div>
+                                    <a href={route('bank-soal.template')} download>
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download Template
+                                    </a>
                                 </Button>
                             </div>
                         </div>

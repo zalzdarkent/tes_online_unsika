@@ -29,7 +29,6 @@ type QuestionBankData = {
     media?: string;
     equation?: string;
     explanation?: string;
-    tags?: string[];
     kategori?: {
         id: number;
         nama: string;
@@ -391,24 +390,6 @@ export default function BankSoalShow({ questionBank }: QuestionBankShowProps) {
                                         </div>
                                     </CardContent>
                                 </Card>
-
-                                {/* Tags */}
-                                {questionBank.tags && questionBank.tags.length > 0 && (
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="text-lg">Tags</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="flex flex-wrap gap-2">
-                                                {questionBank.tags.map((tag, index) => (
-                                                    <Badge key={index} variant="outline" className="text-xs">
-                                                        #{tag}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
                             </div>
                         </div>
                     </div>

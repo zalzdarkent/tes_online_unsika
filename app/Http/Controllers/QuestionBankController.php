@@ -127,8 +127,6 @@ class QuestionBankController extends Controller
             'skala_label_maks' => 'nullable|string|max:255',
             'skor' => 'required|integer|min:1',
             'difficulty_level' => ['required', 'string', Rule::in(['easy', 'medium', 'hard', 'expert'])],
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:100',
             'is_public' => 'nullable|boolean',
             'kategori_tes_id' => 'nullable|exists:kategori_tes,id'
         ]);
@@ -244,8 +242,6 @@ class QuestionBankController extends Controller
             'skala_label_maks' => 'nullable|string|max:255',
             'skor' => 'required|integer|min:1',
             'difficulty_level' => ['required', 'string', Rule::in(['easy', 'medium', 'hard', 'expert'])],
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:100',
             'is_public' => 'boolean',
             'kategori_tes_id' => 'nullable|exists:kategori_tes,id'
         ]);
@@ -265,6 +261,26 @@ class QuestionBankController extends Controller
 
         return redirect()->route('bank-soal.index')
             ->with('success', 'Soal berhasil diperbarui');
+    }
+
+    /**
+     * Download template file for bank soal import.
+     */
+    public function downloadTemplate()
+    {
+        $filePath = public_path('template-bank-soal.xlsx');
+
+        if (!file_exists($filePath)) {
+            abort(404, 'Template file tidak ditemukan.');
+        }
+
+        $filename = 'template-bank-soal.xlsx';
+        $headers = [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        return response()->download($filePath, $filename, $headers);
     }
 
     /**

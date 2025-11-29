@@ -75,13 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('kategori.bulk-destroy')
             ->middleware('bulk.throttle');
 
-        // Bank Soal Management
-        Route::resource('bank-soal', QuestionBankController::class);
-        Route::post('bank-soal/bulk-destroy', [QuestionBankController::class, 'bulkDestroy'])
-            ->name('bank-soal.bulk-destroy')
-            ->middleware('bulk.throttle');
-        
-        // Bank Soal Additional Routes
+        // Bank Soal Additional Routes (Must be before resource route)
         Route::post('bank-soal/import', [QuestionBankController::class, 'import'])->name('bank-soal.import');
         Route::post('bank-soal/share', [QuestionBankController::class, 'share'])->name('bank-soal.share');
         Route::delete('bank-soal/unshare/{userId}', [QuestionBankController::class, 'unshare'])->name('bank-soal.unshare');
@@ -89,6 +83,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('bank-soal/copy-to-jadwal', [QuestionBankController::class, 'copyToJadwal'])->name('bank-soal.copy-to-jadwal');
         Route::post('bank-soal/store-from-soal', [QuestionBankController::class, 'storeFromSoal'])->name('bank-soal.store-from-soal');
         Route::get('bank-soal/json', [QuestionBankController::class, 'getQuestionsJson'])->name('bank-soal.json');
+        Route::get('bank-soal/template', [QuestionBankController::class, 'downloadTemplate'])->name('bank-soal.template');
+
+        // Bank Soal Management
+        Route::resource('bank-soal', QuestionBankController::class);
+        Route::post('bank-soal/bulk-destroy', [QuestionBankController::class, 'bulkDestroy'])
+            ->name('bank-soal.bulk-destroy')
+            ->middleware('bulk.throttle');
 
         // Jadwal Management
         Route::get('jadwal', [JadwalController::class, 'index'])->name('jadwal.index');
