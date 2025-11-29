@@ -29,10 +29,7 @@ type QuestionBankData = {
     media?: string;
     equation?: string;
     explanation?: string;
-    kategori?: {
-        id: number;
-        nama: string;
-    };
+
     user: {
         id: number;
         nama: string;
@@ -317,14 +314,7 @@ export default function BankSoalShow({ questionBank }: QuestionBankShowProps) {
                                             <span className="font-mono font-medium">{questionBank.skor}</span>
                                         </div>
 
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-600 dark:text-white">Kategori:</span>
-                                            {questionBank.kategori ? (
-                                                <Badge variant="secondary">{questionBank.kategori.nama}</Badge>
-                                            ) : (
-                                                <span className="text-gray-400 text-sm">-</span>
-                                            )}
-                                        </div>
+
 
                                         <Separator />
 

@@ -11,15 +11,11 @@ import 'katex/dist/katex.min.css';
 import React, { useState } from 'react';
 import { BlockMath } from 'react-katex';
 
-type KategoriData = {
-    id: number;
-    nama: string;
-};
+
 
 type CreateQuestionModalProps = {
     open: boolean;
     onClose: () => void;
-    kategoriList: KategoriData[];
 };
 
 // Tipe soal yang didukung untuk bank soal
@@ -44,7 +40,7 @@ const DIFFICULTY_OPTIONS = [
     { value: 'expert', label: 'Expert' }
 ];
 
-export default function CreateQuestionModal({ open, onClose, kategoriList }: CreateQuestionModalProps) {
+export default function CreateQuestionModal({ open, onClose }: CreateQuestionModalProps) {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [title, setTitle] = useState('');
@@ -55,7 +51,6 @@ export default function CreateQuestionModal({ open, onClose, kategoriList }: Cre
     const [jawabanBenarMulti, setJawabanBenarMulti] = useState<string[]>([]);
     const [skor, setSkor] = useState(1);
     const [difficultyLevel, setDifficultyLevel] = useState('');
-    const [kategoriTesId, setKategoriTesId] = useState('');
     const [isPublic, setIsPublic] = useState(false);
     const [equation, setEquation] = useState('');
     const [skalaMin, setSkalaMin] = useState<number | undefined>(1);
@@ -75,7 +70,6 @@ export default function CreateQuestionModal({ open, onClose, kategoriList }: Cre
         setJawabanBenarMulti([]);
         setSkor(1);
         setDifficultyLevel('');
-        setKategoriTesId('');
         setIsPublic(false);
         setEquation('');
         setSkalaMin(1);
@@ -161,7 +155,6 @@ export default function CreateQuestionModal({ open, onClose, kategoriList }: Cre
             difficulty_level: difficultyLevel,
             skor,
             is_public: isPublic ? 1 : 0, // Convert boolean to 1/0 for Laravel
-            kategori_tes_id: kategoriTesId && kategoriTesId !== 'none' ? parseInt(kategoriTesId) : null,
         };
 
         // Set tipe_jawaban based on jenis_soal
@@ -503,23 +496,7 @@ export default function CreateQuestionModal({ open, onClose, kategoriList }: Cre
                                 {errors.skor && <span className="text-xs text-red-500">{errors.skor}</span>}
                             </div>
 
-                            {/* Kategori */}
-                            <div>
-                                <label className="mb-1 block font-medium">Kategori</label>
-                                <Select value={kategoriTesId} onValueChange={setKategoriTesId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih kategori (opsional)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Tanpa Kategori</SelectItem>
-                                        {kategoriList.map((kategori) => (
-                                            <SelectItem key={kategori.id} value={kategori.id.toString()}>
-                                                {kategori.nama}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+
 
                             {/* Public Switch */}
                             <div className="flex items-center space-x-2">

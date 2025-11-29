@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\QuestionBank;
-use App\Models\KategoriTes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -26,7 +25,7 @@ class QuestionBankController extends Controller
         $user = Auth::user();
 
         // Query dasar - tampilkan soal milik user ATAU yang dishare ke user
-        $query = QuestionBank::with(['user', 'kategori'])
+        $query = QuestionBank::with(['user'])
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                   ->orWhereHas('permissions', function ($subQ) use ($user) {
@@ -45,10 +44,7 @@ class QuestionBankController extends Controller
                   ->orWhere('is_public', true);
             });
 
-        // Filter berdasarkan kategori jika ada
-        if ($request->filled('kategori')) {
-            $query->where('kategori_tes_id', $request->kategori);
-        }
+
 
         // Filter berdasarkan tingkat kesulitan
         if ($request->filled('difficulty')) {
@@ -74,13 +70,9 @@ class QuestionBankController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Get kategori untuk filter dropdown
-        $kategoriList = KategoriTes::byUser($user->id)->get();
-
         return Inertia::render('bank-soal/index', [
             'questionBanks' => $questionBanks,
-            'kategoriList' => $kategoriList,
-            'filters' => $request->only(['kategori', 'difficulty', 'jenis_soal', 'search'])
+            'filters' => $request->only(['difficulty', 'jenis_soal', 'search'])
         ]);
     }
 
@@ -90,11 +82,7 @@ class QuestionBankController extends Controller
     public function create()
     {
         $user = Auth::user();
-        $kategoriList = KategoriTes::byUser($user->id)->get();
-
-        return Inertia::render('bank-soal/create', [
-            'kategoriList' => $kategoriList
-        ]);
+        return Inertia::render('bank-soal/create');
     }
 
     /**
@@ -127,8 +115,7 @@ class QuestionBankController extends Controller
             'skala_label_maks' => 'nullable|string|max:255',
             'skor' => 'required|integer|min:1',
             'difficulty_level' => ['required', 'string', Rule::in(['easy', 'medium', 'hard', 'expert'])],
-            'is_public' => 'nullable|boolean',
-            'kategori_tes_id' => 'nullable|exists:kategori_tes,id'
+            'is_public' => 'nullable|boolean'
         ]);
 
         // Handle media upload
@@ -174,7 +161,7 @@ class QuestionBankController extends Controller
         }
 
         $questionBank->loadCount('soals as actual_usage_count');
-        $questionBank->load(['user', 'kategori']);
+        $questionBank->load(['user']);
 
         return Inertia::render('bank-soal/show', [
             'questionBank' => $questionBank
@@ -195,11 +182,8 @@ class QuestionBankController extends Controller
                 ->withErrors(['error' => 'Anda hanya bisa mengedit soal milik sendiri']);
         }
 
-        $kategoriList = KategoriTes::byUser($user->id)->get();
-
         return Inertia::render('bank-soal/edit', [
-            'questionBank' => $questionBank,
-            'kategoriList' => $kategoriList
+            'questionBank' => $questionBank
         ]);
     }
 
@@ -242,8 +226,7 @@ class QuestionBankController extends Controller
             'skala_label_maks' => 'nullable|string|max:255',
             'skor' => 'required|integer|min:1',
             'difficulty_level' => ['required', 'string', Rule::in(['easy', 'medium', 'hard', 'expert'])],
-            'is_public' => 'boolean',
-            'kategori_tes_id' => 'nullable|exists:kategori_tes,id'
+            'is_public' => 'boolean'
         ]);
 
         // Handle media upload
@@ -566,7 +549,7 @@ class QuestionBankController extends Controller
     {
         $user = Auth::user();
         
-        $query = QuestionBank::with(['user', 'kategori'])
+        $query = QuestionBank::with(['user'])
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
                   ->orWhereHas('permissions', function ($subQ) use ($user) {
@@ -592,9 +575,7 @@ class QuestionBankController extends Controller
             });
         }
 
-        if ($request->filled('kategori') && $request->kategori !== 'all') {
-            $query->where('kategori_tes_id', $request->kategori);
-        }
+
 
         $questions = $query->orderBy('created_at', 'desc')->paginate(10);
         

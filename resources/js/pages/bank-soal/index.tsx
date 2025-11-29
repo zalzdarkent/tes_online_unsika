@@ -28,10 +28,7 @@ type QuestionBankData = {
     usage_count: number;
     actual_usage_count: number;
     is_public: boolean;
-    kategori?: {
-        id: number;
-        nama: string;
-    };
+
     user: {
         id: number;
         nama: string;
@@ -40,10 +37,7 @@ type QuestionBankData = {
     updated_at: string;
 };
 
-type KategoriData = {
-    id: number;
-    nama: string;
-};
+
 
 type QuestionBankProps = {
     questionBanks: {
@@ -57,9 +51,7 @@ type QuestionBankProps = {
             active: boolean;
         }>;
     };
-    kategoriList: KategoriData[];
     filters: {
-        kategori?: string;
         difficulty?: string;
         jenis_soal?: string;
         search?: string;
@@ -90,7 +82,7 @@ const JENIS_SOAL_LABELS = {
     equation: 'Equation'
 };
 
-export default function BankSoalIndex({ questionBanks, kategoriList, filters }: QuestionBankProps) {
+export default function BankSoalIndex({ questionBanks, filters }: QuestionBankProps) {
     const { toast } = useToast();
     const page = usePage<SharedData>();
     const appEnv = page.props.app_env; // Get environment from shared props
@@ -101,7 +93,6 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
     const [shareModal, setShareModal] = useState(false);
     const [selectedQuestion, setSelectedQuestion] = useState<QuestionBankData | null>(null);
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
-    const [kategoriFilter, setKategoriFilter] = useState(filters.kategori || 'all');
     const [difficultyFilter, setDifficultyFilter] = useState(filters.difficulty || 'all');
     const [jenisFilter, setJenisFilter] = useState(filters.jenis_soal || 'all');
     const isFirstMount = useRef(true);
@@ -116,7 +107,6 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
         const timer = setTimeout(() => {
             const params = {
                 search: searchTerm || undefined,
-                kategori: kategoriFilter !== 'all' ? kategoriFilter : undefined,
                 difficulty: difficultyFilter !== 'all' ? difficultyFilter : undefined,
                 jenis_soal: jenisFilter !== 'all' ? jenisFilter : undefined
             };
@@ -132,7 +122,7 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchTerm, kategoriFilter, difficultyFilter, jenisFilter]);
+    }, [searchTerm, difficultyFilter, jenisFilter]);
 
     const handleDeleteSingle = (question: QuestionBankData) => {
         setSelectedQuestion(question);
@@ -255,18 +245,7 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                 );
             }
         },
-        {
-            accessorKey: 'kategori.nama',
-            header: 'Kategori',
-            cell: ({ row }) => {
-                const kategori = row.original.kategori;
-                return kategori ? (
-                    <Badge variant="secondary">{kategori.nama}</Badge>
-                ) : (
-                    <span className="text-gray-400 text-sm">-</span>
-                );
-            }
-        },
+
         {
             accessorKey: 'difficulty_level',
             header: 'Tingkat',
@@ -399,7 +378,7 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                         </div>
 
                         {/* Filters */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             {/* Search */}
                             <div className="lg:col-span-2">
                                 <div className="relative">
@@ -413,20 +392,7 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                                 </div>
                             </div>
 
-                            {/* Kategori Filter */}
-                            <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Semua Kategori" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Semua Kategori</SelectItem>
-                                    {kategoriList.map((kategori) => (
-                                        <SelectItem key={`kategori-${kategori.id}`} value={kategori.id.toString()}>
-                                            {kategori.nama}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+
 
                             {/* Difficulty Filter */}
                             <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
@@ -504,7 +470,6 @@ export default function BankSoalIndex({ questionBanks, kategoriList, filters }: 
                         <CreateQuestionModal
                             open={createModal}
                             onClose={() => setCreateModal(false)}
-                            kategoriList={kategoriList}
                         />
 
                         {/* Import Modal */}

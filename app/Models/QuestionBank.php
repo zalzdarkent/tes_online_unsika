@@ -31,8 +31,7 @@ class QuestionBank extends Model
         'difficulty_level',
         'is_public',
         'usage_count',
-        'user_id',
-        'kategori_tes_id'
+        'user_id'
     ];
 
     protected $casts = [
@@ -51,13 +50,7 @@ class QuestionBank extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the category of the question
-     */
-    public function kategori(): BelongsTo
-    {
-        return $this->belongsTo(KategoriTes::class, 'kategori_tes_id');
-    }
+
 
     /**
      * Get all permissions for this question
@@ -107,13 +100,7 @@ class QuestionBank extends Model
         return $query->where('is_public', true);
     }
 
-    /**
-     * Scope untuk mengambil soal berdasarkan kategori
-     */
-    public function scopeByKategori($query, $kategoriId)
-    {
-        return $query->where('kategori_tes_id', $kategoriId);
-    }
+
 
     /**
      * Scope untuk mengambil soal berdasarkan tingkat kesulitan
