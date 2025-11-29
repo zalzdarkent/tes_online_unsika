@@ -180,13 +180,13 @@ export default function BankSoalShow({ questionBank }: QuestionBankShowProps) {
                         <div className="mb-6 bg-gradient-to-r from-red-100 to-orange-100 border border-red-200 rounded-lg p-4 flex items-center gap-3 shadow-sm">
                             <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0" />
                             <div className="flex-1">
-                                <div className="font-semibold text-red-800">Production Environment</div>
+                                <div className="font-semibold text-red-800">Development Environment</div>
                                 <div className="text-sm text-red-700">
-                                    Anda sedang menggunakan fitur Bank Soal di environment production. Pastikan data yang dimasukkan sudah benar.
+                                    Anda sedang menggunakan fitur Bank Soal di environment Development. Pastikan data yang dimasukkan sudah benar.
                                 </div>
                             </div>
                             <div className="px-2 py-1 bg-red-200 text-red-800 text-xs font-medium rounded-full">
-                                PROD
+                                DEV
                             </div>
                         </div>
                     )}
