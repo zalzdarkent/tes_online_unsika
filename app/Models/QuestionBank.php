@@ -31,7 +31,8 @@ class QuestionBank extends Model
         'difficulty_level',
         'is_public',
         'usage_count',
-        'user_id'
+        'user_id',
+        'kategori_tes_id'
     ];
 
     protected $casts = [
@@ -48,6 +49,14 @@ class QuestionBank extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the category that owns the question
+     */
+    public function kategori(): BelongsTo
+    {
+        return $this->belongsTo(KategoriTes::class, 'kategori_tes_id');
     }
 
 
