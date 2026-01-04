@@ -4,8 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import {
     Code,
-    Github,
-    Globe,
     Heart,
     Laptop,
     Mail,
@@ -188,12 +186,12 @@ export default function DevPage() {
                         <CardContent>
                             <div className="grid gap-6 md:grid-cols-4">
                                 <div className="text-center">
-                                    <div className="text-3xl font-bold text-indigo-600 mb-1">100+</div>
+                                    <div className="text-3xl font-bold text-indigo-600 mb-1">15+</div>
                                     <div className="text-sm text-muted-foreground">Components Built</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-3xl font-bold text-purple-600 mb-1">50+</div>
-                                    <div className="text-sm text-muted-foreground">API Endpoints</div>
+                                    <div className="text-sm text-muted-foreground">Hours of Developing</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-3xl font-bold text-pink-600 mb-1">3</div>
@@ -221,14 +219,14 @@ export default function DevPage() {
                                     for students and educators at UNSIKA. Collaboration makes everything possible!
                                 </p>
                                 <div className="flex flex-wrap justify-center gap-4">
-                                    <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                                    {/* <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                                         <Globe className="h-4 w-4 mr-2" />
                                         Visit Portfolio
                                     </Button>
                                     <Button variant="secondary" size="sm" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                                         <Github className="h-4 w-4 mr-2" />
                                         View on GitHub
-                                    </Button>
+                                    </Button> */}
                                 </div>
                             </CardContent>
                         </Card>
