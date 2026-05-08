@@ -25,25 +25,22 @@ export default function DevPage() {
 
     const teamMembers = [
         {
-            name: 'Alif Fadillah',
+            name: 'Alif Fadillah Ummar, S.Kom', 
             role: 'Lead Developer',
-            description: 'Full Stack Developer yang fokus menyuruh AI untuk membuat frontnd dan backend aplikasi',
             photo: '/team/foto-kucing-oren.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-indigo-500 to-purple-600',
             contact: '2210631170004@student.unsika.ac.id'
         },
         {
-            name: 'Teman Developer', // Silakan ganti dengan nama asli
+            name: 'Aqmarina Shabihah, S.Kom', // Silakan ganti dengan nama asli
             role: 'Co-Developer',
-            description: 'Developer yang membantu dalam pengembangan fitur dan testing aplikasi',
             photo: '/team/co-developer.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-green-500 to-teal-600',
             contact: 'partner@example.com' // Silakan ganti dengan email asli
         },
         {
-            name: 'Dosen Pembimbing', // Silakan ganti dengan nama asli
+            name: 'Dr. Jajam Haerul Jaman, SE, M.Kom', // Silakan ganti dengan nama asli
             role: 'Project Supervisor',
-            description: 'Dosen pembimbing yang memberikan arahan dan supervisi dalam pengembangan sistem',
             photo: '/team/supervisor.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-orange-500 to-red-600',
             contact: 'supervisor@unsika.ac.id' // Silakan ganti dengan email asli
@@ -108,9 +105,6 @@ export default function DevPage() {
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <p className="text-sm text-muted-foreground text-center">
-                                            {member.description}
-                                        </p>
                                         <div className="flex items-center justify-center gap-2">
                                             <Mail className="h-4 w-4 text-muted-foreground" />
                                             <a
