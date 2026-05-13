@@ -27,7 +27,7 @@ export default function AppSidebarLayout({ children, breadcrumbs = [] }: PropsWi
                                 href="/dev"
                                 className="hover:text-foreground transition-colors cursor-pointer underline decoration-dotted underline-offset-2"
                             >
-                                Alrina
+                                Laboratorium Komputer UNSIKA
                             </Link>
                             . All rights reserved. | Developed with ❤️ for Universitas Singaperbangsa Karawang
                         </div>
