@@ -26,21 +26,21 @@ export default function DevPage() {
     const teamMembers = [
         {
             name: 'Alif Fadillah Ummar, S.Kom', 
-            role: 'Lead Developer',
-            photo: '/team/foto-kucing-oren.jpg', // Foto akan disimpan di public/team/
+            role: 'Developer',
+            photo: '/team/20250822_150546.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-indigo-500 to-purple-600',
             contact: '2210631170004@student.unsika.ac.id'
         },
         {
             name: 'Aqmarina Shabihah, S.Kom', // Silakan ganti dengan nama asli
-            role: 'Co-Developer',
+            role: 'Developer',
             photo: '/team/co-developer.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-green-500 to-teal-600',
             contact: 'partner@example.com' // Silakan ganti dengan email asli
         },
         {
             name: 'Dr. Jajam Haerul Jaman, SE, M.Kom', // Silakan ganti dengan nama asli
-            role: 'Project Supervisor',
+            role: 'Project Manager',
             photo: '/team/supervisor.jpg', // Foto akan disimpan di public/team/
             gradient: 'from-orange-500 to-red-600',
             contact: 'supervisor@unsika.ac.id' // Silakan ganti dengan email asli
@@ -92,9 +92,14 @@ export default function DevPage() {
                                             <img
                                                 src={member.photo}
                                                 alt={member.name}
-                                                className="absolute inset-0 h-full w-full object-cover"
+                                                className="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-200 ease-in-out"
+                                                style={{ opacity: 0 }}
+                                                onLoad={(e) => {
+                                                    const img = e.currentTarget as HTMLImageElement;
+                                                    img.style.opacity = '1';
+                                                }}
                                                 onError={(e) => {
-                                                    const target = e.target as HTMLImageElement;
+                                                    const target = e.currentTarget as HTMLImageElement;
                                                     target.style.display = 'none';
                                                 }}
                                             />
