@@ -166,6 +166,7 @@ class KoreksiController extends Controller
                     'waktu_ujian' => $item->waktu_ujian,
                     // Total skor langsung dari SUM(skor_didapat) di tabel jawaban
                     'total_skor' => $item->total_skor,
+                    'total_nilai' => $hasilTest?->total_nilai,
                     'status_koreksi' => $statusKoreksi
                 ];
             });

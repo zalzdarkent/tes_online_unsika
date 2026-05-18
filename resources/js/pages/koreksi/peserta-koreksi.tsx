@@ -18,6 +18,7 @@ interface DataKoreksi {
     nama_peserta: string;
     total_soal: number;
     total_skor: number | null;
+    total_nilai: number | null;
     waktu_ujian: string;
     status_koreksi?: string | null;
 }
@@ -323,6 +324,25 @@ export default function PesertaKoreksi({ data, jadwal }: Props) {
         },
     ];
 
+    const exportRows = (rows: DataKoreksi[]) =>
+        rows.map((item) => {
+            const isKoreksi = item.total_skor !== null;
+            const statusLabel = !isKoreksi
+                ? 'Belum Dikoreksi'
+                : item.status_koreksi === 'submitted'
+                    ? 'Final'
+                    : 'Draft';
+
+            return {
+                'Nama Peserta': item.nama_peserta,
+                'Total Soal': item.total_soal,
+                'Total Skor': item.total_skor ?? 'Belum dikoreksi',
+                'Total Nilai': item.total_nilai !== null ? Number(item.total_nilai).toFixed(2) : 'Belum dikoreksi',
+                'Status Koreksi': statusLabel,
+                'Waktu Ujian': formatDateTime(item.waktu_ujian),
+            };
+        });
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Koreksi Peserta - ${jadwal.nama_jadwal}`} />
@@ -350,6 +370,7 @@ export default function PesertaKoreksi({ data, jadwal }: Props) {
                     searchColumn="nama_peserta"
                     searchPlaceholder="Cari nama peserta..."
                     exportFilename={`data-koreksi-${jadwal.nama_jadwal.replace(/\s+/g, '-').toLowerCase()}`}
+                    exportDataTransformer={exportRows}
                     showExportButton
                     onBulkDelete={handleBulkDelete}
                     customBulkActions={customBulkActions}

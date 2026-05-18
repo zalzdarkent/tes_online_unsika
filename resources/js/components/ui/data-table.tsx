@@ -72,6 +72,7 @@ interface DataTableProps<TData, TValue> {
   emptyMessage?: React.ReactNode
   initialColumnVisibility?: VisibilityState
   exportFilename?: string
+  exportDataTransformer?: (rows: TData[]) => Record<string, unknown>[]
   showExportButton?: boolean
   filters?: FilterConfig[]
   onFilterChange?: (filterId: string, selectedValues: (string | number | boolean)[]) => void
@@ -92,6 +93,7 @@ export function DataTable<TData, TValue>({
   emptyMessage,
   initialColumnVisibility = {},
   exportFilename = "exported-data",
+  exportDataTransformer,
   showExportButton = false,
   filters = [],
   onFilterChange,
@@ -210,44 +212,46 @@ export function DataTable<TData, TValue>({
   })
 
   const handleExport = () => {
-    const excludedIds = ["select", "actions", "aksi", "action"]
-    const visibleColumns = table.getAllColumns().filter(col =>
-      !excludedIds.includes(col.id)
-    )
+    const filteredRows = table.getFilteredRowModel().rows.map(row => row.original)
+    const exportData = exportDataTransformer
+      ? exportDataTransformer(filteredRows)
+      : table.getFilteredRowModel().rows.map(row => {
+          const rowData: Record<string, unknown> = {}
+          const excludedIds = ["select", "actions", "aksi", "action"]
+          const visibleColumns = table.getAllColumns().filter(col =>
+            !excludedIds.includes(col.id)
+          )
 
-    const exportData = table.getFilteredRowModel().rows.map(row => {
-      const rowData: Record<string, unknown> = {}
+          visibleColumns.forEach(col => {
+            const columnId = col.id
 
-      visibleColumns.forEach(col => {
-        const columnId = col.id
+            if (columnId === "no") {
+              rowData["No"] = row.index + 1
+            } else {
+              const cell = row.getAllCells().find(c => c.column.id === columnId)
+              if (cell) {
+                const rawValue = cell.renderValue() ?? cell.getValue()
+                let value = rawValue === null || rawValue === undefined || rawValue === "" ? "-" : rawValue
 
-        if (columnId === "no") {
-          rowData["No"] = row.index + 1
-        } else {
-          const cell = row.getAllCells().find(c => c.column.id === columnId)
-          if (cell) {
-            const rawValue = cell.renderValue() ?? cell.getValue()
-            let value = rawValue === null || rawValue === undefined || rawValue === "" ? "-" : rawValue
+                // html
+                if (typeof value === "string") {
+                  const doc = new DOMParser().parseFromString(value, "text/html");
+                  value = doc.body.textContent || "";
+                }
 
-            // html
-            if (typeof value === "string") {
-              const doc = new DOMParser().parseFromString(value, "text/html");
-              value = doc.body.textContent || "";
+                const header = col.columnDef.header
+                const headerText = typeof header === "string"
+                  ? header
+                  : typeof header === "function"
+                    ? columnId
+                    : columnId
+                rowData[headerText] = value
+              }
             }
+          })
 
-            const header = col.columnDef.header
-            const headerText = typeof header === "string"
-              ? header
-              : typeof header === "function"
-                ? columnId
-                : columnId
-            rowData[headerText] = value
-          }
-        }
-      })
-
-      return rowData
-    })
+          return rowData
+        })
 
     // Create worksheet
     const ws = XLSX.utils.json_to_sheet(exportData)
