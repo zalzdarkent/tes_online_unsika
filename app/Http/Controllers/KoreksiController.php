@@ -177,7 +177,7 @@ class KoreksiController extends Controller
 
             foreach ($selectedJadwal as $jadwal) {
                 $score = $scoreMap[$participant->id][$jadwal->id] ?? null;
-                $row[$jadwal->nama_jadwal] = $score !== null ? number_format((float) $score, 2, '.', '') : '-';
+                $row[$jadwal->nama_jadwal] = $score !== null ? round((float) $score, 2) : '-';
             }
 
             return $row;
