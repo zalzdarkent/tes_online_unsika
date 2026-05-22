@@ -1,11 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
+import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { ClipboardCheck, BarChart3 } from 'lucide-react';
+import { useState } from 'react';
+import * as XLSX from 'xlsx';
 
 interface DataJadwal {
     id: number;
@@ -29,8 +32,63 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Koreksi({ data }: Props) {
+    const [selectedRows, setSelectedRows] = useState<DataJadwal[]>([]);
+
+    const handleExportRekap = async () => {
+        if (selectedRows.length === 0) {
+            return;
+        }
+
+        const params = new URLSearchParams();
+        selectedRows.forEach((row) => {
+            params.append('jadwal_ids[]', String(row.id));
+        });
+
+        const response = await fetch(`${route('koreksi.export-rekap')}?${params.toString()}`, {
+            headers: {
+                Accept: 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Gagal mengambil data export rekap.');
+        }
+
+        const payload = await response.json();
+        const headers: string[] = payload.headers ?? [];
+        const rows: Record<string, unknown>[] = payload.rows ?? [];
+        const worksheet = XLSX.utils.aoa_to_sheet([
+            headers,
+            ...rows.map((row) => headers.map((header) => row[header] ?? '-')),
+        ]);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Rekap Peserta');
+
+        const exportName = `rekap-peserta-${selectedRows
+            .map((row) => row.nama_jadwal)
+            .join('-')
+            .replace(/\s+/g, '-')
+            .toLowerCase()}`;
+
+        XLSX.writeFile(workbook, `${exportName}.xlsx`);
+    };
 
     const columns: ColumnDef<DataJadwal>[] = [
+        {
+            id: 'select',
+            header: ({ table }) => (
+                <Checkbox
+                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Select all"
+                />
+            ),
+            cell: ({ row }) => (
+                <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} aria-label="Select row" />
+            ),
+            enableSorting: false,
+            enableHiding: false,
+        },
         {
             accessorKey: 'nama_jadwal',
             header: 'Nama Jadwal Tes',
@@ -154,7 +212,9 @@ export default function Koreksi({ data }: Props) {
                     searchColumn="nama_jadwal"
                     searchPlaceholder="Cari nama jadwal tes..."
                     exportFilename="data-jadwal-koreksi"
-                    showExportButton
+                    showExportButton={selectedRows.length > 0}
+                    onSelectionChange={setSelectedRows}
+                    onExport={handleExportRekap}
                     emptyMessage={
                         <div className="w-full py-8 text-center text-gray-500">
                             <ClipboardCheck className="mx-auto mb-4 h-12 w-12 text-gray-400" />

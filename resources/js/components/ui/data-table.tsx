@@ -74,6 +74,7 @@ interface DataTableProps<TData, TValue> {
   exportFilename?: string
   exportDataTransformer?: (rows: TData[]) => Record<string, unknown>[]
   showExportButton?: boolean
+  onExport?: () => void
   filters?: FilterConfig[]
   onFilterChange?: (filterId: string, selectedValues: (string | number | boolean)[]) => void
   activeFilters?: Record<string, (string | number | boolean)[]>
@@ -95,6 +96,7 @@ export function DataTable<TData, TValue>({
   exportFilename = "exported-data",
   exportDataTransformer,
   showExportButton = false,
+  onExport,
   filters = [],
   onFilterChange,
   activeFilters = {},
@@ -265,6 +267,13 @@ export function DataTable<TData, TValue>({
   const selectedRows = table.getFilteredSelectedRowModel().rows
   const hasSelectedRows = selectedRows.length > 0
 
+  useEffect(() => {
+    if (onSelectionChange) {
+      const currentSelectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original)
+      onSelectionChange(currentSelectedRows)
+    }
+  }, [onSelectionChange, rowSelection, table])
+
   const handleBulkDelete = () => {
     if (onBulkDelete && hasSelectedRows) {
       const selectedData = selectedRows.map(row => row.original)
@@ -380,7 +389,7 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               className="cursor-pointer"
-              onClick={handleExport}
+              onClick={onExport || handleExport}
             >
               <FileDown className="mr-2 h-4 w-4" />
               Export Excel

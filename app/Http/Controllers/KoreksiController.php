@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Jawaban;
 use App\Models\HasilTestPeserta;
 use App\Models\Jadwal;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -104,6 +105,94 @@ class KoreksiController extends Controller
 
         return Inertia::render('koreksi/koreksi', [
             'data' => $data
+        ]);
+    }
+
+    /**
+     * Export rekap peserta untuk jadwal yang dipilih.
+     */
+    public function exportRekap(Request $request)
+    {
+        $validated = $request->validate([
+            'jadwal_ids' => 'required|array|min:1',
+            'jadwal_ids.*' => 'required|integer',
+        ]);
+
+        $currentUser = Auth::user();
+        $jadwalIds = collect($validated['jadwal_ids'])
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $jadwalQuery = Jadwal::select('id', 'nama_jadwal', 'user_id')
+            ->whereIn('id', $jadwalIds);
+
+        if ($currentUser->role === 'teacher') {
+            $jadwalQuery->where('user_id', $currentUser->id);
+        }
+
+        $selectedJadwal = $jadwalQuery->orderBy('created_at')->get();
+
+        if ($selectedJadwal->count() !== $jadwalIds->count()) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses untuk export salah satu jadwal yang dipilih.',
+            ], 403);
+        }
+
+        $participantIds = Jawaban::whereIn('id_jadwal', $jadwalIds)
+            ->distinct()
+            ->pluck('id_user');
+
+        if ($participantIds->isEmpty()) {
+            return response()->json([
+                'filename' => 'rekap-peserta-koreksi',
+                'headers' => ['email', 'npm', 'nama', 'fakultas', 'prodi'],
+                'rows' => [],
+            ]);
+        }
+
+        $participants = User::whereIn('id', $participantIds)
+            ->select('id', 'email', 'npm', 'nama', 'fakultas', 'prodi')
+            ->orderBy('nama')
+            ->get();
+
+        $scores = HasilTestPeserta::whereIn('id_jadwal', $jadwalIds)
+            ->whereIn('id_user', $participantIds)
+            ->select('id_user', 'id_jadwal', 'total_nilai')
+            ->get();
+
+        $scoreMap = [];
+        foreach ($scores as $score) {
+            $scoreMap[$score->id_user][$score->id_jadwal] = $score->total_nilai;
+        }
+
+        $rows = $participants->map(function ($participant) use ($selectedJadwal, $scoreMap) {
+            $row = [
+                'email' => $participant->email,
+                'npm' => $participant->npm,
+                'nama' => $participant->nama,
+                'fakultas' => $participant->fakultas,
+                'prodi' => $participant->prodi,
+            ];
+
+            foreach ($selectedJadwal as $jadwal) {
+                $score = $scoreMap[$participant->id][$jadwal->id] ?? null;
+                $row[$jadwal->nama_jadwal] = $score !== null ? number_format((float) $score, 2, '.', '') : '-';
+            }
+
+            return $row;
+        })->values();
+
+        $headers = ['email', 'npm', 'nama', 'fakultas', 'prodi'];
+
+        foreach ($selectedJadwal as $jadwal) {
+            $headers[] = $jadwal->nama_jadwal;
+        }
+
+        return response()->json([
+            'filename' => 'rekap-peserta-koreksi',
+            'headers' => $headers,
+            'rows' => $rows,
         ]);
     }
 

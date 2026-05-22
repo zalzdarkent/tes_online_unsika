@@ -148,6 +148,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/', [KoreksiController::class, 'index'])->name('index');
             Route::get('jadwal/{jadwalId}/peserta', [KoreksiController::class, 'peserta'])->name('peserta');
             Route::get('jadwal/{jadwalId}/statistik', [KoreksiController::class, 'statistik'])->name('statistik');
+            Route::get('export-rekap', [KoreksiController::class, 'exportRekap'])->name('export-rekap');
             Route::get('{userId}/{jadwalId}', [KoreksiController::class, 'show'])->name('detail');
             Route::post('{userId}/{jadwalId}', [KoreksiController::class, 'update'])->name('update');
             Route::delete('{userId}/{jadwalId}', [KoreksiController::class, 'destroy'])->name('destroy');
