@@ -231,33 +231,20 @@ export default function SoalFormModal({
             );
             formData.append('pertanyaan', pertanyaan);
             formData.append('skor', String(skor));
-            if (tipeJawaban === 'single_choice') {
+            // Append options and correct answer for single/multi choice variants (including audio/image variants)
+            if (tipeJawaban.startsWith('single_choice')) {
                 formData.append('opsi_a', opsi[0]);
                 formData.append('opsi_b', opsi[1]);
                 formData.append('opsi_c', opsi[2]);
                 formData.append('opsi_d', opsi[3]);
                 formData.append('jawaban_benar', jawabanBenar);
             }
-            if (tipeJawaban === 'multi_choice') {
+            if (tipeJawaban.startsWith('multi_choice')) {
                 formData.append('opsi_a', opsi[0]);
                 formData.append('opsi_b', opsi[1]);
                 formData.append('opsi_c', opsi[2]);
                 formData.append('opsi_d', opsi[3]);
                 formData.append('jawaban_benar', jawabanBenarMulti.join(','));
-            }
-            if (tipeJawaban === 'multi_choice_gambar') {
-                formData.append('opsi_a', opsi[0]);
-                formData.append('opsi_b', opsi[1]);
-                formData.append('opsi_c', opsi[2]);
-                formData.append('opsi_d', opsi[3]);
-                formData.append('jawaban_benar', jawabanBenarMulti.join(','));
-            }
-            if (tipeJawaban === 'single_choice_gambar') {
-                formData.append('opsi_a', opsi[0]);
-                formData.append('opsi_b', opsi[1]);
-                formData.append('opsi_c', opsi[2]);
-                formData.append('opsi_d', opsi[3]);
-                formData.append('jawaban_benar', jawabanBenar);
             }
 
             if (tipeJawaban === 'essay' || tipeJawaban === 'essay_gambar' || tipeJawaban === 'essay_audio') {
