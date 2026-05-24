@@ -2,13 +2,14 @@ import ConfirmDialogWrapper from '@/components/modal/ConfirmDialogWrapper';
 import AccessDeniedModal from '@/components/modal/AccessDeniedModal';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
 import useAccessControl from '@/hooks/useAccessControl';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
 import { BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
 import Echo from '@/lib/echo';
@@ -65,10 +66,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function DaftarTes({ jadwal }: Props) {
+export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFields }: Props) {
     const { props } = usePage<{ errors?: Record<string, string>; auth: { user: { id: number } } }>();
     const { showAccessDeniedModal, accessDeniedData, handleAccessDenied, closeAccessDeniedModal } = useAccessControl();
     const [jadwalList, setJadwalList] = useState<JadwalData[]>(jadwal);
+    const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
 
     useEffect(() => {
         if (props.errors?.error) {
@@ -253,6 +255,11 @@ export default function DaftarTes({ jadwal }: Props) {
     };
 
     const handleDaftar = (id_jadwal: number) => {
+        if (!isProfileComplete) {
+            setCompletionDialogOpen(true);
+            return;
+        }
+
         router.post(
             route('peserta.daftar'),
             { id_jadwal },
@@ -427,6 +434,14 @@ export default function DaftarTes({ jadwal }: Props) {
 
                 // Jika belum daftar
                 if (!sudah_daftar) {
+                    if (!isProfileComplete) {
+                        return (
+                            <Button onClick={() => handleDaftar(id)}>
+                                Daftar
+                            </Button>
+                        );
+                    }
+
                     return (
                         <ConfirmDialogWrapper
                             title="Daftar Tes?"
@@ -610,6 +625,49 @@ export default function DaftarTes({ jadwal }: Props) {
             </TooltipProvider>
 
             {/* Access Denied Modal */}
+
+            <Dialog open={completionDialogOpen} onOpenChange={setCompletionDialogOpen}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Lengkapi profil dulu</DialogTitle>
+                        <DialogDescription>
+                            Anda harus melengkapi profil dan info akademik sebelum bisa mendaftar tes.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 text-sm">
+                        {/* <p className="text-muted-foreground">
+                            Data yang belum lengkap:
+                        </p>
+                        {missingProfileFields.length > 0 ? (
+                            <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                                {missingProfileFields.map((field) => (
+                                    <li key={field}>{field}</li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-muted-foreground">Silakan lengkapi semua profil dan info akademik yang belum tersimpan.</p>
+                        )} */}
+                        {/* <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+                            Setelah data dilengkapi, kembali ke halaman daftar tes lalu klik Daftar lagi.
+                        </div> */}
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:justify-between">
+                        <Button variant="outline" onClick={() => setCompletionDialogOpen(false)}>
+                            Tutup
+                        </Button>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            <Button asChild>
+                                <Link href={route('profile.edit')}>Lengkapi Biodata</Link>
+                            </Button>
+                            {/* <Button asChild>
+                                <Link href={route('academic.edit')}>Lengkapi Info Akademik</Link>
+                            </Button> */}
+                        </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             {showAccessDeniedModal && accessDeniedData && (
                 <AccessDeniedModal
                     isOpen={showAccessDeniedModal}

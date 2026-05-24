@@ -52,6 +52,19 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
         _method: 'patch',
     });
 
+    const [isNoHpValid, setIsNoHpValid] = useState<boolean>(true);
+
+    useEffect(() => {
+        const val = data.no_hp?.toString() || '';
+        if (val === '') {
+            setIsNoHpValid(true); // nullable field
+            return;
+        }
+
+        const regex = /^62[0-9]{8,13}$/;
+        setIsNoHpValid(regex.test(val));
+    }, [data.no_hp]);
+
     // State for foto preview
     const [fotoPreview, setFotoPreview] = useState<string | null>(null);
 
@@ -201,11 +214,19 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                                         id="no_hp"
                                         type="tel"
                                         value={data.no_hp}
-                                        onChange={(e) => setData('no_hp', e.target.value)}
+                                        onChange={(e) => {
+                                            // Allow only digits
+                                            const digits = e.target.value.replace(/\D/g, '');
+                                            setData('no_hp', digits);
+                                        }}
+                                        className={!isNoHpValid ? 'border-orange-300 focus:border-orange-500' : ''}
                                         autoComplete="tel"
                                         placeholder="Masukkan nomor handphone Anda"
                                     />
-                                    <p className="text-xs text-muted-foreground">Diawali dengan 62. Tanpa strip. Contoh: 6281234567890</p>
+                                    <p className="text-xs text-muted-foreground">Harus diawali dengan 62, tanpa strip. Contoh: 6281234567890</p>
+                                    {!isNoHpValid && (
+                                        <p className="text-xs text-orange-600">Nomor tidak valid — harus diawali 62 dan hanya angka (10–15 digit).</p>
+                                    )}
                                     <InputError message={errors.no_hp} />
                                 </div>
 
@@ -253,7 +274,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
                         {/* Submit Button */}
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing} size="lg">
+                            <Button disabled={processing || !isNoHpValid} size="lg">
                                 {processing ? 'Memperbarui...' : 'Perbarui Profil'}
                             </Button>
 

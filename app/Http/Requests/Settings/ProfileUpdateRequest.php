@@ -28,7 +28,8 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore(Auth::user()->id),
             ],
-            'no_hp' => ['nullable', 'string', 'max:20'],
+            // No HP harus dimulai dengan 62 dan hanya angka, total panjang antara 10-15 digit
+            'no_hp' => ['nullable', 'string', 'regex:/^62[0-9]{8,13}$/', 'max:20'],
             'alamat' => ['nullable', 'string', 'max:500'],
             'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:4590'],
             'prodi' => ['nullable', 'string', 'max:100'],
@@ -48,6 +49,7 @@ class ProfileUpdateRequest extends FormRequest
         return [
             'npm.regex' => 'NPM/NIM hanya boleh berisi angka dan harus tepat 13 digit.',
             'npm.size' => 'NPM/NIM harus tepat 13 digit.',
+            'no_hp.regex' => 'Nomor HP harus diawali dengan 62 dan hanya berisi angka (contoh: 6281234567890).',
         ];
     }
 }

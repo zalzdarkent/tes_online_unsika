@@ -4,6 +4,7 @@ import { Head, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ export default function Academic() {
         fakultas?: string;
         universitas?: string;
         npm?: string;
+        
     };
 
     const { data, setData, post, errors, processing, recentlySuccessful } = useForm<AcademicForm>({
@@ -57,6 +59,7 @@ export default function Academic() {
         fakultas: user.fakultas || '',
         universitas: user.universitas || '',
         npm: user.npm || '',
+        
         redirect_to: 'academic',
         _method: 'patch',
     });
@@ -78,6 +81,86 @@ export default function Academic() {
             },
         });
     };
+
+    // Hardcoded fakultas and prodi per jenjang
+    const fakultasOptions = [
+        'Fakultas Hukum',
+        'Fakultas Ekonomi',
+        'Fakultas Keguruan dan Ilmu Pendidikan',
+        'Fakultas Pertanian',
+        'Fakultas Teknik',
+        'Fakultas Ilmu Komputer',
+        'Fakultas Ilmu Sosial dan Ilmu Politik',
+        'Fakultas Agama Islam',
+        'Fakultas Ilmu Kesehatan',
+    ];
+
+    const prodiMap: Record<string, string[]> = {
+        'Fakultas Hukum': [
+            'Ilmu Hukum (S1)',
+            'Ilmu Hukum (S2)',
+        ],
+        'Fakultas Ekonomi': [
+            'Manajemen (S1)',
+            'Manajemen (S2)',
+            'Akuntansi (D3)',
+            'Akuntansi (S1)',
+        ],
+        'Fakultas Keguruan dan Ilmu Pendidikan': [
+            'Pend. Matematika (S1)',
+            'Pend. Matematika (S2)',
+            'Pend. Luar Sekolah (S1)',
+            'Pend. Bahasa & Sasta Indonesia (S1)',
+            'Pend. Jasmani, Kesehatan & Rekreasi (S1)',
+            'Pend. Jasmani, Kesehatan & Rekreasi (S2)',
+            'Pend. Bahasa Inggris (S1)',
+            'Pend. Masyarakat (S1)',
+            'Administrasi Pendidikan (S2)',
+        ],
+        'Fakultas Pertanian': [
+            'Agroteknologi (S1)',
+            'Agrobisnis (S1)',
+            'Ilmu Pertanian (S2)',
+        ],
+        'Fakultas Teknik': [
+            'Teknik Mesin (D3)',
+            'Teknik Mesin (S1)',
+            'Teknik Kimia (S1)',
+            'Teknik Elektro (S1)',
+            'Teknik Industri (S1)',
+            'Teknik Lingkungan (S1)',
+            'Teknik Sipil (S1)',
+            'Fisika (S1)',
+        ],
+        'Fakultas Ilmu Komputer': [
+            'Informatika (S1)',
+            'Sistem Informasi (S1)',
+        ],
+        'Fakultas Ilmu Sosial dan Ilmu Politik': [
+            'Ilmu Komunikasi (S1)',
+            'Ilmu Pemerintahan (S1)',
+            'Hubungan Internasional (S1)',
+        ],
+        'Fakultas Agama Islam': [
+            'Pend. Agama Islam (S1)',
+            'Pend. Agama Islam (S2)',
+            'Manajemen Pendidikan Islam (S1)',
+            'Pendidikan Islam Anak Usia Dini (S1)',
+        ],
+        'Fakultas Ilmu Kesehatan': [
+            'Kebidanan (D3)',
+            'Ilmu Keolahragaan (S1)',
+            'Ilmu Gizi (S1)',
+            'Farmasi (S1)',
+            'Administrasi Rumah Sakit (S1)',
+        ],
+    };
+
+    const availableProdi = (() => {
+        const fakultas = data.fakultas;
+        if (!fakultas) return [];
+        return prodiMap[fakultas] ?? [];
+    })();
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -130,34 +213,7 @@ export default function Academic() {
                                     )}
                                     <InputError message={errors.npm} />
                                 </div>
-
-                                {/* Program Studi */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="prodi">Program Studi</Label>
-                                    <Input
-                                        id="prodi"
-                                        value={data.prodi}
-                                        onChange={(e) => setData('prodi', e.target.value)}
-                                        autoComplete="prodi"
-                                        placeholder="Masukkan program studi Anda"
-                                    />
-                                    <InputError message={errors.prodi} />
-                                </div>
-
-                                {/* Fakultas */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="fakultas">Fakultas</Label>
-                                    <Input
-                                        id="fakultas"
-                                        value={data.fakultas}
-                                        onChange={(e) => setData('fakultas', e.target.value)}
-                                        autoComplete="fakultas"
-                                        placeholder="Masukkan fakultas Anda"
-                                    />
-                                    <p className="text-xs text-muted-foreground">Tidak perlu disingkat. Contoh: Fakultas Ilmu Komputer</p>
-                                    <InputError message={errors.fakultas} />
-                                </div>
-
+                                
                                 {/* Universitas */}
                                 <div className="space-y-2">
                                     <Label htmlFor="universitas">Universitas</Label>
@@ -172,6 +228,47 @@ export default function Academic() {
                                         Tidak perlu disingkat. Contoh: Universitas Singaperbangsa Karawang
                                     </p>
                                     <InputError message={errors.universitas} />
+                                </div>
+
+                                {/* Fakultas */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="fakultas">Fakultas</Label>
+                                    <Select
+                                        value={data.fakultas}
+                                        onValueChange={(v) => {
+                                            setData('fakultas', v);
+                                            setData('prodi', '');
+                                        }}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Pilih fakultas..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {fakultasOptions.map((opt) => (
+                                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground">Pilih fakultas Anda dari daftar.</p>
+                                    <InputError message={errors.fakultas} />
+                                </div>
+
+
+
+                                {/* Program Studi */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="prodi">Program Studi</Label>
+                                    <Select value={data.prodi} onValueChange={(v) => setData('prodi', v)}>
+                                        <SelectTrigger className={`w-full ${availableProdi.length === 0 ? 'opacity-60 pointer-events-none' : ''}`}>
+                                            <SelectValue placeholder={availableProdi.length === 0 ? 'Pilih fakultas terlebih dahulu' : 'Pilih program studi'} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {availableProdi.map((p) => (
+                                                <SelectItem key={p} value={p}>{p}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.prodi} />
                                 </div>
                             </CardContent>
                         </Card>
