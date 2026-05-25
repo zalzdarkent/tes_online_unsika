@@ -1,3 +1,4 @@
+import { DatePicker } from '@/components/ui/date-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -5,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
+import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 
 // Helper function untuk parsing tanggal dari database
@@ -93,6 +95,13 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
         waktu_mulai_tes_date: '',
         waktu_mulai_tes_time: '',
     });
+
+    const toDatePickerValue = (dateString: string) => {
+        if (!dateString) return undefined;
+
+        const parsedDate = new Date(`${dateString}T00:00:00`);
+        return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
+    };
 
     // Load data saat komponen dimount
     useEffect(() => {
@@ -314,12 +323,11 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Tanggal & Waktu Mulai</label>
                                     <div className="grid gap-2 md:grid-cols-2">
-                                        <Input
-                                            type="date"
-                                            value={dateTimeInputs.tanggal_mulai_date}
-                                            onChange={(e) => updateTanggalMulai(e.target.value, dateTimeInputs.tanggal_mulai_time)}
-                                            required
-                                            className="text-sm"
+                                        <DatePicker
+                                            date={toDatePickerValue(dateTimeInputs.tanggal_mulai_date)}
+                                            onSelect={(date) => updateTanggalMulai(date ? format(date, 'yyyy-MM-dd') : '', dateTimeInputs.tanggal_mulai_time)}
+                                            placeholder="Pilih tanggal mulai"
+                                            className="w-full"
                                         />
 
                                         <Input
@@ -335,12 +343,11 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Tanggal & Waktu Berakhir</label>
                                     <div className="grid gap-2 md:grid-cols-2">
-                                        <Input
-                                            type="date"
-                                            value={dateTimeInputs.tanggal_berakhir_date}
-                                            onChange={(e) => updateTanggalBerakhir(e.target.value, dateTimeInputs.tanggal_berakhir_time)}
-                                            required
-                                            className="text-sm"
+                                        <DatePicker
+                                            date={toDatePickerValue(dateTimeInputs.tanggal_berakhir_date)}
+                                            onSelect={(date) => updateTanggalBerakhir(date ? format(date, 'yyyy-MM-dd') : '', dateTimeInputs.tanggal_berakhir_time)}
+                                            placeholder="Pilih tanggal berakhir"
+                                            className="w-full"
                                         />
                                         <Input
                                             type="time"
@@ -359,12 +366,11 @@ export default function EditJadwal({ jadwal, allJadwal, kategoriTes }: EditJadwa
                                     Waktu spesifik kapan peserta yang sudah disetujui bisa mulai mengerjakan tes. Jika tidak diisi, peserta bisa mulai kapan saja dalam rentang jadwal.
                                 </p>
                                 <div className="grid gap-2 md:grid-cols-2">
-                                    <Input
-                                        type="date"
-                                        value={dateTimeInputs.waktu_mulai_tes_date}
-                                        onChange={(e) => updateWaktuMulaiTes(e.target.value, dateTimeInputs.waktu_mulai_tes_time)}
-                                        className="text-sm"
+                                    <DatePicker
+                                        date={toDatePickerValue(dateTimeInputs.waktu_mulai_tes_date)}
+                                        onSelect={(date) => updateWaktuMulaiTes(date ? format(date, 'yyyy-MM-dd') : '', dateTimeInputs.waktu_mulai_tes_time)}
                                         placeholder="Pilih tanggal"
+                                        className="w-full"
                                     />
                                     <Input
                                         type="time"

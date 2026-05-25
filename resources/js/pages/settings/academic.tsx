@@ -82,7 +82,6 @@ export default function Academic() {
         });
     };
 
-    // Hardcoded fakultas and prodi per jenjang
     const fakultasOptions = [
         'Fakultas Hukum',
         'Fakultas Ekonomi',
@@ -187,7 +186,6 @@ export default function Academic() {
                                         value={data.npm}
                                         onChange={(e) => {
                                             const value = e.target.value;
-                                            // Only allow numbers and limit to exactly 13 characters
                                             if (/^\d*$/.test(value) && value.length <= 13) {
                                                 setData('npm', value);
                                             }
