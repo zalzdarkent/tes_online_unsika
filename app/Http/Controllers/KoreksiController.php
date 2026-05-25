@@ -158,12 +158,12 @@ class KoreksiController extends Controller
 
         $scores = HasilTestPeserta::whereIn('id_jadwal', $jadwalIds)
             ->whereIn('id_user', $participantIds)
-            ->select('id_user', 'id_jadwal', 'total_nilai')
+            ->select('id_user', 'id_jadwal', 'total_skor')
             ->get();
 
         $scoreMap = [];
         foreach ($scores as $score) {
-            $scoreMap[$score->id_user][$score->id_jadwal] = $score->total_nilai;
+            $scoreMap[$score->id_user][$score->id_jadwal] = $score->total_skor;
         }
 
         $rows = $participants->map(function ($participant) use ($selectedJadwal, $scoreMap) {
