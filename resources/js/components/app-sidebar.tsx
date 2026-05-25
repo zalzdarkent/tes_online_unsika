@@ -18,9 +18,25 @@ const platformNavItems: NavItem[] = [
 const mainNavItems: NavItem[] = [
     {
         title: 'Jadwal Tes',
-        href: '/jadwal',
         icon: Calendar,
         roles: ['admin', 'teacher'],
+        children: [
+            {
+                title: 'Kategori Tes',
+                href: '/kategori',
+                roles: ['admin', 'teacher'],
+            },
+            {
+                title: 'Bank Soal',
+                href: '/bank-soal',
+                roles: ['admin', 'teacher'],
+            },
+            {
+                title: 'Jadwal Tes',
+                href: '/jadwal',
+                roles: ['admin', 'teacher'],
+            },
+        ],
     },
     {
         title: 'Koreksi Peserta',

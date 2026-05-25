@@ -44,11 +44,19 @@ export function hasRole(user: User | null, roles: string | string[]): boolean {
 export function filterMenuByRole(menuItems: NavItem[], user: User | null): NavItem[] {
     if (!user) return [];
 
-    return menuItems.filter(item => {
-        // Jika tidak ada role requirement, show untuk semua user
-        if (!item.roles) return true;
+    return menuItems
+        .map((item) => {
+            const filteredChildren = item.children ? filterMenuByRole(item.children, user) : undefined;
+            const hasAccess = !item.roles || hasRole(user, item.roles);
 
-        // Check apakah user memiliki role yang diperlukan
-        return hasRole(user, item.roles);
-    });
+            if (!hasAccess && (!filteredChildren || filteredChildren.length === 0)) {
+                return null;
+            }
+
+            return {
+                ...item,
+                children: filteredChildren && filteredChildren.length > 0 ? filteredChildren : undefined,
+            };
+        })
+        .filter((item): item is NavItem => item !== null);
 }

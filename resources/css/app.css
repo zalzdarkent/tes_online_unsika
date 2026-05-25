@@ -150,25 +150,25 @@
 }
 
 .dark {
-    --background: oklch(0.1 0.02 255);
+    --background: oklch(0.1 0.01 0);
     --foreground: oklch(0.985 0 0);
-    --card: oklch(0.14 0.03 255);
+    --card: oklch(0.14 0.01 0);
     --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.14 0.03 255);
+    --popover: oklch(0.14 0.01 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.96 0.01 255);
-    --primary-foreground: oklch(0.15 0.03 255);
-    --secondary: oklch(0.2 0.03 255);
+    --primary: oklch(0.96 0 0);
+    --primary-foreground: oklch(0.15 0 0);
+    --secondary: oklch(0.2 0 0);
     --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.2 0.03 255);
-    --muted-foreground: oklch(0.75 0.01 255);
-    --accent: oklch(0.24 0.05 255);
+    --muted: oklch(0.2 0 0);
+    --muted-foreground: oklch(0.75 0 0);
+    --accent: oklch(0.24 0 0);
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.53 0.22 25);
     --destructive-foreground: oklch(0.985 0 0);
-    --border: oklch(0.29 0.03 255);
-    --input: oklch(0.24 0.03 255);
-    --ring: oklch(0.72 0.14 255);
+    --border: oklch(0.29 0 0);
+    --input: oklch(0.24 0 0);
+    --ring: oklch(0.72 0 0);
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
@@ -176,18 +176,18 @@
     --chart-5: oklch(0.645 0.246 16.439);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.96 0.01 255);
-    --sidebar-primary-foreground: oklch(0.15 0.03 255);
-    --sidebar-accent: oklch(0.24 0.05 255);
+    --sidebar-primary: oklch(0.96 0 0);
+    --sidebar-primary-foreground: oklch(0.15 0 0);
+    --sidebar-accent: oklch(0.24 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.29 0.03 255);
-    --sidebar-ring: oklch(0.72 0.14 255);
+    --sidebar-border: oklch(0.29 0 0);
+    --sidebar-ring: oklch(0.72 0 0);
 }
 
 @layer base {
     body {
         background-color: var(--background);
-        background-image: radial-gradient(circle at top, color-mix(in oklch, var(--primary) 18%, transparent) 0%, transparent 42%), linear-gradient(180deg, color-mix(in oklch, var(--background) 82%, white 18%) 0%, var(--background) 35%);
+        background-image: radial-gradient(circle at top, color-mix(in oklch, var(--primary) 10%, transparent) 0%, transparent 42%), linear-gradient(180deg, color-mix(in oklch, var(--background) 90%, white 10%) 0%, var(--background) 35%);
         background-attachment: fixed;
     }
 }
