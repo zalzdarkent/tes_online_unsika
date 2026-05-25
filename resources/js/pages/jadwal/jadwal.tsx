@@ -399,11 +399,10 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                 const status = row.getValue('status') as string;
                 return (
                     <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            status === 'Buka'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                        }`}
+                        className={`rounded-full px-2 py-1 text-xs font-medium ${status === 'Buka'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            }`}
                     >
                         {status}
                     </span>
@@ -419,11 +418,10 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                 const accessMode = row.getValue('access_mode') as string || 'online';
                 return (
                     <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            accessMode === 'online'
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-                        }`}
+                        className={`rounded-full px-2 py-1 text-xs font-medium ${accessMode === 'online'
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                            }`}
                     >
                         {accessMode === 'online' ? 'Online' : 'Offline'}
                     </span>
@@ -548,7 +546,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Jadwal Tes" />
-            <JadwalLayout>
+            <div className="px-4 py-6">
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl">
                     <div className="flex w-full flex-col flex-wrap justify-between gap-2 sm:flex-row sm:space-x-2">
                         <h2 className="text-2xl font-bold">Daftar Jadwal Tes</h2>
@@ -583,7 +581,7 @@ export default function Jadwal({ jadwal, kategoriTes }: JadwalProps) {
                         enableResponsiveHiding={true}
                     />
                 </div>
-            </JadwalLayout>
+            </div>
         </AppLayout>
     );
 }

@@ -337,7 +337,7 @@ export default function BankSoalIndex({ questionBanks, filters }: QuestionBankPr
         <>
             <Head title="Bank Soal" />
             <AppLayout>
-                <JadwalLayout>
+                <div className="px-4 py-6">
                     {/* Production Warning Banner */}
                     {appEnv === 'production' && (
                         <div className="mb-6 bg-gradient-to-r from-red-100 to-orange-100 border border-red-200 rounded-lg p-4 flex items-center gap-3 shadow-sm">
@@ -487,7 +487,7 @@ export default function BankSoalIndex({ questionBanks, filters }: QuestionBankPr
                             onClose={() => setShareModal(false)}
                         />
                     </div>
-                </JadwalLayout>
+                </div>
             </AppLayout>
         </>
     );

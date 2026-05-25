@@ -21,7 +21,6 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
-import JadwalLayout from '@/layouts/jadwal/layout';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef, Row } from '@tanstack/react-table';
 import { format } from 'date-fns';
@@ -290,7 +289,7 @@ export default function SoalPage({ jadwal, soal, questionBanks = [] }: SoalPageP
     // Handler untuk simpan ke bank soal
     const handleSaveToBank = (selectedData: SoalData[]) => {
         const selectedIds = selectedData.map((item) => item.id);
-        
+
         router.post(
             '/bank-soal/store-from-soal',
             { soal_ids: selectedIds },
@@ -601,16 +600,14 @@ export default function SoalPage({ jadwal, soal, questionBanks = [] }: SoalPageP
                                             <>
                                                 {selectedSoal.opsi_a && (
                                                     <div
-                                                        className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${
-                                                            isCorrectAnswer('a')
+                                                        className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${isCorrectAnswer('a')
                                                                 ? 'border-2 border-green-200 bg-green-50'
                                                                 : 'border border-blue-200 bg-blue-100'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <span
-                                                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${
-                                                                isCorrectAnswer('a') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
-                                                            }`}
+                                                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${isCorrectAnswer('a') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
+                                                                }`}
                                                         >
                                                             A
                                                         </span>
@@ -629,16 +626,14 @@ export default function SoalPage({ jadwal, soal, questionBanks = [] }: SoalPageP
 
                                                 {selectedSoal.opsi_b && (
                                                     <div
-                                                        className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${
-                                                            isCorrectAnswer('b')
+                                                        className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${isCorrectAnswer('b')
                                                                 ? 'border-2 border-green-200 bg-green-50'
                                                                 : 'border border-blue-200 bg-blue-100'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <span
-                                                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${
-                                                                isCorrectAnswer('b') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
-                                                            }`}
+                                                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${isCorrectAnswer('b') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
+                                                                }`}
                                                         >
                                                             B
                                                         </span>
@@ -657,16 +652,14 @@ export default function SoalPage({ jadwal, soal, questionBanks = [] }: SoalPageP
 
                                                 {selectedSoal.opsi_c && (
                                                     <div
-                                                        className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${
-                                                            isCorrectAnswer('c')
+                                                        className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${isCorrectAnswer('c')
                                                                 ? 'border-2 border-green-200 bg-green-50'
                                                                 : 'border border-blue-200 bg-blue-100'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <span
-                                                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${
-                                                                isCorrectAnswer('c') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
-                                                            }`}
+                                                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${isCorrectAnswer('c') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
+                                                                }`}
                                                         >
                                                             C
                                                         </span>
@@ -685,16 +678,14 @@ export default function SoalPage({ jadwal, soal, questionBanks = [] }: SoalPageP
 
                                                 {selectedSoal.opsi_d && (
                                                     <div
-                                                        className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${
-                                                            isCorrectAnswer('d')
+                                                        className={`flex items-start gap-3 rounded-lg p-3 transition-colors ${isCorrectAnswer('d')
                                                                 ? 'border-2 border-green-200 bg-green-50'
                                                                 : 'border border-blue-200 bg-blue-100'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         <span
-                                                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${
-                                                                isCorrectAnswer('d') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
-                                                            }`}
+                                                            className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm font-medium ${isCorrectAnswer('d') ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
+                                                                }`}
                                                         >
                                                             D
                                                         </span>
@@ -847,7 +838,7 @@ export default function SoalPage({ jadwal, soal, questionBanks = [] }: SoalPageP
             ]}
         >
             <Head title={`Soal - ${jadwal.nama_jadwal}`} />
-            <JadwalLayout>
+            <div className="px-4 py-6">
                 <div className="flex h-full flex-1 flex-col gap-2 overflow-x-auto rounded-xl">
                     <div className="flex items-center justify-between gap-4">
                         <div>
@@ -982,7 +973,7 @@ export default function SoalPage({ jadwal, soal, questionBanks = [] }: SoalPageP
                         questionBanks={questionBanks}
                     />
                 </div>
-            </JadwalLayout>
+            </div>
         </AppLayout>
     );
 }

@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import AppLayout from '@/layouts/app-layout';
-import JadwalLayout from '@/layouts/jadwal/layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
@@ -183,7 +182,7 @@ export default function KategoriTes({ kategori }: KategoriProps) {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Kategori Tes" />
-            <JadwalLayout>
+            <div className="px-4 py-6">
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl">
                     <div className="flex items-center justify-between">
                         <h2 className="text-2xl font-bold">Kategori Tes</h2>
@@ -229,7 +228,7 @@ export default function KategoriTes({ kategori }: KategoriProps) {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
-            </JadwalLayout>
+            </div>
         </AppLayout>
     );
 }
