@@ -1,6 +1,37 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export type Appearance = 'light' | 'dark' | 'system';
+export type ThemeAccent = 'default' | 'maroon' | 'violet' | 'navy' | 'blue' | 'emerald';
+
+const APPEARANCE_STORAGE_KEY = 'appearance';
+const THEME_ACCENT_STORAGE_KEY = 'theme-accent';
+
+const appearances: Appearance[] = ['light', 'dark', 'system'];
+const themeAccents: ThemeAccent[] = ['default', 'maroon', 'violet', 'navy', 'blue', 'emerald'];
+
+const isAppearance = (value: string | null): value is Appearance => value !== null && appearances.includes(value as Appearance);
+
+const isThemeAccent = (value: string | null): value is ThemeAccent => value !== null && themeAccents.includes(value as ThemeAccent);
+
+const getSavedAppearance = (): Appearance => {
+    if (typeof window === 'undefined') {
+        return 'system';
+    }
+
+    const savedAppearance = localStorage.getItem(APPEARANCE_STORAGE_KEY);
+
+    return isAppearance(savedAppearance) ? savedAppearance : 'system';
+};
+
+const getSavedThemeAccent = (): ThemeAccent => {
+    if (typeof window === 'undefined') {
+        return 'default';
+    }
+
+    const savedAccent = localStorage.getItem(THEME_ACCENT_STORAGE_KEY);
+
+    return isThemeAccent(savedAccent) ? savedAccent : 'default';
+};
 
 const prefersDark = () => {
     if (typeof window === 'undefined') {
@@ -25,6 +56,15 @@ const applyTheme = (appearance: Appearance) => {
     document.documentElement.classList.toggle('dark', isDark);
 };
 
+const applyThemeAccent = (accent: ThemeAccent) => {
+    if (accent === 'default') {
+        document.documentElement.removeAttribute('data-theme-accent');
+        return;
+    }
+
+    document.documentElement.setAttribute('data-theme-accent', accent);
+};
+
 const mediaQuery = () => {
     if (typeof window === 'undefined') {
         return null;
@@ -34,14 +74,15 @@ const mediaQuery = () => {
 };
 
 const handleSystemThemeChange = () => {
-    const currentAppearance = localStorage.getItem('appearance') as Appearance;
-    applyTheme(currentAppearance || 'system');
+    applyTheme(getSavedAppearance());
 };
 
 export function initializeTheme() {
-    const savedAppearance = (localStorage.getItem('appearance') as Appearance) || 'system';
+    const savedAppearance = getSavedAppearance();
+    const savedThemeAccent = getSavedThemeAccent();
 
     applyTheme(savedAppearance);
+    applyThemeAccent(savedThemeAccent);
 
     // Add the event listener for system theme changes...
     mediaQuery()?.addEventListener('change', handleSystemThemeChange);
@@ -49,12 +90,13 @@ export function initializeTheme() {
 
 export function useAppearance() {
     const [appearance, setAppearance] = useState<Appearance>('system');
+    const [themeAccent, setThemeAccent] = useState<ThemeAccent>('default');
 
     const updateAppearance = useCallback((mode: Appearance) => {
         setAppearance(mode);
 
         // Store in localStorage for client-side persistence...
-        localStorage.setItem('appearance', mode);
+        localStorage.setItem(APPEARANCE_STORAGE_KEY, mode);
 
         // Store in cookie for SSR...
         setCookie('appearance', mode);
@@ -62,12 +104,28 @@ export function useAppearance() {
         applyTheme(mode);
     }, []);
 
+    const updateThemeAccent = useCallback((accent: ThemeAccent) => {
+        setThemeAccent(accent);
+        localStorage.setItem(THEME_ACCENT_STORAGE_KEY, accent);
+        applyThemeAccent(accent);
+    }, []);
+
     useEffect(() => {
-        const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
-        updateAppearance(savedAppearance || 'system');
+        const savedAppearance = getSavedAppearance();
+        const savedThemeAccent = getSavedThemeAccent();
 
-        return () => mediaQuery()?.removeEventListener('change', handleSystemThemeChange);
-    }, [updateAppearance]);
+        setAppearance(savedAppearance);
+        setThemeAccent(savedThemeAccent);
 
-    return { appearance, updateAppearance } as const;
+        applyTheme(savedAppearance);
+        applyThemeAccent(savedThemeAccent);
+
+        const systemMediaQuery = mediaQuery();
+
+        systemMediaQuery?.addEventListener('change', handleSystemThemeChange);
+
+        return () => systemMediaQuery?.removeEventListener('change', handleSystemThemeChange);
+    }, []);
+
+    return { appearance, updateAppearance, themeAccent, updateThemeAccent } as const;
 }
