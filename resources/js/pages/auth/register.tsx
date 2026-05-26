@@ -287,12 +287,18 @@ export default function Register() {
 
     return (
         <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <Head title="Register" />
+            <Head title="Daftar akun">
+                <meta
+                    name="description"
+                    content="Buat akun Online Test UNSIKA untuk mengikuti tes online, mengelola data peserta, dan mengakses jadwal yang tersedia."
+                />
+                <meta name="robots" content="noindex,nofollow" />
+            </Head>
 
             <Card className="mx-auto w-full max-w-md">
                 <CardHeader className="space-y-4">
                     <div className="flex justify-center">
-                        <Link href={route('home')} className="flex flex-col items-center gap-2 font-medium">
+                        <Link href={route('root')} className="flex flex-col items-center gap-2 font-medium">
                             <div className="mb-1 flex h-16 w-16 items-center justify-center">
                                 <AppLogoIcon className="h-full w-full object-contain" />
                             </div>

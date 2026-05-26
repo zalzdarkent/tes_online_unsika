@@ -27,7 +27,7 @@ Route::get('/', function () {
     if (Auth::check()) {
         return redirect()->route('dashboard');
     }
-    return redirect()->route('login');
+    return Inertia::render('welcome');
 })->name('root');
 
 // Developer info page - accessible without authentication

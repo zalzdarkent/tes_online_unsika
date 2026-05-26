@@ -6,7 +6,17 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="Welcome">
+            <Head title="Online Test UNSIKA">
+                <meta
+                    name="description"
+                    content="Online Test UNSIKA adalah platform ujian online untuk pendaftaran tes, pengerjaan soal, pengawasan, dan koreksi hasil secara terpusat."
+                />
+                <meta name="robots" content="index,follow" />
+                <meta property="og:title" content="Online Test UNSIKA" />
+                <meta
+                    property="og:description"
+                    content="Platform ujian online UNSIKA untuk peserta, admin, dan pengawas dengan proses yang lebih rapi dan terpusat."
+                />
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
             </Head>
@@ -41,85 +51,45 @@ export default function Welcome() {
                 <div className="flex w-full items-center justify-center opacity-100 transition-opacity duration-750 lg:grow starting:opacity-0">
                     <main className="flex w-full max-w-[335px] flex-col-reverse lg:max-w-4xl lg:flex-row">
                         <div className="flex-1 rounded-br-lg rounded-bl-lg bg-white p-6 pb-12 text-[13px] leading-[20px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] lg:rounded-tl-lg lg:rounded-br-none lg:p-20 dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]">
-                            <h1 className="mb-1 font-medium">Let's get started</h1>
-                            <p className="mb-2 text-[#706f6c] dark:text-[#A1A09A]">
-                                Laravel has an incredibly rich ecosystem.
-                                <br />
-                                We suggest starting with the following.
+                            <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-[#706f6c] dark:text-[#A1A09A]">
+                                Online Test UNSIKA
                             </p>
-                            <ul className="mb-4 flex flex-col lg:mb-6">
-                                <li className="relative flex items-center gap-4 py-2 before:absolute before:top-1/2 before:bottom-0 before:left-[0.4rem] before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A]">
-                                    <span className="relative bg-white py-1 dark:bg-[#161615]">
-                                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#e3e3e0] bg-[#FDFDFC] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.06)] dark:border-[#3E3E3A] dark:bg-[#161615]">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-[#dbdbd7] dark:bg-[#3E3E3A]" />
-                                        </span>
-                                    </span>
-                                    <span>
-                                        Read the
-                                        <a
-                                            href="https://laravel.com/docs"
-                                            target="_blank"
-                                            className="ml-1 inline-flex items-center space-x-1 font-medium text-[#f53003] underline underline-offset-4 dark:text-[#FF4433]"
-                                        >
-                                            <span>Documentation</span>
-                                            <svg
-                                                width={10}
-                                                height={11}
-                                                viewBox="0 0 10 11"
-                                                fill="none"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-2.5 w-2.5"
-                                            >
-                                                <path
-                                                    d="M7.70833 6.95834V2.79167H3.54167M2.5 8L7.5 3.00001"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="square"
-                                                />
-                                            </svg>
-                                        </a>
-                                    </span>
-                                </li>
-                                <li className="relative flex items-center gap-4 py-2 before:absolute before:top-0 before:bottom-1/2 before:left-[0.4rem] before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A]">
-                                    <span className="relative bg-white py-1 dark:bg-[#161615]">
-                                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#e3e3e0] bg-[#FDFDFC] shadow-[0px_0px_1px_0px_rgba(0,0,0,0.03),0px_1px_2px_0px_rgba(0,0,0,0.06)] dark:border-[#3E3E3A] dark:bg-[#161615]">
-                                            <span className="h-1.5 w-1.5 rounded-full bg-[#dbdbd7] dark:bg-[#3E3E3A]" />
-                                        </span>
-                                    </span>
-                                    <span>
-                                        Watch video tutorials at
-                                        <a
-                                            href="https://laracasts.com"
-                                            target="_blank"
-                                            className="ml-1 inline-flex items-center space-x-1 font-medium text-[#f53003] underline underline-offset-4 dark:text-[#FF4433]"
-                                        >
-                                            <span>Laracasts</span>
-                                            <svg
-                                                width={10}
-                                                height={11}
-                                                viewBox="0 0 10 11"
-                                                fill="none"
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-2.5 w-2.5"
-                                            >
-                                                <path
-                                                    d="M7.70833 6.95834V2.79167H3.54167M2.5 8L7.5 3.00001"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="square"
-                                                />
-                                            </svg>
-                                        </a>
-                                    </span>
-                                </li>
-                            </ul>
-                            <ul className="flex gap-3 text-sm leading-normal">
+                            <h1 className="mb-3 text-3xl font-semibold leading-tight tracking-tight lg:text-5xl">
+                                Sistem ujian online yang lebih rapi untuk peserta, admin, dan pengawas.
+                            </h1>
+                            <p className="mb-6 max-w-xl text-base leading-7 text-[#706f6c] dark:text-[#A1A09A]">
+                                Kelola pendaftaran tes, pengerjaan soal, pemantauan pelanggaran, dan koreksi hasil dalam satu alur yang terpusat.
+                            </p>
+                            <div className="mb-8 grid gap-3 sm:grid-cols-2">
+                                <div className="rounded-2xl border border-[#e3e3e0] bg-[#fafaf9] p-4 dark:border-[#3E3E3A] dark:bg-[#161615]">
+                                    <div className="mb-1 text-sm font-semibold">Pendaftaran terpusat</div>
+                                    <p className="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                        Peserta bisa daftar dan masuk ke jadwal tes yang aktif tanpa alur manual.
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-[#e3e3e0] bg-[#fafaf9] p-4 dark:border-[#3E3E3A] dark:bg-[#161615]">
+                                    <div className="mb-1 text-sm font-semibold">Monitoring dan koreksi</div>
+                                    <p className="text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                                        Admin dan pengawas memantau pelaksanaan, pelanggaran, serta hasil dengan lebih mudah.
+                                    </p>
+                                </div>
+                            </div>
+                            <ul className="flex flex-col gap-3 text-sm leading-normal sm:flex-row">
                                 <li>
-                                    <a
-                                        href="https://cloud.laravel.com"
-                                        target="_blank"
-                                        className="inline-block rounded-sm border border-black bg-[#1b1b18] px-5 py-1.5 text-sm leading-normal text-white hover:border-black hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:border-white dark:hover:bg-white"
+                                    <Link
+                                        href={route('login')}
+                                        className="inline-flex items-center justify-center rounded-full border border-black bg-[#1b1b18] px-5 py-2.5 text-white hover:bg-black dark:border-[#eeeeec] dark:bg-[#eeeeec] dark:text-[#1C1C1A] dark:hover:bg-white"
                                     >
-                                        Deploy now
-                                    </a>
+                                        Masuk ke sistem
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href={route('register')}
+                                        className="inline-flex items-center justify-center rounded-full border border-[#19140035] px-5 py-2.5 text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
+                                    >
+                                        Daftar akun
+                                    </Link>
                                 </li>
                             </ul>
                         </div>

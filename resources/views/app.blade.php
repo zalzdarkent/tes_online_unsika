@@ -31,6 +31,25 @@
         </style>
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <meta
+            name="description"
+            content="Online Test UNSIKA adalah platform ujian online untuk peserta, admin, dan pengawas dengan alur pendaftaran, pelaksanaan tes, dan koreksi yang terpusat."
+        >
+        <link rel="canonical" href="{{ url()->current() }}">
+        <meta property="og:site_name" content="Online Test UNSIKA">
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="Online Test UNSIKA">
+        <meta
+            property="og:description"
+            content="Platform ujian online UNSIKA untuk pendaftaran tes, pengerjaan soal, dan pengelolaan hasil secara terpusat."
+        >
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="Online Test UNSIKA">
+        <meta
+            name="twitter:description"
+            content="Platform ujian online UNSIKA untuk pendaftaran tes, pengerjaan soal, dan pengelolaan hasil secara terpusat."
+        >
 
         <!-- CSRF Token -->
         <meta name="csrf-token" content="{{ csrf_token() }}">

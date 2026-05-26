@@ -43,12 +43,18 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     return (
         <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <Head title="Log in" />
+            <Head title="Masuk">
+                <meta
+                    name="description"
+                    content="Masuk ke Online Test UNSIKA untuk mengakses pendaftaran tes, pengerjaan soal, dan dashboard peserta atau admin."
+                />
+                <meta name="robots" content="noindex,nofollow" />
+            </Head>
 
             <Card className="mx-auto w-full max-w-md">
                 <CardHeader className="space-y-4">
                     <div className="flex justify-center">
-                        <Link href={route('home')} className="flex flex-col items-center gap-2 font-medium">
+                        <Link href={route('root')} className="flex flex-col items-center gap-2 font-medium">
                             <div className="mb-1 flex h-16 w-16 items-center justify-center">
                                 <AppLogoIcon className="h-full w-full object-contain" />
                             </div>
