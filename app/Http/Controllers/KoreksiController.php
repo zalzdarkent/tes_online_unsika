@@ -500,7 +500,8 @@ class KoreksiController extends Controller
                 'soal.opsi_d',
                 'users.nama as nama_peserta',
                 'jadwal.nama_jadwal',
-                'jadwal.is_shuffled'
+                'jadwal.is_shuffled',
+                'jadwal.is_answer_shuffled'
             )
             ->orderBy('jawaban.id_soal', 'asc')
             ->get();
@@ -527,8 +528,8 @@ class KoreksiController extends Controller
             $jawabanBenar = $item->jawaban_benar;
             $opsiToShow = [];
 
-            // Jika jadwal di-shuffle dan soal adalah pilihan ganda, gunakan jawaban dan opsi yang sudah di-shuffle
-            if ($item->is_shuffled && in_array($item->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
+            // Jika shuffle jawaban diaktifkan dan soal pilihan ganda, gunakan jawaban + opsi yang sudah di-shuffle
+            if ($item->is_answer_shuffled && in_array($item->jenis_soal, ['pilihan_ganda', 'multi_choice'])) {
                 // Buat instance soal untuk menggunakan method getShuffledAnswers
                 $soal = new \App\Models\Soal();
                 $soal->id = $item->soal_id;
@@ -568,7 +569,8 @@ class KoreksiController extends Controller
                 'skor_maksimal' => $item->skor_maksimal,
                 'skor_didapat' => $item->skor_didapat,
                 'opsi_shuffled' => $opsiToShow,
-                'is_shuffled' => $item->is_shuffled
+                'is_shuffled' => $item->is_shuffled,
+                'is_answer_shuffled' => $item->is_answer_shuffled,
             ];
         });
 

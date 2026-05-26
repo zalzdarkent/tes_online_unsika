@@ -39,6 +39,7 @@ interface JawabanDetail {
         D?: string;
     };
     is_shuffled?: boolean;
+    is_answer_shuffled?: boolean;
 }
 
 interface Props {
@@ -62,6 +63,22 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
     const [isSaving, setIsSaving] = useState(false);
     const isSubmitted = status_koreksi === 'submitted';
     const { toast } = useToast();
+
+    const getStatusByScore = (item: JawabanDetail): 'benar' | 'salah' | 'sebagian' | 'belum' => {
+        if (item.skor_didapat === null) {
+            return 'belum';
+        }
+
+        if (item.skor_didapat <= 0) {
+            return 'salah';
+        }
+
+        if (item.skor_didapat >= item.skor_maksimal) {
+            return 'benar';
+        }
+
+        return 'sebagian';
+    };
 
     // Function untuk membandingkan jawaban multi choice (urutan tidak berpengaruh)
     const compareMultiChoiceAnswer = (peserta: string, benar: string): boolean => {
@@ -175,7 +192,7 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 cell: ({ row }) => {
                     const jawaban = row.getValue('jawaban_benar') as string;
                     const data = row.original;
-                    const isShuffled = data.is_shuffled && ['pilihan_ganda', 'multi_choice'].includes(data.jenis_soal);
+                    const isShuffled = (data.is_answer_shuffled ?? data.is_shuffled) && ['pilihan_ganda', 'multi_choice'].includes(data.jenis_soal);
 
                     if (isShuffled && data.opsi_shuffled) {
                         // Tampilkan jawaban benar dengan konteks opsi yang di-shuffle
@@ -212,7 +229,7 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 cell: ({ row }) => {
                     const jawaban = row.original.jawaban_peserta;
                     const data = row.original;
-                    const isShuffled = data.is_shuffled && ['pilihan_ganda', 'multi_choice'].includes(data.jenis_soal);
+                    const isShuffled = (data.is_answer_shuffled ?? data.is_shuffled) && ['pilihan_ganda', 'multi_choice'].includes(data.jenis_soal);
 
                     if (!jawaban) {
                         return <span className="text-muted-foreground italic">Tidak diisi</span>;
@@ -248,33 +265,7 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 id: 'status',
                 header: 'Status',
                 cell: ({ row }) => {
-                    const { jenis_soal, skor_didapat, skor_maksimal, jawaban_peserta, jawaban_benar } = row.original;
-                    let status: 'benar' | 'salah' | 'sebagian' | 'belum' = 'belum';
-
-                    if (skor_didapat !== null) {
-                        if (jenis_soal === 'pilihan_ganda') {
-                            // Untuk pilihan ganda biasa, urutan tetap penting
-                            const jawabanPeserta = (jawaban_peserta || '').toString().toLowerCase().trim();
-                            const jawabanBenar = (jawaban_benar || '').toString().toLowerCase().trim();
-                            status = jawabanPeserta === jawabanBenar ? 'benar' : 'salah';
-                        } else if (jenis_soal === 'multi_choice') {
-                            // Untuk multi choice, gunakan function pembanding khusus
-                            const isCorrect = compareMultiChoiceAnswer(
-                                jawaban_peserta || '',
-                                jawaban_benar || ''
-                            );
-                            status = isCorrect ? 'benar' : 'salah';
-                        } else {
-                            // Untuk soal esai dan lainnya, cek apakah skor sebagian
-                            if (skor_didapat === skor_maksimal) {
-                                status = 'benar';
-                            } else if (skor_didapat === 0) {
-                                status = 'salah';
-                            } else {
-                                status = 'sebagian'; // Skor di antara 0 dan maksimal
-                            }
-                        }
-                    }
+                    const status = getStatusByScore(row.original);
 
                     const label = {
                         benar: 'Benar',
@@ -297,26 +288,29 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
                 accessorKey: 'skor_didapat',
                 header: 'Skor Didapat',
                 cell: ({ row }) => {
-                    const index = row.index;
+                    const jawabanId = row.original.id;
                     const isAuto = ['pilihan_ganda', 'multi_choice'].includes(row.original.jenis_soal);
                     const isReadonly = isSubmitted;
+                    const currentItem = skorData.find((item) => item.id === jawabanId) ?? row.original;
 
                     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                         if (isReadonly) return;
                         const val = Math.min(Math.max(0, parseInt(e.target.value) || 0), row.original.skor_maksimal);
-                        const newData = [...skorData];
-                        newData[index] = { ...newData[index], skor_didapat: val };
-                        setSkorData(newData);
+                        setSkorData((prev) =>
+                            prev.map((item) =>
+                                item.id === jawabanId ? { ...item, skor_didapat: val } : item,
+                            ),
+                        );
                     };
 
                     return isAuto ? (
-                        <p>{skorData[index]?.skor_didapat ?? 0}</p>
+                        <p>{currentItem.skor_didapat ?? 0}</p>
                     ) : (
                         <Input
                             type="number"
                             min={0}
                             max={row.original.skor_maksimal}
-                            value={skorData[index]?.skor_didapat ?? ''}
+                            value={currentItem.skor_didapat ?? ''}
                             onChange={handleChange}
                             className="w-20"
                             disabled={isReadonly}
@@ -419,47 +413,10 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
     const handleSubmit = () => handleSave(true);
 
     const renderStatistik = () => {
-        const correct = skorData.filter((item) => {
-            if (item.skor_didapat === null) return false;
-
-            if (item.jenis_soal === 'pilihan_ganda') {
-                // Untuk pilihan ganda biasa
-                const jawabanPeserta = (item.jawaban_peserta || '').toString().toLowerCase().trim();
-                const jawabanBenar = (item.jawaban_benar || '').toString().toLowerCase().trim();
-                return jawabanPeserta === jawabanBenar;
-            } else if (item.jenis_soal === 'multi_choice') {
-                // Untuk multi choice, gunakan function pembanding khusus
-                return compareMultiChoiceAnswer(
-                    item.jawaban_peserta || '',
-                    item.jawaban_benar || ''
-                );
-            } else {
-                // Untuk soal esai dan lainnya - hanya yang dapat skor penuh
-                return item.skor_didapat === item.skor_maksimal;
-            }
-        }).length;
-
-        const incorrect = skorData.filter((item) => {
-            if (item.skor_didapat === null) return false;
-
-            if (item.jenis_soal === 'pilihan_ganda') {
-                // Untuk pilihan ganda biasa
-                const jawabanPeserta = (item.jawaban_peserta || '').toString().toLowerCase().trim();
-                const jawabanBenar = (item.jawaban_benar || '').toString().toLowerCase().trim();
-                return jawabanPeserta !== jawabanBenar;
-            } else if (item.jenis_soal === 'multi_choice') {
-                // Untuk multi choice, gunakan function pembanding khusus
-                return !compareMultiChoiceAnswer(
-                    item.jawaban_peserta || '',
-                    item.jawaban_benar || ''
-                );
-            } else {
-                // Untuk soal esai dan lainnya - skor tidak penuh (termasuk 0 dan sebagian)
-                return item.skor_didapat !== item.skor_maksimal;
-            }
-        }).length;
-
-        const ungraded = skorData.filter((item) => item.skor_didapat === null).length;
+        const statusList = skorData.map(getStatusByScore);
+        const correct = statusList.filter((status) => status === 'benar').length;
+        const incorrect = statusList.filter((status) => status === 'salah' || status === 'sebagian').length;
+        const ungraded = statusList.filter((status) => status === 'belum').length;
 
         const blocks = [
             { label: 'Jawaban Benar', value: correct, icon: <CheckCircle />, color: 'green' },
