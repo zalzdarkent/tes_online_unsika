@@ -94,6 +94,7 @@ class KoreksiController extends Controller
 
                 return [
                     'id' => $jadwal->id,
+                    'user_id' => $jadwal->user_id,
                     'nama_jadwal' => $jadwal->nama_jadwal,
                     'total_peserta' => $jadwal->total_peserta,
                     'total_sudah_dikoreksi' => $jadwal->total_sudah_dikoreksi,

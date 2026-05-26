@@ -1,17 +1,19 @@
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime } from '@/lib/format-date';
-import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react';
+import { type BreadcrumbItem, type SharedData } from '@/types';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
 import { ClipboardCheck, BarChart3 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 
 interface DataJadwal {
     id: number;
+    user_id: number;
     nama_jadwal: string;
     total_peserta: number;
     total_sudah_dikoreksi: number;
@@ -32,7 +34,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Koreksi({ data }: Props) {
+    const page = usePage<SharedData>();
+    const currentUserId = page.props.auth.user.id;
     const [selectedRows, setSelectedRows] = useState<DataJadwal[]>([]);
+    const [jadwalFilter, setJadwalFilter] = useState<'mine' | 'all'>('mine');
+
+    const filteredData = useMemo(() => {
+        if (jadwalFilter === 'all') {
+            return data;
+        }
+
+        return data.filter((item) => item.user_id === currentUserId);
+    }, [data, jadwalFilter, currentUserId]);
 
     const handleExportRekap = async () => {
         if (selectedRows.length === 0) {
@@ -202,19 +215,30 @@ export default function Koreksi({ data }: Props) {
                 <div className="space-y-2">
                     <h2 className="text-2xl font-bold">Koreksi Peserta</h2>
                     <p className="text-gray-600 dark:text-gray-400">
-                        Pilih jadwal tes yang ingin Anda koreksi. Anda dapat melihat progress koreksi dan mengakses detail peserta dari setiap jadwal.
+                        Pilih jadwal tes yang ingin Anda koreksi.
                     </p>
                 </div>
 
                 <DataTable
                     columns={columns}
-                    data={data}
+                    data={filteredData}
                     searchColumn="nama_jadwal"
                     searchPlaceholder="Cari nama jadwal tes..."
                     exportFilename="data-jadwal-koreksi"
                     showExportButton={selectedRows.length > 0}
                     onSelectionChange={setSelectedRows}
                     onExport={handleExportRekap}
+                    toolbarExtras={
+                        <Select value={jadwalFilter} onValueChange={(value: 'mine' | 'all') => setJadwalFilter(value)}>
+                            <SelectTrigger className="w-[170px]">
+                                <SelectValue placeholder="Filter tes" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="mine">Tes Saya</SelectItem>
+                                <SelectItem value="all">Semua Tes</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    }
                     emptyMessage={
                         <div className="w-full py-8 text-center text-gray-500">
                             <ClipboardCheck className="mx-auto mb-4 h-12 w-12 text-gray-400" />

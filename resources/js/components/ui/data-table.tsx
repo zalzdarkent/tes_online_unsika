@@ -80,6 +80,7 @@ interface DataTableProps<TData, TValue> {
   activeFilters?: Record<string, (string | number | boolean)[]>
   enableResponsiveHiding?: boolean // New prop to enable/disable responsive column hiding
   onSelectionChange?: (selectedRows: TData[]) => void
+  toolbarExtras?: React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
@@ -101,7 +102,8 @@ export function DataTable<TData, TValue>({
   onFilterChange,
   activeFilters = {},
   enableResponsiveHiding = true, // Default to true for backward compatibility
-  onSelectionChange
+  onSelectionChange,
+  toolbarExtras
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -404,6 +406,9 @@ export function DataTable<TData, TValue>({
               activeFilters={activeFilters}
             />
           )}
+
+          {/* custom toolbar extras */}
+          {toolbarExtras}
 
           {/* visible columns */}
           <DropdownMenu>
