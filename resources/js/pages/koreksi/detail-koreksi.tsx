@@ -445,7 +445,15 @@ export default function DetailKoreksi({ data, peserta, status_koreksi = null }: 
             <div className="flex flex-col gap-4 p-4">
                 {/* button kembali */}
                 <div>
-                    <Button variant="ghost" onClick={() => router.visit('/koreksi')} className="w-fit">
+                    <Button
+                        variant="ghost"
+                        onClick={() => {
+                            const parts = window.location.pathname.split('/').filter(Boolean);
+                            const jadwalId = parts[2];
+                            router.visit(jadwalId ? `/koreksi/jadwal/${jadwalId}/peserta` : '/koreksi');
+                        }}
+                        className="w-fit"
+                    >
                         <ArrowLeft />
                         Kembali
                     </Button>
