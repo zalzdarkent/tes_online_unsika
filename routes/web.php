@@ -12,6 +12,7 @@ use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\SoalController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViolationController;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -22,12 +23,14 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 
-// Root route - redirect to dashboard if authenticated, otherwise to login
+// Root route - redirect to dashboard if authenticated, otherwise show landing page
 Route::get('/', function () {
     if (Auth::check()) {
         return redirect()->route('dashboard');
     }
-    return Inertia::render('welcome');
+    return view('landing', [
+        'userCount' => User::count(),
+    ]);
 })->name('root');
 
 // Developer info page - accessible without authentication
