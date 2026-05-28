@@ -11,12 +11,12 @@ declare global {
 window.Pusher = Pusher;
 
 // Log environment variables untuk debugging
-console.log('🔧 Reverb Configuration:');
-console.log('  VITE_REVERB_APP_KEY:', import.meta.env.VITE_REVERB_APP_KEY);
-console.log('  VITE_REVERB_HOST:', import.meta.env.VITE_REVERB_HOST);
-console.log('  VITE_REVERB_PORT:', import.meta.env.VITE_REVERB_PORT ?? 4090);
-console.log('  VITE_REVERB_SCHEME:', import.meta.env.VITE_REVERB_SCHEME ?? 'http');
-console.log('  forceTLS:', (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https');
+// console.log('🔧 Reverb Configuration:');
+// console.log('  VITE_REVERB_APP_KEY:', import.meta.env.VITE_REVERB_APP_KEY);
+// console.log('  VITE_REVERB_HOST:', import.meta.env.VITE_REVERB_HOST);
+// console.log('  VITE_REVERB_PORT:', import.meta.env.VITE_REVERB_PORT ?? 4090);
+// console.log('  VITE_REVERB_SCHEME:', import.meta.env.VITE_REVERB_SCHEME ?? 'http');
+// console.log('  forceTLS:', (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https');
 
 window.Echo = new Echo({
     broadcaster: 'reverb',
@@ -40,7 +40,7 @@ if (pusher && pusher.connection) {
 
     pusher.connection.bind('connected', () => {
         console.log('✅ Reverb: Connected to WebSocket successfully!');
-        console.log('   Socket ID:', pusher.connection.socket_id);
+        // console.log('   Socket ID:', pusher.connection.socket_id);
     });
 
     pusher.connection.bind('unavailable', () => {
