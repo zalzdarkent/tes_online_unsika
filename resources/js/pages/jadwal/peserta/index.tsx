@@ -157,7 +157,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                 title: 'Pelanggaran Terdeteksi!',
                 description: `Pelanggaran terdeteksi pada peserta ID ${event.peserta_id}`,
             });
-        });        console.log('✅ [Peserta Terdaftar] Successfully subscribed to channels:');
+        }); console.log('✅ [Peserta Terdaftar] Successfully subscribed to channels:');
         console.log('   - jadwal.' + jadwal.id + '.peserta');
         console.log('   - jadwal.' + jadwal.id + '.violations');
 
@@ -186,7 +186,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
         isOpen: false,
         title: '',
         description: '',
-        onConfirm: () => {},
+        onConfirm: () => { },
         confirmText: 'Ya',
         variant: 'default',
     });
@@ -650,7 +650,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Peserta - ${jadwal.nama_jadwal}`} />
-            <JadwalLayout>
+            <div className="px-4 py-6">
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl">
                     <div className="flex w-full flex-col flex-wrap justify-between gap-2 sm:flex-row sm:space-x-2">
                         <div>
@@ -665,7 +665,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                         Daftarkan Peserta
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="flex max-h-[90vh] w-[90vw] flex-col sm:w-[80vw] md:w-[70vw] lg:max-w-6xl">
+                                <DialogContent className="flex h-[90vh] max-h-[90vh] min-h-0 w-[90vw] flex-col overflow-hidden sm:w-[80vw] md:w-[70vw] lg:max-w-6xl">
                                     <DialogHeader className="flex-shrink-0">
                                         <DialogTitle>Daftarkan Peserta ke Jadwal</DialogTitle>
                                         <p className="text-sm text-muted-foreground">
@@ -673,12 +673,12 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                         </p>
                                     </DialogHeader>
 
-                                    <div className="flex-1 overflow-hidden">
+                                    <div className="flex-1 min-h-0 overflow-hidden">
                                         {allPeserta.length === 0 ? (
                                             <div className="py-8 text-center text-muted-foreground">Semua peserta sudah terdaftar di jadwal ini.</div>
                                         ) : (
-                                            <div className="flex h-full flex-col space-y-4">
-                                                <div className="flex-1 overflow-hidden">
+                                            <div className="flex h-full min-h-0 flex-col space-y-4">
+                                                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1">
                                                     <DataTable
                                                         columns={[
                                                             {
@@ -692,7 +692,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                                                                         onCheckedChange={(value) => {
                                                                             table.toggleAllPageRowsSelected(!!value);
                                                                             if (value) {
-                                                                                setSelectedPeserta(allPeserta.map((p) => p.id));
+                                                                                        setSelectedPeserta(table.getRowModel().rows.map((row) => row.original.id));
                                                                             } else {
                                                                                 setSelectedPeserta([]);
                                                                             }
@@ -859,7 +859,7 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
                         enableResponsiveHiding={false}
                     />
                 </div>
-            </JadwalLayout>
+            </div>
 
             {/* Alert Dialog */}
             <AlertDialog open={alertDialog.isOpen} onOpenChange={(open) => setAlertDialog((prev) => ({ ...prev, isOpen: open }))}>
