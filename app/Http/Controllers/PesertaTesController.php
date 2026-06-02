@@ -133,15 +133,15 @@ class PesertaTesController extends Controller
             ->filter() // Hapus item yang null (status Tutup)
             ->values(); // Reset array keys setelah filter
 
-        // Check apakah profil user lengkap
+        // Check apakah informasi akademik user lengkap
         $user = Auth::user();
-        $isProfileComplete = $user->isProfileComplete();
-        $missingProfileFields = $isProfileComplete ? [] : $user->getMissingProfileFields();
+        $isAcademicInfoComplete = $user->hasAcademicInfo();
+        $missingAcademicFields = $isAcademicInfoComplete ? [] : $user->getMissingAcademicInfoFields();
 
         return Inertia::render('peserta/daftar-tes/index', [
             'jadwal' => $jadwal,
-            'isProfileComplete' => $isProfileComplete,
-            'missingProfileFields' => $missingProfileFields,
+            'isAcademicInfoComplete' => $isAcademicInfoComplete,
+            'missingAcademicFields' => $missingAcademicFields,
             'debug' => [
                 'total_jadwal_in_db' => $totalJadwalInDB,
                 'jadwal_status_buka' => $jadwalStatusBuka,

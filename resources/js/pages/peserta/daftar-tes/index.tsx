@@ -46,8 +46,8 @@ interface JadwalData {
 
 interface Props {
     jadwal: JadwalData[];
-    isProfileComplete: boolean;
-    missingProfileFields: string[];
+    isAcademicInfoComplete: boolean;
+    missingAcademicFields: string[];
     debug?: {
         total_jadwal_in_db: number;
         jadwal_status_buka: number;
@@ -66,7 +66,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFields }: Props) {
+export default function DaftarTes({ jadwal, isAcademicInfoComplete, missingAcademicFields }: Props) {
     const { props } = usePage<{ errors?: Record<string, string>; auth: { user: { id: number } } }>();
     const { showAccessDeniedModal, accessDeniedData, handleAccessDenied, closeAccessDeniedModal } = useAccessControl();
     const [jadwalList, setJadwalList] = useState<JadwalData[]>(jadwal);
@@ -255,7 +255,7 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
     };
 
     const handleDaftar = (id_jadwal: number) => {
-        if (!isProfileComplete) {
+        if (!isAcademicInfoComplete) {
             setCompletionDialogOpen(true);
             return;
         }
@@ -434,7 +434,7 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
 
                 // Jika belum daftar
                 if (!sudah_daftar) {
-                    if (!isProfileComplete) {
+                    if (!isAcademicInfoComplete) {
                         return (
                             <Button onClick={() => handleDaftar(id)}>
                                 Daftar
@@ -629,9 +629,9 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
             <Dialog open={completionDialogOpen} onOpenChange={setCompletionDialogOpen}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Lengkapi profil dulu</DialogTitle>
+                        <DialogTitle>Lengkapi info akademik dulu</DialogTitle>
                         <DialogDescription>
-                            Anda harus melengkapi profil dan info akademik sebelum bisa mendaftar tes.
+                            Anda harus melengkapi info akademik sebelum bisa mendaftar tes.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -639,14 +639,14 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
                         {/* <p className="text-muted-foreground">
                             Data yang belum lengkap:
                         </p>
-                        {missingProfileFields.length > 0 ? (
+                        {missingAcademicFields.length > 0 ? (
                             <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-                                {missingProfileFields.map((field) => (
+                                {missingAcademicFields.map((field) => (
                                     <li key={field}>{field}</li>
                                 ))}
                             </ul>
                         ) : (
-                            <p className="text-muted-foreground">Silakan lengkapi semua profil dan info akademik yang belum tersimpan.</p>
+                            <p className="text-muted-foreground">Silakan lengkapi info akademik yang belum tersimpan.</p>
                         )} */}
                         {/* <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
                             Setelah data dilengkapi, kembali ke halaman daftar tes lalu klik Daftar lagi.
@@ -659,11 +659,8 @@ export default function DaftarTes({ jadwal, isProfileComplete, missingProfileFie
                         </Button>
                         <div className="flex flex-col gap-2 sm:flex-row">
                             <Button asChild>
-                                <Link href={route('profile.edit')}>Lengkapi Biodata</Link>
-                            </Button>
-                            {/* <Button asChild>
                                 <Link href={route('academic.edit')}>Lengkapi Info Akademik</Link>
-                            </Button> */}
+                            </Button>
                         </div>
                     </DialogFooter>
                 </DialogContent>

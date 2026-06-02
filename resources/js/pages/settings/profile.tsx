@@ -1,7 +1,7 @@
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 import DeleteUser from '@/components/delete-user';
 import InputError from '@/components/input-error';
@@ -77,10 +77,15 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
         };
     }, [fotoPreview]);
 
-    const submit: FormEventHandler = (e) => {
+    const submit = async (e: FormEvent) => {
         e.preventDefault();
 
         console.log('Form data being sent:', data);
+
+        const windowWithRefresh = window as unknown as { refreshCSRFToken?: () => Promise<string | null> };
+        if (windowWithRefresh.refreshCSRFToken) {
+            await windowWithRefresh.refreshCSRFToken();
+        }
 
         // Use POST with _method: 'patch' for file uploads
         post(route('profile.update'), {

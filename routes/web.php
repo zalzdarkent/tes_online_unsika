@@ -180,6 +180,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
+// Session helper routes
+Route::get('/session-info', function () {
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'csrf_token' => csrf_token(),
+        ],
+    ]);
+});
+
 // Include additional route files
 require __DIR__ . '/auth.php';
 require __DIR__ . '/settings.php';

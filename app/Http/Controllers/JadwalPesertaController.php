@@ -71,9 +71,9 @@ class JadwalPesertaController extends Controller
 
         $user = Auth::user();
 
-        if (!$user->isProfileComplete()) {
+        if (!$user->hasAcademicInfo()) {
             return redirect()->back()->withErrors([
-                'error' => 'Lengkapi biodata dan info akademik terlebih dahulu sebelum mendaftar tes. Data yang belum lengkap: ' . implode(', ', $user->getMissingProfileFields()),
+                'error' => 'Lengkapi info akademik terlebih dahulu sebelum mendaftar tes. Data yang belum lengkap: ' . implode(', ', $user->getMissingAcademicInfoFields()),
             ]);
         }
 

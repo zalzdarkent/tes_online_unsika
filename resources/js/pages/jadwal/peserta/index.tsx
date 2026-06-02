@@ -21,7 +21,7 @@ import { type BreadcrumbItem } from '@/types';
 import ViolationAlert from '@/components/violation-alert';
 import { Head, router } from '@inertiajs/react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Check, MoreHorizontal, Play, Trash2, UserPlus, X, AlertTriangle } from 'lucide-react';
+import { Check, MoreHorizontal, Play, Trash2, UserPlus, X, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Echo from '@/lib/echo';
 
@@ -653,155 +653,166 @@ export default function JadwalPesertaPage({ jadwal, pesertaTerdaftar, allPeserta
             <div className="px-4 py-6">
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl">
                     <div className="flex w-full flex-col flex-wrap justify-between gap-2 sm:flex-row sm:space-x-2">
-                        <div>
-                            <h2 className="text-2xl font-bold">Peserta Terdaftar</h2>
-                            <p className="text-muted-foreground">{jadwal.nama_jadwal}</p>
+                        <div className="space-y-4">
+                            <Button
+                                variant="outline"
+                                onClick={() => router.visit('/jadwal')}
+                                className="flex items-center gap-2"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                Kembali
+                            </Button>
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-bold">Peserta Terdaftar</h2>
+                                <p className="text-muted-foreground">{jadwal.nama_jadwal}</p>
+                            </div>
                         </div>
-                        <div className="flex gap-2">
-                            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                                <DialogTrigger asChild>
-                                    <Button>
-                                        <UserPlus className="mr-2 h-4 w-4" />
-                                        Daftarkan Peserta
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="flex h-[90vh] max-h-[90vh] min-h-0 w-[90vw] flex-col overflow-hidden sm:w-[80vw] md:w-[70vw] lg:max-w-6xl">
-                                    <DialogHeader className="flex-shrink-0">
-                                        <DialogTitle>Daftarkan Peserta ke Jadwal</DialogTitle>
-                                        <p className="text-sm text-muted-foreground">
-                                            Pilih peserta yang ingin didaftarkan ke jadwal "{jadwal.nama_jadwal}".
-                                        </p>
-                                    </DialogHeader>
+                    </div>
 
-                                    <div className="flex-1 min-h-0 overflow-hidden">
-                                        {allPeserta.length === 0 ? (
-                                            <div className="py-8 text-center text-muted-foreground">Semua peserta sudah terdaftar di jadwal ini.</div>
-                                        ) : (
-                                            <div className="flex h-full min-h-0 flex-col space-y-4">
-                                                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1">
-                                                    <DataTable
-                                                        columns={[
-                                                            {
-                                                                id: 'select',
-                                                                header: ({ table }) => (
-                                                                    <Checkbox
-                                                                        checked={
-                                                                            table.getIsAllPageRowsSelected() ||
-                                                                            (table.getIsSomePageRowsSelected() && 'indeterminate')
+                    <div className="flex gap-2 justify-end">
+                        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Daftarkan Peserta
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="flex h-[90vh] max-h-[90vh] min-h-0 w-[90vw] flex-col overflow-hidden sm:w-[80vw] md:w-[70vw] lg:max-w-6xl">
+                                <DialogHeader className="flex-shrink-0">
+                                    <DialogTitle>Daftarkan Peserta ke Jadwal</DialogTitle>
+                                    <p className="text-sm text-muted-foreground">
+                                        Pilih peserta yang ingin didaftarkan ke jadwal "{jadwal.nama_jadwal}".
+                                    </p>
+                                </DialogHeader>
+
+                                <div className="flex-1 min-h-0 overflow-hidden">
+                                    {allPeserta.length === 0 ? (
+                                        <div className="py-8 text-center text-muted-foreground">Semua peserta sudah terdaftar di jadwal ini.</div>
+                                    ) : (
+                                        <div className="flex h-full min-h-0 flex-col space-y-4">
+                                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1">
+                                                <DataTable
+                                                    columns={[
+                                                        {
+                                                            id: 'select',
+                                                            header: ({ table }) => (
+                                                                <Checkbox
+                                                                    checked={
+                                                                        table.getIsAllPageRowsSelected() ||
+                                                                        (table.getIsSomePageRowsSelected() && 'indeterminate')
+                                                                    }
+                                                                    onCheckedChange={(value) => {
+                                                                        table.toggleAllPageRowsSelected(!!value);
+                                                                        if (value) {
+                                                                            setSelectedPeserta(table.getRowModel().rows.map((row) => row.original.id));
+                                                                        } else {
+                                                                            setSelectedPeserta([]);
                                                                         }
-                                                                        onCheckedChange={(value) => {
-                                                                            table.toggleAllPageRowsSelected(!!value);
-                                                                            if (value) {
-                                                                                        setSelectedPeserta(table.getRowModel().rows.map((row) => row.original.id));
-                                                                            } else {
-                                                                                setSelectedPeserta([]);
-                                                                            }
-                                                                        }}
-                                                                        aria-label="Select all"
-                                                                    />
-                                                                ),
-                                                                cell: ({ row }) => (
-                                                                    <Checkbox
-                                                                        checked={selectedPeserta.includes(row.original.id)}
-                                                                        onCheckedChange={(value) => {
-                                                                            if (value) {
-                                                                                setSelectedPeserta([...selectedPeserta, row.original.id]);
-                                                                            } else {
-                                                                                setSelectedPeserta(
-                                                                                    selectedPeserta.filter((id) => id !== row.original.id),
-                                                                                );
-                                                                            }
-                                                                            row.toggleSelected(!!value);
-                                                                        }}
-                                                                        aria-label="Select row"
-                                                                    />
-                                                                ),
-                                                                enableSorting: false,
-                                                                enableHiding: false,
+                                                                    }}
+                                                                    aria-label="Select all"
+                                                                />
+                                                            ),
+                                                            cell: ({ row }) => (
+                                                                <Checkbox
+                                                                    checked={selectedPeserta.includes(row.original.id)}
+                                                                    onCheckedChange={(value) => {
+                                                                        if (value) {
+                                                                            setSelectedPeserta([...selectedPeserta, row.original.id]);
+                                                                        } else {
+                                                                            setSelectedPeserta(
+                                                                                selectedPeserta.filter((id) => id !== row.original.id),
+                                                                            );
+                                                                        }
+                                                                        row.toggleSelected(!!value);
+                                                                    }}
+                                                                    aria-label="Select row"
+                                                                />
+                                                            ),
+                                                            enableSorting: false,
+                                                            enableHiding: false,
+                                                        },
+                                                        {
+                                                            accessorKey: 'nama',
+                                                            header: 'Nama Peserta',
+                                                            enableSorting: true,
+                                                            cell: ({ row }) => (
+                                                                <div>
+                                                                    <div className="font-medium">{row.original.nama}</div>
+                                                                    <div className="text-sm text-muted-foreground">{row.original.npm}</div>
+                                                                </div>
+                                                            ),
+                                                        },
+                                                        {
+                                                            accessorKey: 'email',
+                                                            header: 'Email',
+                                                            enableSorting: true,
+                                                        },
+                                                        {
+                                                            accessorKey: 'prodi',
+                                                            header: 'Program Studi',
+                                                            enableSorting: true,
+                                                            cell: ({ row }) => (
+                                                                <div>
+                                                                    <div>{row.original.prodi}</div>
+                                                                    <div className="text-sm text-muted-foreground">{row.original.fakultas}</div>
+                                                                </div>
+                                                            ),
+                                                        },
+                                                    ]}
+                                                    data={allPeserta}
+                                                    searchColumn="nama"
+                                                    searchPlaceholder="Cari peserta..."
+                                                    customBulkActions={[
+                                                        {
+                                                            label: 'Daftarkan Terpilih',
+                                                            action: (selectedData: PesertaData[]) => {
+                                                                const ids = selectedData.map((p) => p.id);
+                                                                setSelectedPeserta(ids);
+                                                                handleDaftarkanPeserta();
                                                             },
-                                                            {
-                                                                accessorKey: 'nama',
-                                                                header: 'Nama Peserta',
-                                                                enableSorting: true,
-                                                                cell: ({ row }) => (
-                                                                    <div>
-                                                                        <div className="font-medium">{row.original.nama}</div>
-                                                                        <div className="text-sm text-muted-foreground">{row.original.npm}</div>
-                                                                    </div>
-                                                                ),
-                                                            },
-                                                            {
-                                                                accessorKey: 'email',
-                                                                header: 'Email',
-                                                                enableSorting: true,
-                                                            },
-                                                            {
-                                                                accessorKey: 'prodi',
-                                                                header: 'Program Studi',
-                                                                enableSorting: true,
-                                                                cell: ({ row }) => (
-                                                                    <div>
-                                                                        <div>{row.original.prodi}</div>
-                                                                        <div className="text-sm text-muted-foreground">{row.original.fakultas}</div>
-                                                                    </div>
-                                                                ),
-                                                            },
-                                                        ]}
-                                                        data={allPeserta}
-                                                        searchColumn="nama"
-                                                        searchPlaceholder="Cari peserta..."
-                                                        customBulkActions={[
-                                                            {
-                                                                label: 'Daftarkan Terpilih',
-                                                                action: (selectedData: PesertaData[]) => {
-                                                                    const ids = selectedData.map((p) => p.id);
-                                                                    setSelectedPeserta(ids);
-                                                                    handleDaftarkanPeserta();
-                                                                },
-                                                                variant: 'default',
-                                                                icon: <UserPlus className="h-4 w-4" />,
-                                                                disabled: false,
-                                                            },
-                                                        ]}
-                                                        emptyMessage={
-                                                            <div className="w-full py-8 text-center text-gray-500">
-                                                                Tidak ada peserta yang dapat didaftarkan.
-                                                            </div>
-                                                        }
-                                                        enableResponsiveHiding={false}
-                                                    />
-                                                </div>
+                                                            variant: 'default',
+                                                            icon: <UserPlus className="h-4 w-4" />,
+                                                            disabled: false,
+                                                        },
+                                                    ]}
+                                                    emptyMessage={
+                                                        <div className="w-full py-8 text-center text-gray-500">
+                                                            Tidak ada peserta yang dapat didaftarkan.
+                                                        </div>
+                                                    }
+                                                    enableResponsiveHiding={false}
+                                                />
+                                            </div>
 
-                                                <div className="flex flex-shrink-0 items-center justify-between border-t bg-background pt-4">
-                                                    <div className="text-sm text-muted-foreground">{selectedPeserta.length} peserta dipilih</div>
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            onClick={() => {
-                                                                setSelectedPeserta([]);
-                                                                setIsModalOpen(false);
-                                                            }}
-                                                            disabled={isSubmitting}
-                                                        >
-                                                            Batal
-                                                        </Button>
-                                                        <Button
-                                                            onClick={handleDaftarkanPeserta}
-                                                            disabled={selectedPeserta.length === 0 || isSubmitting}
-                                                        >
-                                                            {isSubmitting ? 'Mendaftarkan...' : `Daftarkan ${selectedPeserta.length} Peserta`}
-                                                        </Button>
-                                                    </div>
+                                            <div className="flex flex-shrink-0 items-center justify-between border-t bg-background pt-4">
+                                                <div className="text-sm text-muted-foreground">{selectedPeserta.length} peserta dipilih</div>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => {
+                                                            setSelectedPeserta([]);
+                                                            setIsModalOpen(false);
+                                                        }}
+                                                        disabled={isSubmitting}
+                                                    >
+                                                        Batal
+                                                    </Button>
+                                                    <Button
+                                                        onClick={handleDaftarkanPeserta}
+                                                        disabled={selectedPeserta.length === 0 || isSubmitting}
+                                                    >
+                                                        {isSubmitting ? 'Mendaftarkan...' : `Daftarkan ${selectedPeserta.length} Peserta`}
+                                                    </Button>
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                            <Button variant="outline" onClick={handleRefresh}>
-                                Refresh
-                            </Button>
-                        </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                        <Button variant="outline" onClick={handleRefresh}>
+                            Refresh
+                        </Button>
                     </div>
 
                     <DataTable

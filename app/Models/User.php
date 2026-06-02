@@ -153,15 +153,22 @@ class User extends Authenticatable
     }
 
     /**
-     * Get missing profile fields
+     * Check apakah informasi akademik lengkap.
      */
-    public function getMissingProfileFields(): array
+    public function hasAcademicInfo(): bool
+    {
+        return !empty($this->prodi) &&
+               !empty($this->fakultas) &&
+               !empty($this->universitas) &&
+               !empty($this->npm);
+    }
+
+    /**
+     * Get missing academic information fields.
+     */
+    public function getMissingAcademicInfoFields(): array
     {
         $required = [
-            'nama' => 'Nama Lengkap',
-            'email' => 'Email',
-            'alamat' => 'Alamat',
-            'no_hp' => 'Nomor HP',
             'prodi' => 'Program Studi',
             'fakultas' => 'Fakultas',
             'universitas' => 'Universitas',

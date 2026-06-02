@@ -1,7 +1,7 @@
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEvent } from 'react';
 
 import InputError from '@/components/input-error';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -64,11 +64,16 @@ export default function Academic() {
         _method: 'patch',
     });
 
-    const submit: FormEventHandler = (e) => {
+    const submit = async (e: FormEvent) => {
         e.preventDefault();
 
         console.log('Academic form data being sent:', data);
         console.log('Current user data:', user);
+
+        const windowWithRefresh = window as unknown as { refreshCSRFToken?: () => Promise<string | null> };
+        if (windowWithRefresh.refreshCSRFToken) {
+            await windowWithRefresh.refreshCSRFToken();
+        }
 
         // Use POST with _method: 'patch' for academic info update
         post(route('profile.update'), {
