@@ -114,7 +114,7 @@ export default function Academic() {
             'Pend. Matematika (S1)',
             'Pend. Matematika (S2)',
             'Pend. Luar Sekolah (S1)',
-            'Pend. Bahasa & Sasta Indonesia (S1)',
+            'Pend. Bahasa & Sastra Indonesia (S1)',
             'Pend. Jasmani, Kesehatan & Rekreasi (S1)',
             'Pend. Jasmani, Kesehatan & Rekreasi (S2)',
             'Pend. Bahasa Inggris (S1)',
