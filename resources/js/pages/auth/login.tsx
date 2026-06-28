@@ -48,7 +48,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     name="description"
                     content="Masuk ke Online Test UNSIKA untuk mengakses pendaftaran tes, pengerjaan soal, dan dashboard peserta atau admin."
                 />
-                <meta name="robots" content="noindex,nofollow" />
+                <meta name="robots" />
             </Head>
 
             <Card className="mx-auto w-full max-w-md">

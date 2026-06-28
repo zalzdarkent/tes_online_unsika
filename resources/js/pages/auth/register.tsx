@@ -292,7 +292,7 @@ export default function Register() {
                     name="description"
                     content="Buat akun Online Test UNSIKA untuk mengikuti tes online, mengelola data peserta, dan mengakses jadwal yang tersedia."
                 />
-                <meta name="robots" content="noindex,nofollow" />
+                <meta name="robots" />
             </Head>
 
             <Card className="mx-auto w-full max-w-md">
