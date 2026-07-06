@@ -33,7 +33,7 @@
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
         <meta
             name="description"
-            content="Online Test UNSIKA adalah platform ujian online untuk peserta, admin, dan pengawas dengan alur pendaftaran, pelaksanaan tes, dan koreksi yang terpusat."
+            content="Online Test UNSIKA adalah platform ujian online untuk mahasiswa UNSIKA maupun luar UNSIKA."
         >
         <link rel="canonical" href="{{ url()->current() }}">
         <meta property="og:site_name" content="Online Test UNSIKA">
