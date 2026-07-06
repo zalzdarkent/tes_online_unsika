@@ -23,7 +23,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
     return (
         <AuthLayout title="Lupa password" description="Masukkan email Anda untuk menerima tautan reset kata sandi.">
-            <Head title="Lupa password" />
+            <Head title="Lupa password">
+                <meta name="robots" content="noindex, nofollow" />
+            </Head>
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
 
